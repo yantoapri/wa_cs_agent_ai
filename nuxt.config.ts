@@ -3,13 +3,9 @@ import { defineNuxtConfig } from "nuxt/config";
 
 export default defineNuxtConfig({
   modules: ["@nuxtjs/supabase"],
-  // Konfigurasi untuk Cloudflare Pages
-  nitro: {
-    preset: "cloudflare-pages",
-  },
-  // Static generation untuk menghindari masalah server-side
+  compatibilityDate: "2025-05-15",
+  devtools: { enabled: true },
   ssr: true,
-  target: "static",
 
   // Runtime config untuk environment variables
   runtimeConfig: {
