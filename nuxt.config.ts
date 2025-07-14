@@ -3,7 +3,6 @@ import { defineNuxtConfig } from "nuxt/config";
 
 export default defineNuxtConfig({
   modules: ["@nuxtjs/supabase"],
-
   // Konfigurasi untuk Cloudflare Pages
   nitro: {
     preset: "cloudflare-pages",
