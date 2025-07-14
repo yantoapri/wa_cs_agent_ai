@@ -1,0 +1,373 @@
+<template>
+  <div class="p-2">
+    <div v-if="channel">
+      <div class="flex gap-2 mb-4">
+        <button
+          class="px-5 py-2 font-medium border-b-2"
+          :class="
+            activeTab === 'integrasi'
+              ? 'text-blue-600 border-blue-600'
+              : 'text-gray-700 border-transparent'
+          "
+          @click="activeTab = 'integrasi'"
+        >
+          Integrasi
+        </button>
+        <button
+          class="px-5 py-2 font-medium border-b-2"
+          :class="
+            activeTab === 'edit'
+              ? 'text-blue-600 border-blue-600'
+              : 'text-gray-700 border-transparent'
+          "
+          @click="activeTab = 'edit'"
+        >
+          Edit Channel
+        </button>
+      </div>
+      <div v-if="activeTab === 'integrasi'">
+        <div class="mb-4">
+          <h3 class="text-lg font-bold mb-2">Integrasi Whatsapp</h3>
+          <div class="flex gap-4 mb-4">
+            <span
+              :class="
+                status.value != 'STOPPED' ? 'text-green-600' : 'text-red-400'
+              "
+            >
+              Connection
+              <span>{{ status != "STOPPED" ? "✔️" : "❌" }}</span>
+            </span>
+            <span
+              :class="
+                sessionStatus.authenticated ? 'text-green-600' : 'text-red-400'
+              "
+            >
+              Authenticated
+              <span>{{ sessionStatus.authenticated ? "✔️" : "❌" }}</span>
+            </span>
+            <span
+              :class="sessionStatus.ready ? 'text-green-600' : 'text-red-400'"
+            >
+              Ready
+              <span>{{ sessionStatus.ready ? "✔️" : "❌" }}</span>
+            </span>
+          </div>
+
+          <div v-if="status == 'SCAN_QR_CODE'">
+            <img
+              v-if="qrCode"
+              class="w-4/5 h-auto mx-auto"
+              :src="qrCode"
+              alt="QR Code"
+            />
+            <div
+              v-else
+              class="flex items-center justify-center h-32 text-gray-400"
+            >
+              Loading...
+            </div>
+          </div>
+          <div v-if="status == 'SCAN_QR_CODE'" class="text-gray-500 text-sm">
+            Scan QR Code dengan Whatsapp Linked devices
+          </div>
+          <div v-if="sessionStatus.ready" class="text-center mb-4">
+            <button
+              class="bg-red-500 text-white px-4 py-2 rounded-lg"
+              @click="onDisconnect"
+            >
+              Putuskan Hubungan
+            </button>
+          </div>
+
+          <!-- Integrasi Agen AI -->
+          <div class="mt-8">
+            <h3 class="text-lg font-bold mb-2">Integrasi Agen AI</h3>
+            <div class="flex items-center mb-2">
+              <span class="text-red-500 text-xl mr-2">●</span>
+              <span class="font-medium">Agen Tidak Terhubung</span>
+            </div>
+            <div
+              v-for="ai in aiAgents"
+              :key="ai.id"
+              class="bg-blue-50 px-4 py-3 rounded flex items-center justify-between mb-2"
+            >
+              <span>{{ ai.name }}</span>
+              <button class="bg-blue-600 text-white px-4 py-1 rounded">
+                Hubungkan
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else-if="activeTab === 'edit'">
+        <form class="edit-channel-form" @submit.prevent="onEditChannel">
+          <div class="form-group">
+            <label>Nama</label>
+            <input v-model="editData.nama" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label>Takeover AI</label>
+            <select v-model="editData.takeoverAI" class="form-input">
+              <option value="0">Tidak Aktif</option>
+              <option value="1">Aktif</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Waktu Takeover</label>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <input
+                v-model="editData.waktuTakeover"
+                class="form-input"
+                style="flex: 1"
+              />
+              <span>menit</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Limit Balasan AI</label>
+            <select v-model="editData.limitBalasanAI" class="form-input">
+              <option value="0">Tidak Aktif</option>
+              <option value="1">Aktif</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Maksimum Balasan AI</label>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <input
+                v-model="editData.maksimumBalasanAI"
+                class="form-input"
+                style="flex: 1"
+              />
+              <span>balasan</span>
+            </div>
+          </div>
+          <button class="edit-btn" type="submit">Edit Channel</button>
+        </form>
+        <div style="margin-top: 32px">
+          <div style="color: #888; font-size: 1em; margin-bottom: 8px">
+            Hapus Channel
+          </div>
+          <div style="color: #aaa; font-size: 0.95em; margin-bottom: 8px">
+            Bila dilakukan, tindakan ini tidak bisa dikembalikan
+          </div>
+          <button class="delete-btn" @click="onDeleteChannel">Hapus</button>
+        </div>
+      </div>
+    </div>
+    <div v-else style="padding: 32px; color: #888; text-align: center">
+      Pilih channel untuk melihat detail.
+    </div>
+  </div>
+</template>
+<script setup>
+import { defineProps, ref, watch, onMounted, onUnmounted } from "vue";
+import { useAgentStore } from "~/composables/useAgents";
+
+const props = defineProps({ channel: Object });
+const emit = defineEmits(["update-whatsapp-number"]);
+const { aiAgents, fetchAgentsByType } = useAgentStore();
+
+const qrCode = ref("");
+const status = ref("");
+const sessionStatus = ref({
+  connection: false,
+  authenticated: false,
+  ready: false,
+});
+const intervalId = ref(null);
+const baseUrl = import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
+const activeTab = ref("integrasi");
+
+// Data untuk edit channel
+const editData = ref({
+  nama: "",
+  takeoverAI: "0",
+  waktuTakeover: "",
+  limitBalasanAI: "0",
+  maksimumBalasanAI: "",
+});
+
+watch(
+  () => props.channel,
+  (val) => {
+    // Reset form saat channel berubah
+    if (val) {
+      editData.value = {
+        nama: val.nama || "",
+        takeoverAI: val.takeoverAI?.toString() || "0",
+        waktuTakeover: val.waktuTakeover?.toString() || "",
+        limitBalasanAI: val.limitBalasanAI?.toString() || "0",
+        maksimumBalasanAI: val.maksimumBalasanAI?.toString() || "",
+      };
+    }
+  }
+);
+
+async function fetchSession() {
+  try {
+    const res = await fetch(`${baseUrl}/api/sessions/default`);
+    const data = await res.json();
+    status.value = data.status;
+    console.log(data);
+    sessionStatus.value = {
+      connection: data.status === "SCAN_QR_CODE" || data.status === "WORKING",
+      authenticated: data.status === "WORKING",
+      ready: data.status === "WORKING",
+    };
+
+    // Check if API response contains 'me' object and update channel list
+    if (data.me && data.me.id && props.channel && props.channel.id) {
+      const whatsappNumber = data.me.id.replace("@c.us", "");
+      emit("update-whatsapp-number", props.channel.id, whatsappNumber);
+    }
+
+    // QR code hanya jika status SCAN_QR_CODE, ambil dari API screenshot
+    if (data.status === "SCAN_QR_CODE") {
+      const qrRes = await fetch(`${baseUrl}/api/screenshot?session=default`);
+      const qrBlob = await qrRes.blob();
+      qrCode.value = URL.createObjectURL(qrBlob);
+    } else {
+      qrCode.value = "";
+    }
+  } catch (e) {
+    sessionStatus.value = {
+      connection: false,
+      authenticated: false,
+      ready: false,
+    };
+    qrCode.value = "";
+  }
+}
+function startInterval() {
+  if (intervalId.value) clearInterval(intervalId.value);
+  intervalId.value = setInterval(fetchSession, 30000);
+}
+function stopInterval() {
+  if (intervalId.value) clearInterval(intervalId.value);
+  intervalId.value = null;
+}
+watch(
+  () => props.channel,
+  (val) => {
+    stopInterval();
+    if (val && val.type === "whatsapp") {
+      fetchSession();
+      startInterval();
+    }
+  },
+  { immediate: true }
+);
+onMounted(async () => {
+  if (props.channel && props.channel.type === "whatsapp") {
+    fetchSession();
+    startInterval();
+  }
+  // Load agent AI list from database
+  await fetchAgentsByType("ai");
+});
+onUnmounted(() => {
+  stopInterval();
+});
+
+import { useChannelStore } from "~/composables/useChannels";
+
+const { updateChannel, deleteChannel } = useChannelStore();
+
+async function onEditChannel() {
+  try {
+    await updateChannel(props.channel.id, {
+      name: editData.value.nama,
+      takeover_ai: editData.value.takeoverAI === "1",
+      waktu_takeover: parseInt(editData.value.waktuTakeover) || 0,
+      limit_balasan_ai: editData.value.limitBalasanAI === "1",
+      maksimum_balasan_ai: parseInt(editData.value.maksimumBalasanAI) || 0,
+    });
+    alert("Channel berhasil diupdate!");
+  } catch (err) {
+    console.error("Error updating channel:", err);
+    alert("Gagal mengupdate channel: " + err.message);
+  }
+}
+
+async function onDeleteChannel() {
+  if (confirm("Yakin ingin menghapus channel ini?")) {
+    try {
+      await deleteChannel(props.channel.id);
+      alert("Channel berhasil dihapus!");
+    } catch (err) {
+      console.error("Error deleting channel:", err);
+      alert("Gagal menghapus channel: " + err.message);
+    }
+  }
+}
+async function onDisconnect() {
+  // Panggil API logout, lalu refresh status session
+  try {
+    const session = "default";
+    await fetch(`${baseUrl}/api/sessions/${session}/logout`, {
+      method: "POST",
+    });
+    await fetchSession();
+  } catch (e) {
+    alert("Gagal memutuskan hubungan!");
+  }
+}
+</script>
+<style scoped>
+.edit-channel-form {
+  margin-top: 32px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 18px 12px 12px 12px;
+  box-shadow: 0 1px 4px #0001;
+  max-width: 900px;
+}
+.form-group {
+  margin-bottom: 18px;
+}
+.form-group label {
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+}
+.form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #d0d0d0;
+  font-size: 1em;
+  margin-top: 4px;
+  margin-bottom: 2px;
+  background: #fafbfc;
+}
+.edit-btn {
+  background: #005fa3;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 24px;
+  font-size: 1em;
+  cursor: pointer;
+  margin-top: 12px;
+}
+.delete-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 24px;
+  font-size: 1em;
+  cursor: pointer;
+  margin-top: 8px;
+}
+.disconnect-btn {
+  background: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 24px;
+  font-size: 1em;
+  cursor: pointer;
+  margin-top: 8px;
+}
+</style>
