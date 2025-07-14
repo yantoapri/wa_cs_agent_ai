@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@nuxtjs/supabase": "^1.5.0",
-    "openai": "^4.104.0",
+    "openai": "^4.104.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
