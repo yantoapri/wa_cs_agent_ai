@@ -8,7 +8,6 @@ export default defineNuxtConfig({
   nitro: {
     preset: "cloudflare-pages",
   },
-
   // Static generation untuk menghindari masalah server-side
   ssr: true,
   target: "static",
