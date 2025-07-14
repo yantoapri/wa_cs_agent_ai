@@ -1,13 +1,11 @@
 {
   "private": true,
-  "scripts": {
+   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev --port 8000",
+    "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "deploy": "npm run generate && npx wrangler pages deploy .output/public --project-name=integrasi-wa-nuxt",
-    "cf-typegen": "npx wrangler types"
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@nuxtjs/supabase": "^1.5.0",
