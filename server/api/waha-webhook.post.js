@@ -6,130 +6,107 @@ const WAHA_API_KEY = process.env.VITE_WAHA_API || "";
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const client = serverSupabaseClient(event);
-  console.log("[WAHA Webhook] Menerima event baru", body);
 
-  const logs = body.logs || [];
-  const results = [];
+  // Format baru: body langsung berisi event object
+  const meId = body?.me?.id?.replace("@c.us", "") || null;
+  const payloadBody = body?.payload?.body || null;
+  const payloadFrom = body?.payload?.from?.replace("@c.us", "") || null;
 
-  for (const log of logs) {
-    const messages = log.message;
-    if (Array.isArray(messages)) {
-      const idx = messages.findIndex((m) => m === "WAHA WEBHOOK EVENT:");
-      if (idx !== -1 && typeof messages[idx + 1] === "object") {
-        const eventObj = messages[idx + 1];
-        const meId = eventObj?.me?.id?.replace("@c.us", "") || null;
-        const payloadBody = eventObj?.payload?.body || null;
-        const payloadFrom =
-          eventObj?.payload?.from?.replace("@c.us", "") || null;
-        console.log("[WAHA Webhook] EventObj", {
-          meId,
-          payloadBody,
-          payloadFrom,
-        });
-        if (!meId || !payloadBody || !payloadFrom) {
-          // console.log("[WAHA Webhook] Data tidak lengkap, skip", {
-          //   meId,
-          //   payloadBody,
-          //   payloadFrom,
-          // });
-          continue;
-        }
-
-        // 1. Cari agentai yang aktif di channel_agent_connections
-        const { data: conn, error: connErr } = await client
-          .from("channel_agent_connections")
-          .select("agent_id")
-          .eq("channel_id", meId)
-          .eq("is_active", true)
-          .maybeSingle();
-        if (connErr || !conn || !conn.agent_id) {
-          // console.log("[WAHA Webhook] Tidak ada agent aktif di channel", {
-          //   meId,
-          // });
-          continue;
-        }
-        // console.log("[WAHA Webhook] Agent aktif ditemukan", {
-        //   agent_id: conn.agent_id,
-        // });
-
-        // 2. Ambil config agent_ai_configs
-        const { data: config, error: configErr } = await client
-          .from("agent_ai_configs")
-          .select("*")
-          .eq("agent_id", conn.agent_id)
-          .maybeSingle();
-        if (configErr || !config) {
-          // console.log("[WAHA Webhook] Config agent tidak ditemukan", {
-          //   agent_id: conn.agent_id,
-          // });
-          continue;
-        }
-        // console.log("[WAHA Webhook] Config agent ditemukan", { config });
-
-        // 3. Fetch ke /api/openrouter
-        try {
-          // console.log("[WAHA Webhook] Memanggil /api/openrouter", {
-          //   prompt: payloadBody,
-          // });
-          const aiRes = await $fetch("/api/openrouter", {
-            method: "POST",
-            body: {
-              prompt: payloadBody,
-              knowledge: JSON.stringify(config),
-            },
-          });
-          const aiText = aiRes?.result;
-          if (!aiText) {
-            // console.log("[WAHA Webhook] Tidak ada hasil dari AI", { aiRes });
-            continue;
-          }
-
-          // 4. Kirim ke WhatsApp (WAHA)
-          try {
-            // console.log("[WAHA Webhook] Mengirim pesan ke WAHA", {
-            //   to: payloadFrom,
-            //   from: meId,
-            //   aiText,
-            // });
-            await $fetch(`${WAHA_BASE_URL}/api/send-message`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Api-Key": WAHA_API_KEY,
-              },
-              body: {
-                to: payloadFrom + "@c.us",
-                from: meId + "@c.us",
-                text: aiText,
-              },
-            });
-          } catch (err) {
-            // console.log("[WAHA Webhook] Gagal mengirim pesan ke WAHA", err);
-            results.push({
-              meId,
-              payloadFrom,
-              error: "Failed to send WAHA message",
-              detail: err?.message,
-            });
-            continue;
-          }
-          results.push({ meId, payloadFrom, aiText });
-        } catch (err) {
-          // console.log(
-          //   "[WAHA Webhook] Error saat memanggil /api/openrouter",
-          //   err
-          // );
-          results.push({
-            meId,
-            payloadFrom,
-            error: "Failed to get AI response",
-            detail: err?.message,
-          });
-          continue;
-        }
-      }
-    }
+  if (!meId || !payloadBody || !payloadFrom) {
+    return { status: "ok", results: [] };
   }
 
+  const results = [];
+
+  // 1. Cari agentai yang aktif di channel_agent_connections
+  const { data: conn, error: connErr } = await client
+    .from("channel_agent_connections")
+    .select("agent_id")
+    .eq("channel_id", meId)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (connErr || !conn || !conn.agent_id) {
+    console.log("[WAHA Webhook] Tidak ada agent aktif di channel", {
+      meId,
+    });
+    return { status: "ok", results: [] };
+  }
+  // console.log("[WAHA Webhook] Agent aktif ditemukan", {
+  //   agent_id: conn.agent_id,
+  // });
+
+  // 2. Ambil config agent_ai_configs
+  const { data: config, error: configErr } = await client
+    .from("agent_ai_configs")
+    .select("*")
+    .eq("agent_id", conn.agent_id)
+    .maybeSingle();
+  if (configErr || !config) {
+    console.log("[WAHA Webhook] Config agent tidak ditemukan", {
+      agent_id: conn.agent_id,
+    });
+    return { status: "ok", results: [] };
+  }
+  // console.log("[WAHA Webhook] Config agent ditemukan", { config });
+
+  // 3. Fetch ke /api/openrouter
+  try {
+    // console.log("[WAHA Webhook] Memanggil /api/openrouter", {
+    //   prompt: payloadBody,
+    // });
+    const aiRes = await $fetch("/api/openrouter", {
+      method: "POST",
+      body: {
+        prompt: payloadBody,
+        knowledge: JSON.stringify(config),
+      },
+    });
+    const aiText = aiRes?.result;
+    if (!aiText) {
+      console.log("[WAHA Webhook] Tidak ada hasil dari AI", { aiRes });
+      return { status: "ok", results: [] };
+    }
+
+    // 4. Kirim ke WhatsApp (WAHA)
+    try {
+      // console.log("[WAHA Webhook] Mengirim pesan ke WAHA", {
+      //   to: payloadFrom,
+      //   from: meId,
+      //   aiText,
+      // });
+      await $fetch(`${WAHA_BASE_URL}/api/send-message`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Api-Key": WAHA_API_KEY,
+        },
+        body: {
+          to: payloadFrom + "@c.us",
+          from: meId + "@c.us",
+          text: aiText,
+        },
+      });
+    } catch (err) {
+      console.log("[WAHA Webhook] Gagal mengirim pesan ke WAHA", err);
+      results.push({
+        meId,
+        payloadFrom,
+        error: "Failed to send WAHA message",
+        detail: err?.message,
+      });
+      return { status: "ok", results };
+    }
+    results.push({ meId, payloadFrom, aiText });
+  } catch (err) {
+    console.log("[WAHA Webhook] Error saat memanggil /api/openrouter", err);
+    results.push({
+      meId,
+      payloadFrom,
+      error: "Failed to get AI response",
+      detail: err?.message,
+    });
+    return { status: "ok", results };
+  }
+  console.log("[WAHA Webhook] Hasil", { results });
   return { status: "ok", results };
 });
