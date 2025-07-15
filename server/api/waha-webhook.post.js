@@ -1,13 +1,7 @@
 import { serverSupabaseClient } from "#supabase/server";
 
 const WAHA_BASE_URL = process.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
-const WAHA_USERNAME = process.env.VITE_WAHA_USERNAME || "";
-const WAHA_PASSWORD = process.env.VITE_WAHA_PASSWORD || "";
-const WAHA_AUTH =
-  WAHA_USERNAME && WAHA_PASSWORD
-    ? "Basic " +
-      Buffer.from(`${WAHA_USERNAME}:${WAHA_PASSWORD}`).toString("base64")
-    : undefined;
+const WAHA_API_KEY = process.env.VITE_WAHA_API || "";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -60,7 +54,10 @@ export default defineEventHandler(async (event) => {
         try {
           await $fetch(`${WAHA_BASE_URL}/api/send-message`, {
             method: "POST",
-            headers: WAHA_AUTH ? { Authorization: WAHA_AUTH } : undefined,
+            headers: {
+              "Content-Type": "application/json",
+              "X-Api-Key": WAHA_API_KEY,
+            },
             body: {
               to: payloadFrom + "@c.us",
               from: meId + "@c.us",

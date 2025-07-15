@@ -81,6 +81,8 @@ const wahaAuth =
     ? "Basic " + btoa(`${wahaUsername}:${wahaPassword}`)
     : undefined;
 
+const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
+
 async function addChannel() {
   try {
     let iconUrl = "";
@@ -118,7 +120,7 @@ async function addChannel() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              ...(wahaAuth ? { Authorization: wahaAuth } : {}),
+              "X-Api-Key": wahaApiKey,
             },
             body: JSON.stringify({
               channel_id: createdChannel.id,
@@ -148,7 +150,7 @@ function selectChannel(channel) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(wahaAuth ? { Authorization: wahaAuth } : {}),
+        "X-Api-Key": wahaApiKey,
       },
     }).catch((e) => {
       console.error("Gagal start session WAHA:", e);
