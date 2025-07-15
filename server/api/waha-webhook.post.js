@@ -34,6 +34,8 @@ export default defineEventHandler(async (event) => {
   if (connErr || !conn || !conn.agent_id) {
     console.log("[WAHA Webhook] Tidak ada agent aktif di channel", {
       meId,
+      channel_id,
+      agent_id,
     });
     return { status: "ok", results: [] };
   }
