@@ -54,29 +54,28 @@
           </div>
 
           <div
-            v-if="status == 'STARTING'"
-            class="flex items-center justify-center mb-2"
+            v-if="
+              status == 'STARTING' ||
+              status == 'STOPPED' ||
+              (status == 'SCAN_QR_CODE' && !qrCode)
+            "
+            class="flex items-center justify-center mb-2 h-48"
           >
             <span
-              class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"
+              class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-2"
             ></span>
-            <span class="text-blue-600 font-medium"
-              >Sedang menyiapkan sesi WhatsApp...</span
-            >
+            <span class="text-blue-600 font-medium">
+              {{
+                status == "STOPPED"
+                  ? "Menunggu sesi WhatsApp..."
+                  : status == "STARTING"
+                  ? "Sedang menyiapkan sesi WhatsApp..."
+                  : "Memuat QR Code..."
+              }}
+            </span>
           </div>
-          <div v-if="status == 'SCAN_QR_CODE'">
-            <div v-if="!qrCode" class="flex items-center justify-center h-48">
-              <span
-                class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-2"
-              ></span>
-              <span class="text-blue-600 font-medium">Memuat QR Code...</span>
-            </div>
-            <img
-              v-else
-              class="w-64 h-auto mx-auto"
-              :src="qrCode"
-              alt="QR Code"
-            />
+          <div v-if="status == 'SCAN_QR_CODE' && qrCode">
+            <img class="w-64 h-auto mx-auto" :src="qrCode" alt="QR Code" />
           </div>
           <div v-if="status == 'SCAN_QR_CODE'" class="text-gray-500 text-sm">
             Scan QR Code dengan Whatsapp Linked devices
