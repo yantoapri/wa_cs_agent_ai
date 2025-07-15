@@ -13,17 +13,17 @@ export default defineEventHandler(async (event) => {
     runtimeConfig.supabaseServiceRoleKey
   );
 
+  // Ambil channel_id dari metadata jika ada
+  const metaChannelId = body?.metadata?.channel_id || null;
   // Ambil channel_id dari param URL jika ada
-  const channel_id =
+  const urlChannelId =
     event.context?.params?.channel_id || event.context?.params?.id || null;
-
   // Format baru: body langsung berisi event object
   const meId = body?.me?.id?.replace("@c.us", "") || null;
   const payloadBody = body?.payload?.body || null;
   const payloadFrom = body?.payload?.from?.replace("@c.us", "") || null;
-
-  // Gunakan channel_id dari URL param jika ada, jika tidak fallback ke meId
-  const channelIdToUse = channel_id || null;
+  // Gunakan channel_id dari metadata, lalu URL param, lalu meId
+  const channelIdToUse = metaChannelId;
   console.log("channelIdToUse:", channelIdToUse);
   // Error handling jika channel_id dan meId tidak ada
   if (!channelIdToUse) {

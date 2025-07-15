@@ -134,7 +134,7 @@ async function addChannel() {
               config: {
                 webhooks: [
                   {
-                    url: webhookUrl + "/" + createdChannel.id,
+                    url: webhookUrl,
                     events: ["session.status", "message"],
                     hmac: { key: null },
                     retries: {
@@ -145,7 +145,7 @@ async function addChannel() {
                     customHeaders: null,
                   },
                 ],
-                metadata: {},
+                metadata: { channel_id: createdChannel.id },
                 noweb: {
                   markOnline: true,
                   store: {
