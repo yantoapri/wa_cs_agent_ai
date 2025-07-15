@@ -13,11 +13,13 @@ export default defineNuxtConfig({
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
       supabaseKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
     },
+    supabaseServiceRoleKey: process.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
   },
 
   supabase: {
     url: process.env.NUXT_PUBLIC_SUPABASE_URL,
     key: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
+    serviceRoleKey: process.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
     redirectOptions: {
       login: "/signin",
       callback: "/confirm",

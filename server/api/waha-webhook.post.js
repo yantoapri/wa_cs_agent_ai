@@ -1,11 +1,17 @@
-import { serverSupabaseClient } from "#supabase/server";
+import { createClient } from "@supabase/supabase-js";
 
 const WAHA_BASE_URL = process.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
 const WAHA_API_KEY = process.env.VITE_WAHA_API || "";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const client = serverSupabaseClient(event);
+
+  // Buat Supabase client dengan service role key
+  const runtimeConfig = useRuntimeConfig();
+  const client = createClient(
+    runtimeConfig.public.supabaseUrl,
+    runtimeConfig.supabaseServiceRoleKey
+  );
 
   // Format baru: body langsung berisi event object
   const meId = body?.me?.id?.replace("@c.us", "") || null;
