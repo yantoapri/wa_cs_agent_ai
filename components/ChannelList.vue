@@ -111,6 +111,9 @@ async function addChannel() {
     if (newChannel.value.type === "whatsapp") {
       const baseUrl =
         import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
+      const webhookUrl =
+        (import.meta.env.VITE_BASE_URL || "http://localhost:3000/") +
+        "api/waha-webhook";
       // Cari channel yang baru saja dibuat
       const createdChannel = channels.value.find(
         (c) => c.name === newChannel.value.name && c.type === "whatsapp"
@@ -126,6 +129,7 @@ async function addChannel() {
             body: JSON.stringify({
               channel_id: createdChannel.id,
               session_name: createdChannel.name,
+              webhook: webhookUrl,
             }),
           });
           const sessionResp = await res.json();

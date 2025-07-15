@@ -4,9 +4,9 @@ const WAHA_BASE_URL = process.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
 const WAHA_API_KEY = process.env.VITE_WAHA_API || "";
 
 export default defineEventHandler(async (event) => {
-  console.log("[WAHA Webhook] Menerima event baru");
   const body = await readBody(event);
   const client = serverSupabaseClient(event);
+  console.log("[WAHA Webhook] Menerima event baru", body);
 
   const logs = body.logs || [];
   const results = [];
@@ -27,11 +27,11 @@ export default defineEventHandler(async (event) => {
           payloadFrom,
         });
         if (!meId || !payloadBody || !payloadFrom) {
-          console.log("[WAHA Webhook] Data tidak lengkap, skip", {
-            meId,
-            payloadBody,
-            payloadFrom,
-          });
+          // console.log("[WAHA Webhook] Data tidak lengkap, skip", {
+          //   meId,
+          //   payloadBody,
+          //   payloadFrom,
+          // });
           continue;
         }
 
@@ -43,14 +43,14 @@ export default defineEventHandler(async (event) => {
           .eq("is_active", true)
           .maybeSingle();
         if (connErr || !conn || !conn.agent_id) {
-          console.log("[WAHA Webhook] Tidak ada agent aktif di channel", {
-            meId,
-          });
+          // console.log("[WAHA Webhook] Tidak ada agent aktif di channel", {
+          //   meId,
+          // });
           continue;
         }
-        console.log("[WAHA Webhook] Agent aktif ditemukan", {
-          agent_id: conn.agent_id,
-        });
+        // console.log("[WAHA Webhook] Agent aktif ditemukan", {
+        //   agent_id: conn.agent_id,
+        // });
 
         // 2. Ambil config agent_ai_configs
         const { data: config, error: configErr } = await client
@@ -59,18 +59,18 @@ export default defineEventHandler(async (event) => {
           .eq("agent_id", conn.agent_id)
           .maybeSingle();
         if (configErr || !config) {
-          console.log("[WAHA Webhook] Config agent tidak ditemukan", {
-            agent_id: conn.agent_id,
-          });
+          // console.log("[WAHA Webhook] Config agent tidak ditemukan", {
+          //   agent_id: conn.agent_id,
+          // });
           continue;
         }
-        console.log("[WAHA Webhook] Config agent ditemukan", { config });
+        // console.log("[WAHA Webhook] Config agent ditemukan", { config });
 
         // 3. Fetch ke /api/openrouter
         try {
-          console.log("[WAHA Webhook] Memanggil /api/openrouter", {
-            prompt: payloadBody,
-          });
+          // console.log("[WAHA Webhook] Memanggil /api/openrouter", {
+          //   prompt: payloadBody,
+          // });
           const aiRes = await $fetch("/api/openrouter", {
             method: "POST",
             body: {
@@ -80,17 +80,17 @@ export default defineEventHandler(async (event) => {
           });
           const aiText = aiRes?.result;
           if (!aiText) {
-            console.log("[WAHA Webhook] Tidak ada hasil dari AI", { aiRes });
+            // console.log("[WAHA Webhook] Tidak ada hasil dari AI", { aiRes });
             continue;
           }
 
           // 4. Kirim ke WhatsApp (WAHA)
           try {
-            console.log("[WAHA Webhook] Mengirim pesan ke WAHA", {
-              to: payloadFrom,
-              from: meId,
-              aiText,
-            });
+            // console.log("[WAHA Webhook] Mengirim pesan ke WAHA", {
+            //   to: payloadFrom,
+            //   from: meId,
+            //   aiText,
+            // });
             await $fetch(`${WAHA_BASE_URL}/api/send-message`, {
               method: "POST",
               headers: {
@@ -104,7 +104,7 @@ export default defineEventHandler(async (event) => {
               },
             });
           } catch (err) {
-            console.log("[WAHA Webhook] Gagal mengirim pesan ke WAHA", err);
+            // console.log("[WAHA Webhook] Gagal mengirim pesan ke WAHA", err);
             results.push({
               meId,
               payloadFrom,
@@ -115,10 +115,10 @@ export default defineEventHandler(async (event) => {
           }
           results.push({ meId, payloadFrom, aiText });
         } catch (err) {
-          console.log(
-            "[WAHA Webhook] Error saat memanggil /api/openrouter",
-            err
-          );
+          // console.log(
+          //   "[WAHA Webhook] Error saat memanggil /api/openrouter",
+          //   err
+          // );
           results.push({
             meId,
             payloadFrom,
