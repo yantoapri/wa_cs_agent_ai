@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
     // 4. Kirim ke WhatsApp (WAHA)
     try {
       if (aiRes?.images && aiRes.images.length > 0) {
-        // Kirim semua gambar satu per satu
+        // Kirim semua gambar satu per satu ke /api/sendImage
         for (const imgUrl of aiRes.images) {
           const messageBody = {
             chatId: payloadFrom + "@c.us",
@@ -101,7 +101,8 @@ export default defineEventHandler(async (event) => {
               caption: aiText,
             },
           };
-          await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
+          console.log("messageBody:", messageBody);
+          await $fetch(`${WAHA_BASE_URL}/api/sendImage`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -111,13 +112,14 @@ export default defineEventHandler(async (event) => {
           });
         }
       } else {
-        // Kirim text saja jika tidak ada gambar
+        // Kirim text saja ke /api/sendText jika tidak ada gambar
         const messageBody = {
           chatId: payloadFrom + "@c.us",
           message: {
             text: aiText,
           },
         };
+        console.log("messageBody:", messageBody);
         await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
           method: "POST",
           headers: {
