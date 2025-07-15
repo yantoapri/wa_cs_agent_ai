@@ -93,6 +93,14 @@
             >
               <span>{{ ai.name }}</span>
               <button
+                v-if="activeAgentId === ai.id"
+                class="bg-red-600 text-white px-4 py-1 rounded"
+                @click="onDisconnectAgentAI(ai.id)"
+              >
+                Putuskan
+              </button>
+              <button
+                v-else
                 class="bg-blue-600 text-white px-4 py-1 rounded"
                 @click="onConnectAgentAI(ai.id)"
               >
@@ -179,7 +187,50 @@ const sessionStatus = ref({
   authenticated: false,
   ready: false,
 });
-const intervalId = ref(null);
+const ws = ref(null);
+
+function connectWahaRealtime(sessionName) {
+  if (ws.value) {
+    ws.value.close();
+    ws.value = null;
+  }
+  const wsBaseUrl = (
+    import.meta.env.VITE_BASE_URL_WAHA_WS || "ws://localhost:3000"
+  ).replace(/^http/, "ws");
+  ws.value = new WebSocket(`${wsBaseUrl}/ws/session-status/${sessionName}`);
+
+  ws.value.onopen = () => {
+    console.log("WebSocket WAHA connected");
+  };
+  ws.value.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    // data: { status: "WORKING", ... }
+    status.value = data.status;
+    sessionStatus.value = {
+      connection: data.status === "SCAN_QR_CODE" || data.status === "WORKING",
+      authenticated: data.status === "WORKING",
+      ready: data.status === "WORKING",
+    };
+    // QR code jika dikirim via ws
+    if (data.qrCode) {
+      qrCode.value = data.qrCode;
+    } else if (data.status !== "SCAN_QR_CODE") {
+      qrCode.value = "";
+    }
+    // Update nomor WA jika ada
+    if (data.me && data.me.id && props.channel && props.channel.id) {
+      const whatsappNumber = data.me.id.replace("@c.us", "");
+      emit("update-whatsapp-number", props.channel.id, whatsappNumber);
+    }
+  };
+  ws.value.onclose = () => {
+    console.log("WebSocket WAHA closed");
+  };
+  ws.value.onerror = (e) => {
+    console.error("WebSocket WAHA error", e);
+  };
+}
+
 const baseUrl = import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
 const activeTab = ref("integrasi");
 const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
@@ -193,9 +244,11 @@ const editData = ref({
   maksimumBalasanAI: "",
 });
 
+const activeAgentId = ref(null);
+
 watch(
   () => props.channel,
-  (val) => {
+  async (val) => {
     // Reset form saat channel berubah
     if (val) {
       editData.value = {
@@ -205,95 +258,39 @@ watch(
         limitBalasanAI: val.limitBalasanAI?.toString() || "0",
         maksimumBalasanAI: val.maksimumBalasanAI?.toString() || "",
       };
-    }
-  }
-);
-
-async function fetchSession() {
-  try {
-    const sessionName =
-      props.channel && props.channel.session_name
-        ? props.channel.session_name
-        : "default";
-    const res = await fetch(`${baseUrl}/api/sessions/${sessionName}`, {
-      headers: {
-        "Content-Type": "application/json",
-        "X-Api-Key": wahaApiKey,
-      },
-    });
-    const data = await res.json();
-    status.value = data.status;
-    console.log(data);
-    sessionStatus.value = {
-      connection: data.status === "SCAN_QR_CODE" || data.status === "WORKING",
-      authenticated: data.status === "WORKING",
-      ready: data.status === "WORKING",
-    };
-
-    // Check if API response contains 'me' object and update channel list
-    if (data.me && data.me.id && props.channel && props.channel.id) {
-      const whatsappNumber = data.me.id.replace("@c.us", "");
-      emit("update-whatsapp-number", props.channel.id, whatsappNumber);
-    }
-
-    // QR code hanya jika status SCAN_QR_CODE, ambil dari API screenshot
-    if (data.status === "SCAN_QR_CODE") {
-      const qrRes = await fetch(
-        `${baseUrl}/api/screenshot?session=${sessionName}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-Api-Key": wahaApiKey,
-          },
-        }
-      );
-      const qrBlob = await qrRes.blob();
-      qrCode.value = URL.createObjectURL(qrBlob);
-    } else {
-      qrCode.value = "";
-    }
-  } catch (e) {
-    sessionStatus.value = {
-      connection: false,
-      authenticated: false,
-      ready: false,
-    };
-    qrCode.value = "";
-  }
-}
-function startInterval() {
-  if (intervalId.value) clearInterval(intervalId.value);
-  intervalId.value = setInterval(fetchSession, 30000);
-}
-function stopInterval() {
-  if (intervalId.value) clearInterval(intervalId.value);
-  intervalId.value = null;
-}
-watch(
-  () => props.channel,
-  (val) => {
-    stopInterval();
-    if (val && val.type === "whatsapp") {
-      fetchSession();
-      startInterval();
+      // Cek agent aktif
+      if (val.id) {
+        const active = await getActiveAgentForChannel(val.id);
+        activeAgentId.value = active ? active.agent_id : null;
+      }
     }
   },
   { immediate: true }
 );
-onMounted(async () => {
-  if (props.channel && props.channel.type === "whatsapp") {
-    fetchSession();
-    startInterval();
-  }
-  // Load agent AI list from database
-  await fetchAgentsByType("ai");
-});
+
+watch(
+  () => props.channel,
+  (val) => {
+    if (val && val.session_name) {
+      connectWahaRealtime(val.session_name);
+    } else if (ws.value) {
+      ws.value.close();
+      ws.value = null;
+    }
+  },
+  { immediate: true }
+);
+
 onUnmounted(() => {
-  stopInterval();
+  if (ws.value) ws.value.close();
 });
 
 const { updateChannel, deleteChannel } = useChannelStore();
-const { connectAgentToChannel } = useChannelAgentConnectionStore();
+const {
+  connectAgentToChannel,
+  disconnectAgentFromChannel,
+  getActiveAgentForChannel,
+} = useChannelAgentConnectionStore();
 
 async function onEditChannel() {
   try {
@@ -346,11 +343,27 @@ async function onConnectAgentAI(agentId) {
   if (!props.channel || !props.channel.id) return;
   try {
     await connectAgentToChannel(props.channel.id, agentId);
-    // Refresh status integrasi/channel jika perlu
     await fetchSession();
+    // Refresh agent aktif
+    const active = await getActiveAgentForChannel(props.channel.id);
+    activeAgentId.value = active ? active.agent_id : null;
     alert("Agent AI berhasil dihubungkan ke channel!");
   } catch (err) {
     alert("Gagal menghubungkan agent AI: " + (err?.message || err));
+  }
+}
+
+async function onDisconnectAgentAI(agentId) {
+  if (!props.channel || !props.channel.id) return;
+  try {
+    await disconnectAgentFromChannel(props.channel.id, agentId);
+    await fetchSession();
+    // Refresh agent aktif
+    const active = await getActiveAgentForChannel(props.channel.id);
+    activeAgentId.value = active ? active.agent_id : null;
+    alert("Agent AI berhasil diputuskan dari channel!");
+  } catch (err) {
+    alert("Gagal memutuskan agent AI: " + (err?.message || err));
   }
 }
 </script>
