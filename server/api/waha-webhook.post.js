@@ -91,10 +91,19 @@ export default defineEventHandler(async (event) => {
 
     // 4. Kirim ke WhatsApp (WAHA)
     try {
+      // Ambil session_name dari tabel channels
+      const { data: channelData } = await client
+        .from("channels")
+        .select("session_name")
+        .eq("id", channelIdToUse)
+        .maybeSingle();
+      const sessionName = channelData?.session_name;
+
       if (aiRes?.images && aiRes.images.length > 0) {
         // Kirim semua gambar satu per satu ke /api/sendImage
         for (const imgUrl of aiRes.images) {
           const messageBody = {
+            session: sessionName,
             chatId: payloadFrom + "@c.us",
             image: { url: imgUrl },
             caption: aiText,
@@ -112,6 +121,7 @@ export default defineEventHandler(async (event) => {
       } else {
         // Kirim text saja ke /api/sendText jika tidak ada gambar
         const messageBody = {
+          session: sessionName,
           chatId: payloadFrom + "@c.us",
           text: aiText,
         };
