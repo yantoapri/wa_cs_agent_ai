@@ -205,7 +205,11 @@ watch(
 
 async function fetchSession() {
   try {
-    const res = await fetch(`${baseUrl}/api/sessions/default`);
+    const sessionName =
+      props.channel && props.channel.session_name
+        ? props.channel.session_name
+        : "default";
+    const res = await fetch(`${baseUrl}/api/sessions/${sessionName}`);
     const data = await res.json();
     status.value = data.status;
     console.log(data);
@@ -223,7 +227,9 @@ async function fetchSession() {
 
     // QR code hanya jika status SCAN_QR_CODE, ambil dari API screenshot
     if (data.status === "SCAN_QR_CODE") {
-      const qrRes = await fetch(`${baseUrl}/api/screenshot?session=default`);
+      const qrRes = await fetch(
+        `${baseUrl}/api/screenshot?session=${sessionName}`
+      );
       const qrBlob = await qrRes.blob();
       qrCode.value = URL.createObjectURL(qrBlob);
     } else {
@@ -303,8 +309,11 @@ async function onDeleteChannel() {
 async function onDisconnect() {
   // Panggil API logout, lalu refresh status session
   try {
-    const session = "default";
-    await fetch(`${baseUrl}/api/sessions/${session}/logout`, {
+    const sessionName =
+      props.channel && props.channel.session_name
+        ? props.channel.session_name
+        : "default";
+    await fetch(`${baseUrl}/api/sessions/${sessionName}/logout`, {
       method: "POST",
     });
     await fetchSession();

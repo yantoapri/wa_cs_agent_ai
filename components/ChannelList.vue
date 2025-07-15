@@ -69,6 +69,7 @@ const {
   error,
   fetchChannels,
   addChannel: addChannelToDB,
+  updateChannel,
 } = useChannelStore();
 const showForm = ref(false);
 const newChannel = ref({ name: "", type: "whatsapp" });
@@ -116,7 +117,7 @@ async function addChannel() {
       );
       if (createdChannel) {
         try {
-          await fetch(`${baseUrl}/api/sessions`, {
+          const res = await fetch(`${baseUrl}/api/sessions`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -127,6 +128,13 @@ async function addChannel() {
               session_name: createdChannel.name,
             }),
           });
+          const sessionResp = await res.json();
+          if (sessionResp && sessionResp.name) {
+            // Update channel di database, set session_name
+            await updateChannel(createdChannel.id, {
+              session_name: sessionResp.name,
+            });
+          }
         } catch (e) {
           console.error("Gagal membuat session WAHA:", e);
         }
