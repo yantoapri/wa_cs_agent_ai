@@ -91,23 +91,42 @@ export default defineEventHandler(async (event) => {
 
     // 4. Kirim ke WhatsApp (WAHA)
     try {
-      // console.log("[WAHA Webhook] Mengirim pesan ke WAHA", {
-      //   to: payloadFrom,
-      //   from: meId,
-      //   aiText,
-      // });
-      await $fetch(`${WAHA_BASE_URL}/api/send-message`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Api-Key": WAHA_API_KEY,
-        },
-        body: {
-          to: payloadFrom + "@c.us",
-          from: meId + "@c.us",
-          text: aiText,
-        },
-      });
+      if (aiRes?.images && aiRes.images.length > 0) {
+        // Kirim semua gambar satu per satu
+        for (const imgUrl of aiRes.images) {
+          const messageBody = {
+            chatId: payloadFrom + "@c.us",
+            message: {
+              image: { url: imgUrl },
+              caption: aiText,
+            },
+          };
+          await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Api-Key": WAHA_API_KEY,
+            },
+            body: messageBody,
+          });
+        }
+      } else {
+        // Kirim text saja jika tidak ada gambar
+        const messageBody = {
+          chatId: payloadFrom + "@c.us",
+          message: {
+            text: aiText,
+          },
+        };
+        await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": WAHA_API_KEY,
+          },
+          body: messageBody,
+        });
+      }
     } catch (err) {
       console.log("[WAHA Webhook] Gagal mengirim pesan ke WAHA", err);
       results.push({
