@@ -97,6 +97,30 @@ async function addChannel() {
 
     await fetchChannels();
 
+    // Jika channel WhatsApp, buat session baru di WAHA
+    if (newChannel.value.type === "whatsapp") {
+      const baseUrl =
+        import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
+      // Cari channel yang baru saja dibuat
+      const createdChannel = channels.value.find(
+        (c) => c.name === newChannel.value.name && c.type === "whatsapp"
+      );
+      if (createdChannel) {
+        try {
+          await fetch(`${baseUrl}/api/sessions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              channel_id: createdChannel.id,
+              session_name: createdChannel.name,
+            }),
+          });
+        } catch (e) {
+          console.error("Gagal membuat session WAHA:", e);
+        }
+      }
+    }
+
     newChannel.value = { name: "", type: "whatsapp" };
     showForm.value = false;
   } catch (err) {
@@ -106,6 +130,18 @@ async function addChannel() {
 }
 
 function selectChannel(channel) {
+  // Start session di WAHA jika channel bertipe WhatsApp
+  if (channel.type === "whatsapp") {
+    const baseUrl =
+      import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
+    fetch(`${baseUrl}/api/sessions/${channel.name}/start`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    }).catch((e) => {
+      console.error("Gagal start session WAHA:", e);
+    });
+  }
+
   emit("select-channel", channel);
 }
 

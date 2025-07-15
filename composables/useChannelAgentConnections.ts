@@ -162,21 +162,18 @@ export const useChannelAgentConnectionStore = () => {
     error.value = null;
 
     try {
-      const { error: updateError } = await supabase
+      const { error: deleteError } = await supabase
         .from("channel_agent_connections")
-        .update({ is_active: false })
+        .delete()
         .eq("channel_id", channelId)
         .eq("agent_id", agentId);
 
-      if (updateError) throw updateError;
+      if (deleteError) throw deleteError;
 
-      // Update local state
-      const index = connections.value.findIndex(
-        (conn) => conn.channel_id === channelId && conn.agent_id === agentId
+      // Remove from local state
+      connections.value = connections.value.filter(
+        (conn) => !(conn.channel_id === channelId && conn.agent_id === agentId)
       );
-      if (index !== -1) {
-        connections.value[index].is_active = false;
-      }
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to disconnect agent";

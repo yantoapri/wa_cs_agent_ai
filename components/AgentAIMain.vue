@@ -125,7 +125,7 @@
                   'mb-2',
                   msg.from === 'ai'
                     ? 'flex flex-col items-start'
-                    : 'flex flex-col items-end'
+                    : 'flex flex-col items-end',
                 ]"
               >
                 <!-- Bubble text -->
@@ -134,7 +134,7 @@
                     'px-4 py-2 rounded-lg max-w-[70%] break-words',
                     msg.from === 'ai'
                       ? 'bg-blue-50 text-left'
-                      : 'bg-blue-100 ml-auto text-right'
+                      : 'bg-blue-100 ml-auto text-right',
                   ]"
                 >
                   <div class="whitespace-pre-line">{{ msg.text }}</div>
@@ -143,19 +143,19 @@
                 <div
                   v-if="msg.images && msg.images.length"
                   class="flex flex-wrap gap-2 mt-1"
-                  style="max-width: 70%;"
+                  style="max-width: 70%"
                 >
                   <div
                     v-for="(img, i) in msg.images"
                     :key="i"
                     class="bg-blue-50 rounded-lg p-2 shadow border max-w-[180px] max-h-[220px] flex items-center justify-center"
-                    style="margin-top: 2px;"
+                    style="margin-top: 2px"
                   >
                     <img
                       :src="img"
                       class="max-w-[160px] max-h-[180px] rounded"
-                      style="display: block; margin: 0 auto;"
-                      :alt="'Gambar AI ' + (i+1)"
+                      style="display: block; margin: 0 auto"
+                      :alt="'Gambar AI ' + (i + 1)"
                     />
                   </div>
                 </div>
@@ -668,7 +668,7 @@ Add Agent's knowledege here</textarea
                   <button
                     v-else
                     @click="connectToChannel(channel.id)"
-                    :disabled="connecting"
+                    :disabled="connecting || !channel.whatsapp_number"
                     class="bg-blue-700 hover:bg-blue-800 text-white border-none rounded-lg px-4 py-2 text-base cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
                     {{ connecting ? "Menghubungkan..." : "Connect" }}
