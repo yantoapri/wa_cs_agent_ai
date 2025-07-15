@@ -92,7 +92,10 @@
               class="bg-blue-50 px-4 py-3 rounded flex items-center justify-between mb-2"
             >
               <span>{{ ai.name }}</span>
-              <button class="bg-blue-600 text-white px-4 py-1 rounded">
+              <button
+                class="bg-blue-600 text-white px-4 py-1 rounded"
+                @click="onConnectAgentAI(ai.id)"
+              >
                 Hubungkan
               </button>
             </div>
@@ -162,6 +165,8 @@
 <script setup>
 import { defineProps, ref, watch, onMounted, onUnmounted } from "vue";
 import { useAgentStore } from "~/composables/useAgents";
+import { useChannelStore } from "~/composables/useChannels";
+import { useChannelAgentConnectionStore } from "~/composables/useChannelAgentConnections";
 
 const props = defineProps({ channel: Object });
 const emit = defineEmits(["update-whatsapp-number"]);
@@ -287,9 +292,8 @@ onUnmounted(() => {
   stopInterval();
 });
 
-import { useChannelStore } from "~/composables/useChannels";
-
 const { updateChannel, deleteChannel } = useChannelStore();
+const { connectAgentToChannel } = useChannelAgentConnectionStore();
 
 async function onEditChannel() {
   try {
@@ -335,6 +339,18 @@ async function onDisconnect() {
     await fetchSession();
   } catch (e) {
     alert("Gagal memutuskan hubungan!");
+  }
+}
+
+async function onConnectAgentAI(agentId) {
+  if (!props.channel || !props.channel.id) return;
+  try {
+    await connectAgentToChannel(props.channel.id, agentId);
+    // Refresh status integrasi/channel jika perlu
+    await fetchSession();
+    alert("Agent AI berhasil dihubungkan ke channel!");
+  } catch (err) {
+    alert("Gagal menghubungkan agent AI: " + (err?.message || err));
   }
 }
 </script>
