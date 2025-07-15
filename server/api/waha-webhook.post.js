@@ -96,10 +96,8 @@ export default defineEventHandler(async (event) => {
         for (const imgUrl of aiRes.images) {
           const messageBody = {
             chatId: payloadFrom + "@c.us",
-            message: {
-              image: { url: imgUrl },
-              caption: aiText,
-            },
+            image: { url: imgUrl },
+            caption: aiText,
           };
           console.log("messageBody:", messageBody);
           await $fetch(`${WAHA_BASE_URL}/api/sendImage`, {
@@ -115,9 +113,7 @@ export default defineEventHandler(async (event) => {
         // Kirim text saja ke /api/sendText jika tidak ada gambar
         const messageBody = {
           chatId: payloadFrom + "@c.us",
-          message: {
-            text: aiText,
-          },
+          text: aiText,
         };
         console.log("messageBody:", messageBody);
         await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
