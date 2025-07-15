@@ -74,6 +74,13 @@ const showForm = ref(false);
 const newChannel = ref({ name: "", type: "whatsapp" });
 const emit = defineEmits(["select-channel"]);
 
+const wahaUsername = import.meta.env.VITE_WAHA_USERNAME || "";
+const wahaPassword = import.meta.env.VITE_WAHA_PASSWORD || "";
+const wahaAuth =
+  wahaUsername && wahaPassword
+    ? "Basic " + btoa(`${wahaUsername}:${wahaPassword}`)
+    : undefined;
+
 async function addChannel() {
   try {
     let iconUrl = "";
@@ -109,7 +116,10 @@ async function addChannel() {
         try {
           await fetch(`${baseUrl}/api/sessions`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...(wahaAuth ? { Authorization: wahaAuth } : {}),
+            },
             body: JSON.stringify({
               channel_id: createdChannel.id,
               session_name: createdChannel.name,
@@ -136,7 +146,10 @@ function selectChannel(channel) {
       import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
     fetch(`${baseUrl}/api/sessions/${channel.name}/start`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(wahaAuth ? { Authorization: wahaAuth } : {}),
+      },
     }).catch((e) => {
       console.error("Gagal start session WAHA:", e);
     });
