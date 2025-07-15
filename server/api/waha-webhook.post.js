@@ -13,12 +13,27 @@ export default defineEventHandler(async (event) => {
     runtimeConfig.supabaseServiceRoleKey
   );
 
+  // Ambil channel_id dari param URL jika ada
+  const channel_id =
+    event.context?.params?.channel_id || event.context?.params?.id || null;
+
   // Format baru: body langsung berisi event object
   const meId = body?.me?.id?.replace("@c.us", "") || null;
   const payloadBody = body?.payload?.body || null;
   const payloadFrom = body?.payload?.from?.replace("@c.us", "") || null;
 
-  if (!meId || !payloadBody || !payloadFrom) {
+  // Gunakan channel_id dari URL param jika ada, jika tidak fallback ke meId
+  const channelIdToUse = channel_id || null;
+
+  // Error handling jika channel_id dan meId tidak ada
+  if (!channelIdToUse) {
+    return {
+      status: "error",
+      error: "channel_id tidak ditemukan di URL maupun body event (me.id)",
+    };
+  }
+
+  if (!payloadBody || !payloadFrom) {
     return { status: "ok", results: [] };
   }
 
@@ -28,14 +43,14 @@ export default defineEventHandler(async (event) => {
   const { data: conn, error: connErr } = await client
     .from("channel_agent_connections")
     .select("agent_id")
-    .eq("channel_id", meId)
+    .eq("channel_id", channelIdToUse)
     .eq("is_active", true)
     .maybeSingle();
   if (connErr || !conn || !conn.agent_id) {
     console.log("[WAHA Webhook] Tidak ada agent aktif di channel", {
       meId,
-      channel_id,
-      agent_id,
+      channel_id: channelIdToUse,
+      agent_id: conn?.agent_id,
     });
     return { status: "ok", results: [] };
   }

@@ -129,7 +129,7 @@ async function addChannel() {
             body: JSON.stringify({
               channel_id: createdChannel.id,
               session_name: createdChannel.name,
-              webhook: webhookUrl,
+              webhook: webhookUrl+"/"+createdChannel.id,
             }),
           });
           const sessionResp = await res.json();
