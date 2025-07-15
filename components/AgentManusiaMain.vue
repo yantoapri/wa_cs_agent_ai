@@ -285,6 +285,8 @@
 <script setup>
 import { ref, watch } from "vue";
 import { useAgentStore } from "~/composables/useAgents";
+import { useToast } from "~/composables/useToast";
+const { showToast } = useToast();
 
 const props = defineProps({ selectedAgent: Object });
 const { updateAgent, deleteAgent, addAgent } = useAgentStore();
@@ -364,7 +366,7 @@ async function onSave() {
   try {
     if (form.value.id) {
       await updateAgent(form.value.id, form.value);
-      notif.value = "Data agent berhasil disimpan.";
+      showToast({ message: "Data agent berhasil disimpan.", type: "success" });
     } else {
       // Tambah agent baru
       const newAgent = await addAgent({
@@ -373,10 +375,16 @@ async function onSave() {
         is_active: true,
       });
       form.value = JSON.parse(JSON.stringify(newAgent));
-      notif.value = "Data agent berhasil ditambahkan.";
+      showToast({
+        message: "Data agent berhasil ditambahkan.",
+        type: "success",
+      });
     }
   } catch (e) {
-    error.value = e.message || "Gagal menyimpan data agent.";
+    showToast({
+      message: e.message || "Gagal menyimpan data agent.",
+      type: "error",
+    });
   }
 }
 async function onDelete() {
@@ -384,10 +392,13 @@ async function onDelete() {
   error.value = "";
   try {
     await deleteAgent(form.value.id);
-    notif.value = "Data agent berhasil dihapus.";
+    showToast({ message: "Data agent berhasil dihapus.", type: "success" });
     form.value = null;
   } catch (e) {
-    error.value = e.message || "Gagal menghapus data agent.";
+    showToast({
+      message: e.message || "Gagal menghapus data agent.",
+      type: "error",
+    });
   }
 }
 </script>

@@ -71,6 +71,9 @@
 </template>
 
 <script setup>
+import { useToast } from "~/composables/useToast";
+const { showToast } = useToast();
+
 const email = ref("");
 const password = ref("");
 const error = ref("");
@@ -89,7 +92,10 @@ async function register() {
     if (signUpError) {
       error.value = signUpError.message;
     } else {
-      alert("Registrasi berhasil! Silakan cek email untuk verifikasi.");
+      showToast({
+        message: "Registrasi berhasil! Silakan cek email untuk verifikasi.",
+        type: "success",
+      });
     }
   } finally {
     loading.value = false;

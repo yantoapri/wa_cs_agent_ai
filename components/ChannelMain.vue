@@ -168,6 +168,19 @@
     <div v-else style="padding: 32px; color: #888; text-align: center">
       Pilih channel untuk melihat detail.
     </div>
+    <div
+      v-if="toast.show"
+      :class="[
+        'fixed top-6 left-1/2 z-[9999] px-6 py-3 rounded shadow-lg text-white text-base font-semibold transition-all duration-300',
+        toast.type === 'success' ? 'bg-green-600' : '',
+        toast.type === 'error' ? 'bg-red-600' : '',
+        toast.type === 'info' ? 'bg-blue-600' : '',
+        toast.type === 'warning' ? 'bg-yellow-500 text-black' : '',
+      ]"
+      style="transform: translateX(-50%); min-width: 220px; max-width: 90vw"
+    >
+      {{ toast.message }}
+    </div>
   </div>
 </template>
 <script setup>
@@ -175,6 +188,8 @@ import { defineProps, ref, watch, onMounted, onUnmounted } from "vue";
 import { useAgentStore } from "~/composables/useAgents";
 import { useChannelStore } from "~/composables/useChannels";
 import { useChannelAgentConnectionStore } from "~/composables/useChannelAgentConnections";
+import { useToast } from "~/composables/useToast";
+const { showToast } = useToast();
 
 const props = defineProps({ channel: Object });
 const emit = defineEmits(["update-whatsapp-number"]);
@@ -371,21 +386,44 @@ async function onEditChannel() {
       limit_balasan_ai: editData.value.limitBalasanAI === "1",
       maksimum_balasan_ai: parseInt(editData.value.maksimumBalasanAI) || 0,
     });
-    alert("Channel berhasil diupdate!");
+    showToast({ message: "Channel berhasil diupdate!", type: "success" });
   } catch (err) {
     console.error("Error updating channel:", err);
-    alert("Gagal mengupdate channel: " + err.message);
+    showToast({
+      message: "Gagal mengupdate channel: " + err.message,
+      type: "error",
+    });
   }
 }
 
 async function onDeleteChannel() {
   if (confirm("Yakin ingin menghapus channel ini?")) {
     try {
+      // Jika channel WhatsApp dan punya session_name, hapus session di WAHA
+      if (props.channel.type === "whatsapp" && props.channel.session_name) {
+        const baseUrl =
+          import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
+        const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
+        try {
+          await fetch(`${baseUrl}/api/sessions/${props.channel.session_name}`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Api-Key": wahaApiKey,
+            },
+          });
+        } catch (e) {
+          console.error("Gagal menghapus session WAHA:", e);
+        }
+      }
       await deleteChannel(props.channel.id);
-      alert("Channel berhasil dihapus!");
+      showToast({ message: "Channel berhasil dihapus!", type: "success" });
     } catch (err) {
       console.error("Error deleting channel:", err);
-      alert("Gagal menghapus channel: " + err.message);
+      showToast({
+        message: "Gagal menghapus channel: " + err.message,
+        type: "error",
+      });
     }
   }
 }
@@ -403,9 +441,9 @@ async function onDisconnect() {
         "X-Api-Key": wahaApiKey,
       },
     });
-    await fetchSession();
+    await fetchSessionStatus(sessionName);
   } catch (e) {
-    alert("Gagal memutuskan hubungan!");
+    showToast({ message: "Gagal memutuskan hubungan!", type: "error" });
   }
 }
 
@@ -413,13 +451,19 @@ async function onConnectAgentAI(agentId) {
   if (!props.channel || !props.channel.id) return;
   try {
     await connectAgentToChannel(props.channel.id, agentId);
-    await fetchSession();
+    await fetchSessionStatus(props.channel.session_name);
     // Refresh agent aktif
     const active = await getActiveAgentForChannel(props.channel.id);
     activeAgentId.value = active ? active.agent_id : null;
-    alert("Agent AI berhasil dihubungkan ke channel!");
+    showToast({
+      message: "Agent AI berhasil dihubungkan ke channel!",
+      type: "success",
+    });
   } catch (err) {
-    alert("Gagal menghubungkan agent AI: " + (err?.message || err));
+    showToast({
+      message: "Gagal menghubungkan agent AI: " + (err?.message || err),
+      type: "error",
+    });
   }
 }
 
@@ -427,13 +471,19 @@ async function onDisconnectAgentAI(agentId) {
   if (!props.channel || !props.channel.id) return;
   try {
     await disconnectAgentFromChannel(props.channel.id, agentId);
-    await fetchSession();
+    await fetchSessionStatus(props.channel.session_name);
     // Refresh agent aktif
     const active = await getActiveAgentForChannel(props.channel.id);
     activeAgentId.value = active ? active.agent_id : null;
-    alert("Agent AI berhasil diputuskan dari channel!");
+    showToast({
+      message: "Agent AI berhasil diputuskan dari channel!",
+      type: "success",
+    });
   } catch (err) {
-    alert("Gagal memutuskan agent AI: " + (err?.message || err));
+    showToast({
+      message: "Gagal memutuskan agent AI: " + (err?.message || err),
+      type: "error",
+    });
   }
 }
 </script>

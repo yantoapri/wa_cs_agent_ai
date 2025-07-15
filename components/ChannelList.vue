@@ -62,6 +62,8 @@
 import { ref, onMounted } from "vue";
 import { useChannelStore } from "~/composables/useChannels";
 import ChannelModal from "~/components/ChannelModal.vue";
+import { useToast } from "~/composables/useToast";
+const { showToast } = useToast();
 
 const {
   channels,
@@ -70,6 +72,7 @@ const {
   fetchChannels,
   addChannel: addChannelToDB,
   updateChannel,
+  deleteChannel,
 } = useChannelStore();
 const showForm = ref(false);
 const newChannel = ref({ name: "", type: "whatsapp" });
@@ -127,9 +130,30 @@ async function addChannel() {
               "X-Api-Key": wahaApiKey,
             },
             body: JSON.stringify({
-              channel_id: createdChannel.id,
-              session_name: createdChannel.name,
-              webhook: webhookUrl+"/"+createdChannel.id,
+              name: createdChannel.name,
+              config: {
+                webhooks: [
+                  {
+                    url: webhookUrl + "/" + createdChannel.id,
+                    events: ["session.status", "message"],
+                    hmac: { key: null },
+                    retries: {
+                      delaySeconds: 2,
+                      attempts: 15,
+                      policy: "exponential",
+                    },
+                    customHeaders: null,
+                  },
+                ],
+                metadata: {},
+                noweb: {
+                  markOnline: true,
+                  store: {
+                    enabled: false,
+                    fullSync: false,
+                  },
+                },
+              },
             }),
           });
           const sessionResp = await res.json();
@@ -149,7 +173,34 @@ async function addChannel() {
     showForm.value = false;
   } catch (err) {
     console.error("Error adding channel:", err);
-    alert("Gagal menambahkan channel");
+    showToast({ message: "Gagal menambahkan channel", type: "error" });
+  }
+}
+
+async function removeChannel(channel) {
+  try {
+    // Jika channel WhatsApp dan punya session_name, hapus session di WAHA
+    if (channel.type === "whatsapp" && channel.session_name) {
+      const baseUrl =
+        import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
+      const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
+      try {
+        await fetch(`${baseUrl}/api/sessions/${channel.session_name}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": wahaApiKey,
+          },
+        });
+      } catch (e) {
+        console.error("Gagal menghapus session WAHA:", e);
+      }
+    }
+    await deleteChannel(channel.id);
+    await fetchChannels();
+  } catch (err) {
+    console.error("Error deleting channel:", err);
+    showToast({ message: "Gagal menghapus channel", type: "error" });
   }
 }
 

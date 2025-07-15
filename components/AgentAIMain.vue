@@ -814,6 +814,8 @@ import { useAgentStore } from "~/composables/useAgents";
 import { useAgentAIStore } from "~/composables/useAgentAI";
 import { useChannelStore } from "~/composables/useChannels";
 import { useChannelAgentConnectionStore } from "~/composables/useChannelAgentConnections";
+import { useToast } from "~/composables/useToast";
+const { showToast } = useToast();
 
 const { aiAgents, fetchAgentsByType, updateAgent } = useAgentStore();
 const { getAIConfigByAgentId, saveAIConfig } = useAgentAIStore();
@@ -1138,7 +1140,7 @@ function addHandover() {
       (h) => h.text.trim().toLowerCase() === newText.toLowerCase()
     );
     if (isDuplicate) {
-      alert("Kondisi handover sudah ada!");
+      showToast({ message: "Kondisi handover sudah ada!", type: "info" });
       return;
     }
     // Auto increment id
@@ -1197,13 +1199,13 @@ function onDeleteAgent() {
     )
   ) {
     // TODO: Integrasi backend hapus agent
-    alert("Agent dihapus (dummy)");
+    showToast({ message: "Agent dihapus (dummy)", type: "success" });
   }
 }
 async function onSaveAll() {
   // Simpan perubahan selectedAI ke database
   if (!selectedAI.value.id) {
-    alert("Pilih agent terlebih dahulu!");
+    showToast({ message: "Pilih agent terlebih dahulu!", type: "info" });
     return;
   }
 
@@ -1231,10 +1233,13 @@ async function onSaveAll() {
       kirim_gambar_configs: selectedAI.value.kirimGambarConfigs,
     });
 
-    alert("Semua perubahan agent telah disimpan!");
+    showToast({
+      message: "Semua perubahan agent telah disimpan!",
+      type: "success",
+    });
   } catch (err) {
     console.error("Error saving AI config:", err);
-    alert("Gagal menyimpan perubahan agent");
+    showToast({ message: "Gagal menyimpan perubahan agent", type: "error" });
   }
 }
 
@@ -1255,7 +1260,7 @@ function addKirimGambar() {
       (k) => k.keyword.trim().toLowerCase() === keyword.toLowerCase()
     );
     if (isDuplicate) {
-      alert("Kondisi kirim gambar sudah ada!");
+      showToast({ message: "Kondisi kirim gambar sudah ada!", type: "info" });
       return;
     }
     const nextId =
