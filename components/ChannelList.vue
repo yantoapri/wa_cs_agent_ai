@@ -154,7 +154,7 @@ function selectChannel(channel) {
   if (channel.type === "whatsapp") {
     const baseUrl =
       import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
-    fetch(`${baseUrl}/api/sessions/${channel.name}/start`, {
+    fetch(`${baseUrl}/api/sessions/${channel.session_name}/start`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -177,6 +177,7 @@ const sessionStatus = ref({
 const intervalId = ref(null);
 const baseUrl = import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
 const activeTab = ref("integrasi");
+const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
 
 // Data untuk edit channel
 const editData = ref({
@@ -209,7 +210,12 @@ async function fetchSession() {
       props.channel && props.channel.session_name
         ? props.channel.session_name
         : "default";
-    const res = await fetch(`${baseUrl}/api/sessions/${sessionName}`);
+    const res = await fetch(`${baseUrl}/api/sessions/${sessionName}`, {
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": wahaApiKey,
+      },
+    });
     const data = await res.json();
     status.value = data.status;
     console.log(data);
@@ -228,7 +234,13 @@ async function fetchSession() {
     // QR code hanya jika status SCAN_QR_CODE, ambil dari API screenshot
     if (data.status === "SCAN_QR_CODE") {
       const qrRes = await fetch(
-        `${baseUrl}/api/screenshot?session=${sessionName}`
+        `${baseUrl}/api/screenshot?session=${sessionName}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": wahaApiKey,
+          },
+        }
       );
       const qrBlob = await qrRes.blob();
       qrCode.value = URL.createObjectURL(qrBlob);
@@ -315,6 +327,10 @@ async function onDisconnect() {
         : "default";
     await fetch(`${baseUrl}/api/sessions/${sessionName}/logout`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": wahaApiKey,
+      },
     });
     await fetchSession();
   } catch (e) {
