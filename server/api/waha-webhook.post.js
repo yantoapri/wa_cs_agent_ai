@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
 
   // Gunakan channel_id dari URL param jika ada, jika tidak fallback ke meId
   const channelIdToUse = channel_id || null;
-
+  console.log("channelIdToUse:", channelIdToUse);
   // Error handling jika channel_id dan meId tidak ada
   if (!channelIdToUse) {
     return {

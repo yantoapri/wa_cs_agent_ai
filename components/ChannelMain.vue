@@ -168,19 +168,6 @@
     <div v-else style="padding: 32px; color: #888; text-align: center">
       Pilih channel untuk melihat detail.
     </div>
-    <div
-      v-if="toast.show"
-      :class="[
-        'fixed top-6 left-1/2 z-[9999] px-6 py-3 rounded shadow-lg text-white text-base font-semibold transition-all duration-300',
-        toast.type === 'success' ? 'bg-green-600' : '',
-        toast.type === 'error' ? 'bg-red-600' : '',
-        toast.type === 'info' ? 'bg-blue-600' : '',
-        toast.type === 'warning' ? 'bg-yellow-500 text-black' : '',
-      ]"
-      style="transform: translateX(-50%); min-width: 220px; max-width: 90vw"
-    >
-      {{ toast.message }}
-    </div>
   </div>
 </template>
 <script setup>
@@ -202,52 +189,9 @@ const sessionStatus = ref({
   authenticated: false,
   ready: false,
 });
-const ws = ref(null);
 const pollingInterval = ref(null);
 
-function connectWahaRealtime(sessionName) {
-  if (ws.value) {
-    ws.value.close();
-    ws.value = null;
-  }
-  const wsBaseUrl = (
-    import.meta.env.VITE_BASE_URL_WAHA_WS || "ws://localhost:3000"
-  ).replace(/^http/, "ws");
-  ws.value = new WebSocket(`${wsBaseUrl}/ws/session-status/${sessionName}`);
-
-  ws.value.onopen = () => {
-    console.log("WebSocket WAHA connected");
-  };
-  ws.value.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    // data: { status: "WORKING", ... }
-    status.value = data.status;
-    sessionStatus.value = {
-      connection: data.status === "SCAN_QR_CODE" || data.status === "WORKING",
-      authenticated: data.status === "WORKING",
-      ready: data.status === "WORKING",
-    };
-    // QR code jika dikirim via ws
-    if (data.qrCode) {
-      qrCode.value = data.qrCode;
-    } else if (data.status !== "SCAN_QR_CODE") {
-      qrCode.value = "";
-    }
-    // Update nomor WA jika ada
-    if (data.me && data.me.id && props.channel && props.channel.id) {
-      const whatsappNumber = data.me.id.replace("@c.us", "");
-      emit("update-whatsapp-number", props.channel.id, whatsappNumber);
-    }
-  };
-  ws.value.onclose = () => {
-    console.log("WebSocket WAHA closed");
-  };
-  ws.value.onerror = (e) => {
-    console.error("WebSocket WAHA error", e);
-  };
-}
-
-const baseUrl = import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
+const baseUrl = import.meta.env.VITE_BASE_URL_WAHA;
 const activeTab = ref("integrasi");
 const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
 
