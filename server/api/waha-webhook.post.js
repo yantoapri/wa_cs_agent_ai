@@ -105,7 +105,7 @@ export default defineEventHandler(async (event) => {
           const messageBody = {
             session: sessionName,
             chatId: payloadFrom + "@c.us",
-            image: { url: imgUrl },
+            image: imgUrl, // string URL, bukan object
             caption: aiText,
           };
           console.log("messageBody:", messageBody);

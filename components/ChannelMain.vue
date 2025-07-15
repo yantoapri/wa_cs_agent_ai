@@ -53,6 +53,10 @@
             </span>
           </div>
 
+          <div v-if="status == 'STARTING'" class="flex items-center justify-center mb-2">
+            <span class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></span>
+            <span class="text-blue-600 font-medium">Sedang menyiapkan sesi WhatsApp...</span>
+          </div>
           <div v-if="status == 'SCAN_QR_CODE'">
             <img
               v-if="qrCode"

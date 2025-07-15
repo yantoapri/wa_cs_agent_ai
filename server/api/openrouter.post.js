@@ -41,7 +41,7 @@ Berikut knowledge agent:
           "X-Title": "OsmoChat", // Optional, branding
         },
         body: JSON.stringify({
-          model: "openai/gpt-4o", // atau model lain yang tersedia di akun OpenRouter Anda
+          model: "deepseek-ai/deepseek-v3-32k", // DeepSeek V3 0324 (free)
           messages,
           max_tokens: 512,
           temperature: 0.7,
