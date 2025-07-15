@@ -14,6 +14,7 @@ export default defineNuxtConfig({
       supabaseKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
     },
     supabaseServiceRoleKey: process.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
+    openAiKey: process.env.OPEN_AI_KEY,
   },
 
   supabase: {
