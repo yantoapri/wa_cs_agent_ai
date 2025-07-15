@@ -1,13 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 
-const WAHA_BASE_URL = process.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
-const WAHA_API_KEY = process.env.VITE_WAHA_API || "";
-
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
+  const runtimeConfig = useRuntimeConfig();
+  const WAHA_BASE_URL = runtimeConfig.wahaBaseUrl;
+  const WAHA_API_KEY = runtimeConfig.wahaApiKey;
 
   // Buat Supabase client dengan service role key
-  const runtimeConfig = useRuntimeConfig();
   const client = createClient(
     runtimeConfig.public.supabaseUrl,
     runtimeConfig.supabaseServiceRoleKey
