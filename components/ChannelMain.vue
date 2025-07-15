@@ -188,6 +188,7 @@ const sessionStatus = ref({
   ready: false,
 });
 const ws = ref(null);
+const pollingInterval = ref(null);
 
 function connectWahaRealtime(sessionName) {
   if (ws.value) {
@@ -268,21 +269,90 @@ watch(
   { immediate: true }
 );
 
+function startPolling(sessionName) {
+  stopPolling();
+  pollingInterval.value = setInterval(
+    () => {
+      fetchSessionStatus(sessionName);
+    },
+    status.value === "SCAN_QR_CODE" ? 4000 : 30000
+  ); // 4 detik saat QR, 30 detik saat lain
+}
+
+function stopPolling() {
+  if (pollingInterval.value) clearInterval(pollingInterval.value);
+  pollingInterval.value = null;
+}
+
+async function fetchSessionStatus(sessionName) {
+  try {
+    const res = await fetch(`${baseUrl}/api/sessions/${sessionName}`, {
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": wahaApiKey,
+      },
+    });
+    const data = await res.json();
+    status.value = data.status;
+    sessionStatus.value = {
+      connection: data.status === "SCAN_QR_CODE" || data.status === "WORKING",
+      authenticated: data.status === "WORKING",
+      ready: data.status === "WORKING",
+    };
+    // QR code
+    if (data.status === "SCAN_QR_CODE") {
+      const qrRes = await fetch(
+        `${baseUrl}/api/screenshot?session=${sessionName}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": wahaApiKey,
+          },
+        }
+      );
+      const qrBlob = await qrRes.blob();
+      qrCode.value = URL.createObjectURL(qrBlob);
+    } else {
+      qrCode.value = "";
+    }
+    // Update nomor WA jika ada
+    if (data.me && data.me.id && props.channel && props.channel.id) {
+      const whatsappNumber = data.me.id.replace("@c.us", "");
+      emit("update-whatsapp-number", props.channel.id, whatsappNumber);
+    }
+    // Restart polling jika status berubah
+    if (pollingInterval.value) {
+      stopPolling();
+      startPolling(sessionName);
+    }
+  } catch (e) {
+    sessionStatus.value = {
+      connection: false,
+      authenticated: false,
+      ready: false,
+    };
+    qrCode.value = "";
+  }
+}
+
 watch(
   () => props.channel,
   (val) => {
+    stopPolling();
     if (val && val.session_name) {
-      connectWahaRealtime(val.session_name);
-    } else if (ws.value) {
-      ws.value.close();
-      ws.value = null;
+      fetchSessionStatus(val.session_name);
+      startPolling(val.session_name);
     }
   },
   { immediate: true }
 );
 
 onUnmounted(() => {
-  if (ws.value) ws.value.close();
+  stopPolling();
+});
+
+onMounted(async () => {
+  await fetchAgentsByType("ai");
 });
 
 const { updateChannel, deleteChannel } = useChannelStore();
