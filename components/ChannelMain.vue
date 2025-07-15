@@ -53,23 +53,30 @@
             </span>
           </div>
 
-          <div v-if="status == 'STARTING'" class="flex items-center justify-center mb-2">
-            <span class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></span>
-            <span class="text-blue-600 font-medium">Sedang menyiapkan sesi WhatsApp...</span>
+          <div
+            v-if="status == 'STARTING'"
+            class="flex items-center justify-center mb-2"
+          >
+            <span
+              class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"
+            ></span>
+            <span class="text-blue-600 font-medium"
+              >Sedang menyiapkan sesi WhatsApp...</span
+            >
           </div>
           <div v-if="status == 'SCAN_QR_CODE'">
+            <div v-if="!qrCode" class="flex items-center justify-center h-48">
+              <span
+                class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-2"
+              ></span>
+              <span class="text-blue-600 font-medium">Memuat QR Code...</span>
+            </div>
             <img
-              v-if="qrCode"
-              class="w-4/5 h-auto mx-auto"
+              v-else
+              class="w-64 h-auto mx-auto"
               :src="qrCode"
               alt="QR Code"
             />
-            <div
-              v-else
-              class="flex items-center justify-center h-32 text-gray-400"
-            >
-              Loading...
-            </div>
           </div>
           <div v-if="status == 'SCAN_QR_CODE'" class="text-gray-500 text-sm">
             Scan QR Code dengan Whatsapp Linked devices
@@ -86,7 +93,7 @@
           <!-- Integrasi Agen AI -->
           <div class="mt-8">
             <h3 class="text-lg font-bold mb-2">Integrasi Agen AI</h3>
-            <div class="flex items-center mb-2">
+            <div v-if="activeAgentId === null" class="flex items-center mb-2">
               <span class="text-red-500 text-xl mr-2">●</span>
               <span class="font-medium">Agen Tidak Terhubung</span>
             </div>
