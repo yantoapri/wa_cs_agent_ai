@@ -315,7 +315,6 @@ export default defineEventHandler(async (event) => {
     });
     return { status: "ok", results };
   } finally {
-    // Setelah selesai, kirim presence available
     if (sessionNameForPresence) {
       try {
         await $fetch(`${WAHA_BASE_URL}/api/sendPresence`, {
