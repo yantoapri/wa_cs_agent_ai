@@ -81,7 +81,7 @@ const wahaPassword = import.meta.env.VITE_WAHA_PASSWORD || "";
 const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
 const baseUrl = import.meta.env.VITE_BASE_URL_WAHA;
 const publicBaseUrl =
-  import.meta.env.VITE_PUBLIC_BASE_URL || "http://localhost:3000";
+  import.meta.env.VITE_PUBLIC_BASE_URL ;
 
 const wahaAuth =
   wahaUsername && wahaPassword
