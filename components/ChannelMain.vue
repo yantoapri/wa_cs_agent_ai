@@ -57,7 +57,9 @@
             v-if="
               status == 'STARTING' ||
               status == 'STOPPED' ||
-              (status == 'SCAN_QR_CODE' && !qrCode)
+              (status == 'SCAN_QR_CODE' && !qrCode) ||
+              restartingSession ||
+              restartingWaha
             "
             class="flex items-center justify-center mb-2 h-48"
           >
@@ -66,7 +68,11 @@
             ></span>
             <span class="text-blue-600 font-medium">
               {{
-                status == "STOPPED"
+                restartingWaha
+                  ? "Sedang restart WAHA..."
+                  : restartingSession
+                  ? "Sedang restart session..."
+                  : status == "STOPPED"
                   ? "Menunggu sesi WhatsApp..."
                   : status == "STARTING"
                   ? "Sedang menyiapkan sesi WhatsApp..."
@@ -186,11 +192,21 @@ import { useAgentStore } from "~/composables/useAgents";
 import { useChannelStore } from "~/composables/useChannels";
 import { useChannelAgentConnectionStore } from "~/composables/useChannelAgentConnections";
 import { useToast } from "~/composables/useToast";
-const { showToast } = useToast();
+// Ambil config WAHA hanya dari import.meta.env
+const baseUrl = import.meta.env.VITE_BASE_URL_WAHA;
+const wahaApiKey = import.meta.env.VITE_WAHA_API;
 
 const props = defineProps({ channel: Object });
 const emit = defineEmits(["update-whatsapp-number"]);
 const { aiAgents, fetchAgentsByType } = useAgentStore();
+
+// Pindahkan ke atas sebelum watcher
+const { updateChannel, deleteChannel } = useChannelStore();
+const {
+  connectAgentToChannel,
+  disconnectAgentFromChannel,
+  getActiveAgentForChannel,
+} = useChannelAgentConnectionStore();
 
 const qrCode = ref("");
 const status = ref("");
@@ -200,10 +216,10 @@ const sessionStatus = ref({
   ready: false,
 });
 const pollingInterval = ref(null);
+const restartingSession = ref(false); // Tambah state untuk loading restart
+const restartingWaha = ref(false);
 
-const baseUrl = import.meta.env.VITE_BASE_URL_WAHA;
 const activeTab = ref("integrasi");
-const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
 
 // Data untuk edit channel
 const editData = ref({
@@ -262,25 +278,79 @@ async function fetchSessionStatus(sessionName) {
       },
     });
     const data = await res.json();
-    status.value = data.status;
-    sessionStatus.value = {
-      connection: data.status === "SCAN_QR_CODE" || data.status === "WORKING",
-      authenticated: data.status === "WORKING",
-      ready: data.status === "WORKING",
-    };
-    // QR code
-    if (data.status === "SCAN_QR_CODE") {
-      const qrRes = await fetch(
-        `${baseUrl}/api/screenshot?session=${sessionName}`,
-        {
+
+    // Handle status FAILED - coba restart WAHA dan session
+    if (data.status === "FAILED") {
+      restartingSession.value = true;
+      restartingWaha.value = true;
+      try {
+        // 1. Restart WAHA service
+        await fetch(`${baseUrl}/api/sessions/${sessionName}/restart`, {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
             "X-Api-Key": wahaApiKey,
           },
+        });
+        restartingWaha.value = false;
+
+        // 2. Stop session
+        await fetch(`${baseUrl}/api/sessions/${sessionName}/stop`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": wahaApiKey,
+          },
+        });
+
+        // 3. Start session lagi
+        await fetch(`${baseUrl}/api/sessions/${sessionName}/start`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": wahaApiKey,
+          },
+        });
+        status.value = "SCAN_QR_CODE";
+      } catch (restartErr) {
+        console.error("[ChannelMain] Gagal restart WAHA/session:", restartErr);
+        status.value = data.status;
+      } finally {
+        restartingSession.value = false;
+        restartingWaha.value = false;
+      }
+    } else {
+      status.value = data.status;
+    }
+
+    sessionStatus.value = {
+      connection: status.value === "SCAN_QR_CODE" || status.value === "WORKING",
+      authenticated: status.value === "WORKING",
+      ready: status.value === "WORKING",
+    };
+    // QR code
+    if (status.value === "SCAN_QR_CODE") {
+      try {
+        const qrRes = await fetch(
+          `${baseUrl}/api/screenshot?session=${encodeURIComponent(
+            sessionName
+          )}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "X-Api-Key": wahaApiKey,
+            },
+          }
+        );
+        if (qrRes.ok) {
+          const qrBlob = await qrRes.blob();
+          qrCode.value = URL.createObjectURL(qrBlob);
+        } else {
+          qrCode.value = "";
         }
-      );
-      const qrBlob = await qrRes.blob();
-      qrCode.value = URL.createObjectURL(qrBlob);
+      } catch (err) {
+        qrCode.value = "";
+      }
     } else {
       qrCode.value = "";
     }
@@ -295,6 +365,8 @@ async function fetchSessionStatus(sessionName) {
       startPolling(sessionName);
     }
   } catch (e) {
+    restartingSession.value = false;
+    restartingWaha.value = false;
     sessionStatus.value = {
       connection: false,
       authenticated: false,
@@ -324,13 +396,6 @@ onMounted(async () => {
   await fetchAgentsByType("ai");
 });
 
-const { updateChannel, deleteChannel } = useChannelStore();
-const {
-  connectAgentToChannel,
-  disconnectAgentFromChannel,
-  getActiveAgentForChannel,
-} = useChannelAgentConnectionStore();
-
 async function onEditChannel() {
   try {
     await updateChannel(props.channel.id, {
@@ -357,9 +422,6 @@ async function onDeleteChannel() {
     try {
       // Jika channel WhatsApp dan punya session_name, hapus session di WAHA
       if (props.channel.type === "whatsapp" && props.channel.session_name) {
-        const baseUrl =
-          import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
-        const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
         try {
           await fetch(`${baseUrl}/api/sessions/${props.channel.session_name}`, {
             method: "DELETE",
@@ -374,6 +436,7 @@ async function onDeleteChannel() {
       }
       await deleteChannel(props.channel.id);
       showToast({ message: "Channel berhasil dihapus!", type: "success" });
+      emit("channel-deleted"); // Emit event ke parent untuk reset channel
     } catch (err) {
       console.error("Error deleting channel:", err);
       showToast({

@@ -16,13 +16,7 @@
           required
           class="px-3 mb-3 py-2 text-base border border-gray-300 rounded w-full"
         />
-        <select
-          v-model="newChannel.type"
-          class="px-3 py-2 text-base border border-gray-300 rounded w-full mb-3"
-        >
-          <option value="whatsapp">WhatsApp</option>
-          <option value="messenger">Messenger</option>
-        </select>
+
         <button
           type="submit"
           class="px-4 py-2 ml-2 bg-blue-500 text-white rounded cursor-pointer border-none"
@@ -63,7 +57,10 @@ import { ref, onMounted } from "vue";
 import { useChannelStore } from "~/composables/useChannels";
 import ChannelModal from "~/components/ChannelModal.vue";
 import { useToast } from "~/composables/useToast";
+// HAPUS: import { useRuntimeConfig } from "#app";
 const { showToast } = useToast();
+
+// HAPUS: const runtimeConfig = useRuntimeConfig();
 
 const {
   channels,
@@ -78,14 +75,18 @@ const showForm = ref(false);
 const newChannel = ref({ name: "", type: "whatsapp" });
 const emit = defineEmits(["select-channel"]);
 
+// Ambil config WAHA hanya dari import.meta.env
 const wahaUsername = import.meta.env.VITE_WAHA_USERNAME || "";
 const wahaPassword = import.meta.env.VITE_WAHA_PASSWORD || "";
+const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
+const baseUrl = import.meta.env.VITE_BASE_URL_WAHA;
+const publicBaseUrl =
+  import.meta.env.VITE_PUBLIC_BASE_URL || "http://localhost:3000";
+
 const wahaAuth =
   wahaUsername && wahaPassword
     ? "Basic " + btoa(`${wahaUsername}:${wahaPassword}`)
     : undefined;
-
-const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
 
 async function addChannel() {
   try {
@@ -112,11 +113,7 @@ async function addChannel() {
 
     // Jika channel WhatsApp, buat session baru di WAHA
     if (newChannel.value.type === "whatsapp") {
-      const baseUrl =
-        import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
-      const webhookUrl =
-        (import.meta.env.VITE_BASE_URL || "http://localhost:3000/") +
-        "/api/waha-webhook";
+      const webhookUrl = `${publicBaseUrl}/api/waha-webhook`;
       // Cari channel yang baru saja dibuat
       const createdChannel = channels.value.find(
         (c) => c.name === newChannel.value.name && c.type === "whatsapp"
@@ -181,9 +178,6 @@ async function removeChannel(channel) {
   try {
     // Jika channel WhatsApp dan punya session_name, hapus session di WAHA
     if (channel.type === "whatsapp" && channel.session_name) {
-      const baseUrl =
-        import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
-      const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
       try {
         await fetch(`${baseUrl}/api/sessions/${channel.session_name}`, {
           method: "DELETE",
@@ -207,8 +201,6 @@ async function removeChannel(channel) {
 function selectChannel(channel) {
   // Start session di WAHA jika channel bertipe WhatsApp
   if (channel.type === "whatsapp") {
-    const baseUrl =
-      import.meta.env.VITE_BASE_URL_WAHA || "http://localhost:3000";
     fetch(`${baseUrl}/api/sessions/${channel.session_name}/start`, {
       method: "POST",
       headers: {
@@ -233,7 +225,6 @@ async function updateChannelWhatsAppNumber(channelId, whatsappNumber) {
   }
 }
 
-// Expose the update function so it can be called from parent components
 defineExpose({
   updateChannelWhatsAppNumber,
 });

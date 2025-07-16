@@ -815,7 +815,9 @@ import { useAgentAIStore } from "~/composables/useAgentAI";
 import { useChannelStore } from "~/composables/useChannels";
 import { useChannelAgentConnectionStore } from "~/composables/useChannelAgentConnections";
 import { useToast } from "~/composables/useToast";
-const { showToast } = useToast();
+// Ambil config WAHA hanya dari import.meta.env
+const baseUrl = import.meta.env.VITE_BASE_URL_WAHA;
+const wahaApiKey = import.meta.env.VITE_WAHA_API;
 
 const { aiAgents, fetchAgentsByType, updateAgent } = useAgentStore();
 const { getAIConfigByAgentId, saveAIConfig } = useAgentAIStore();
