@@ -87,7 +87,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // --- PROSES LIMIT BALASAN AI ---
-  // Ambil data channel (maksimal_balasan_ai, limit_balasan_ai)
+  // Ambil data channel (maksimum_balasan_ai, limit_balasan_ai)
   const { data: channelDataLimit, error: channelErr } = await client
     .from("channels")
     .select("maksimum_balasan_ai, limit_balasan_ai")
@@ -114,7 +114,7 @@ export default defineEventHandler(async (event) => {
     }
     if (
       typeof count === "number" &&
-      count >= channelDataLimit.maksimal_balasan_ai
+      count >= channelDataLimit.maksimum_balasan_ai
     ) {
       // Sudah mencapai limit, kirim peringatan ke WAHA
       try {
@@ -148,7 +148,7 @@ export default defineEventHandler(async (event) => {
           {
             contact_id,
             agent_id: conn.agent_id,
-            message: `Limit balasan AI (${channelDataLimit.maksimal_balasan_ai}) sudah tercapai untuk contact ini.`,
+            message: `Limit balasan AI (${channelDataLimit.maksimum_balasan_ai}) sudah tercapai untuk contact ini.`,
           },
         ],
       };
