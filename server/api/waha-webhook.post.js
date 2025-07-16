@@ -173,7 +173,7 @@ export default defineEventHandler(async (event) => {
   // console.log("[WAHA Webhook] Config agent ditemukan", { config });
 
   // 3. Fetch ke /api/openrouter
-  let sessionNameForPresence = null;
+
   try {
     const aiRes = await $fetch("/api/openrouter", {
       method: "POST",
@@ -186,40 +186,6 @@ export default defineEventHandler(async (event) => {
     if (!aiText) {
       console.log("[WAHA Webhook] Tidak ada hasil dari AI", { aiRes });
       return { status: "ok", results: [] };
-    }
-
-    // Kirim efek mengetik (presence: composing) sebelum kirim pesan ke WAHA
-    try {
-      const { data: channelDataPresence } = await client
-        .from("channels")
-        .select("session_name")
-        .eq("id", channelIdToUse)
-        .maybeSingle();
-      sessionNameForPresence = channelDataPresence?.session_name;
-      console.log(
-        "[WAHA Webhook] Session name for presence:",
-        sessionNameForPresence
-      );
-      await $fetch(`${WAHA_BASE_URL}/api/sendPresence`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Api-Key": WAHA_API_KEY,
-        },
-        body: {
-          session: sessionNameForPresence,
-          chatId: payloadFrom + "@c.us",
-          type: "composing",
-        },
-      });
-      // Hitung delay berdasarkan panjang aiText (1 detik per 15 karakter, min 2s, max 10s)
-      const charCount = aiText.length;
-      let delayMs = Math.ceil(charCount / 15) * 1000;
-      if (delayMs < 2000) delayMs = 2000;
-      if (delayMs > 10000) delayMs = 10000;
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    } catch (err) {
-      console.log("[WAHA Webhook] Gagal kirim presence composing", err);
     }
 
     // 4. Kirim ke WhatsApp (WAHA)
@@ -270,7 +236,11 @@ export default defineEventHandler(async (event) => {
       }
     } else {
       // Kirim text saja ke /api/sendText jika tidak ada gambar
-
+      const messageBody = {
+        session: sessionNameForPresence,
+        chatId: payloadFrom + "@c.us",
+        text: aiText,
+      };
       console.log("messageBody:", messageBody);
       await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
         method: "POST",
@@ -317,25 +287,6 @@ export default defineEventHandler(async (event) => {
       detail: err?.message,
     });
     return { status: "ok", results };
-  } finally {
-    if (sessionNameForPresence) {
-      try {
-        await $fetch(`${WAHA_BASE_URL}/api/sendPresence`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Api-Key": WAHA_API_KEY,
-          },
-          body: {
-            session: sessionNameForPresence,
-            chatId: payloadFrom + "@c.us",
-            type: "available",
-          },
-        });
-      } catch (err) {
-        console.log("[WAHA Webhook] Gagal kirim presence available", err);
-      }
-    }
   }
   console.log("[WAHA Webhook] Hasil", { results });
   return { status: "ok", results };
