@@ -59,6 +59,7 @@ export default defineEventHandler(async (event) => {
           phone_number: payloadFrom,
         },
       });
+      console.log("[WAHA Webhook] Create Contact Response:", createRes);
       if (createRes && createRes.data && createRes.data.id) {
         contact_id = createRes.data.id;
       }
@@ -251,6 +252,14 @@ export default defineEventHandler(async (event) => {
               content: aiText,
             },
           });
+          console.log("[WAHA Webhook] Save Image Message Response:", {
+            agent_id: conn.agent_id,
+            channel_id: channelIdToUse,
+            contact_id,
+            message_type: "image",
+            media_url: imgUrl,
+            content: aiText,
+          });
         } catch (err) {
           console.log("[WAHA Webhook] Gagal simpan message image", err);
         }
@@ -283,6 +292,14 @@ export default defineEventHandler(async (event) => {
             media_url: null,
             content: aiText,
           },
+        });
+        console.log("[WAHA Webhook] Save Text Message Response:", {
+          agent_id: conn.agent_id,
+          channel_id: channelIdToUse,
+          contact_id,
+          message_type: "text",
+          media_url: null,
+          content: aiText,
         });
       } catch (err) {
         console.log("[WAHA Webhook] Gagal simpan message text", err);
