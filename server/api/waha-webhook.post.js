@@ -173,6 +173,7 @@ export default defineEventHandler(async (event) => {
   // console.log("[WAHA Webhook] Config agent ditemukan", { config });
 
   // 3. Fetch ke /api/openrouter
+  let sessionNameForPresence = null;
 
   try {
     const aiRes = await $fetch("/api/openrouter", {
@@ -277,6 +278,29 @@ export default defineEventHandler(async (event) => {
       } catch (err) {
         console.log("[WAHA Webhook] Gagal simpan message text", err);
       }
+    }
+
+    // Kirim efek mengetik (presence: typing) sebelum kirim pesan ke WAHA
+    try {
+      await $fetch(`${WAHA_BASE_URL}/api/${sessionNameForPresence}/presence`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Api-Key": WAHA_API_KEY,
+        },
+        body: {
+          chatId: payloadFrom + "@c.us",
+          presence: "typing",
+        },
+      });
+      // Hitung delay berdasarkan panjang aiText (1 detik per 15 karakter, min 2s, max 10s)
+      const charCount = aiText.length;
+      let delayMs = Math.ceil(charCount / 15) * 1000;
+      if (delayMs < 2000) delayMs = 2000;
+      if (delayMs > 10000) delayMs = 10000;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    } catch (err) {
+      console.log("[WAHA Webhook] Gagal kirim presence typing", err);
     }
   } catch (err) {
     console.log("[WAHA Webhook] Error saat memanggil /api/openrouter", err);

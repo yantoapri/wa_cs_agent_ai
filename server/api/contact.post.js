@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     );
     const { data, error } = await client
       .from("contacts")
-      .insert({ phone_number })
+      .insert({ name: phone_number, phone_number })
       .select("id")
       .single();
     if (error) {
