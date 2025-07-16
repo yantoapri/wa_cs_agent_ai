@@ -176,25 +176,83 @@ export default defineEventHandler(async (event) => {
   let sessionNameForPresence = null;
 
   try {
-    const aiRes = await $fetch("/api/openrouter", {
-      method: "POST",
-      body: {
-        prompt: payloadBody,
-        knowledge: JSON.stringify(config),
-      },
-    });
-    const aiText = aiRes?.result;
-    if (!aiText) {
-      console.log("[WAHA Webhook] Tidak ada hasil dari AI", { aiRes });
-      return { status: "ok", results: [] };
+    // Pastikan sessionNameForPresence sudah terisi
+    if (!sessionNameForPresence) {
+      const { data: channelDataPresence } = await client
+        .from("channels")
+        .select("session_name")
+        .eq("id", channelIdToUse)
+        .maybeSingle();
+      sessionNameForPresence = channelDataPresence?.session_name;
+    }
+
+    // Kirim efek mengetik (presence: typing) sebelum proses AI
+    if (sessionNameForPresence) {
+      try {
+        await $fetch(
+          `${WAHA_BASE_URL}/api/${sessionNameForPresence}/presence`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Api-Key": WAHA_API_KEY,
+            },
+            body: {
+              chatId: payloadFrom + "@c.us",
+              presence: "typing",
+            },
+          }
+        );
+      } catch (err) {
+        console.log("[WAHA Webhook] Gagal kirim presence typing", err);
+      }
+    }
+
+    let aiText, images;
+    try {
+      const aiRes = await $fetch("/api/openrouter", {
+        method: "POST",
+        body: {
+          prompt: payloadBody,
+          knowledge: JSON.stringify(config),
+        },
+      });
+      aiText = aiRes?.result;
+      images = aiRes?.images;
+      if (!aiText) {
+        console.log("[WAHA Webhook] Tidak ada hasil dari AI", { aiRes });
+        return { status: "ok", results: [] };
+      }
+    } finally {
+      // Setelah proses AI selesai, kembalikan presence ke online
+      if (sessionNameForPresence) {
+        try {
+          await $fetch(
+            `${WAHA_BASE_URL}/api/${sessionNameForPresence}/presence`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Api-Key": WAHA_API_KEY,
+              },
+              body: {
+                chatId: payloadFrom + "@c.us",
+                presence: "available",
+              },
+            }
+          );
+        } catch (err) {
+          console.log("[WAHA Webhook] Gagal kirim presence available", err);
+        }
+      }
     }
 
     // 4. Kirim ke WhatsApp (WAHA)
     let message_type = "text";
     let media_url = null;
-    if (aiRes?.images && aiRes.images.length > 0) {
+    if (images && images.length > 0) {
       message_type = "image";
-      for (const imgUrl of aiRes.images) {
+      for (const imgUrl of images) {
         const messageBody = {
           session: sessionNameForPresence,
           chatId: payloadFrom + "@c.us",
@@ -278,29 +336,6 @@ export default defineEventHandler(async (event) => {
       } catch (err) {
         console.log("[WAHA Webhook] Gagal simpan message text", err);
       }
-    }
-
-    // Kirim efek mengetik (presence: typing) sebelum kirim pesan ke WAHA
-    try {
-      await $fetch(`${WAHA_BASE_URL}/api/${sessionNameForPresence}/presence`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Api-Key": WAHA_API_KEY,
-        },
-        body: {
-          chatId: payloadFrom + "@c.us",
-          presence: "typing",
-        },
-      });
-      // Hitung delay berdasarkan panjang aiText (1 detik per 15 karakter, min 2s, max 10s)
-      const charCount = aiText.length;
-      let delayMs = Math.ceil(charCount / 15) * 1000;
-      if (delayMs < 2000) delayMs = 2000;
-      if (delayMs > 10000) delayMs = 10000;
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    } catch (err) {
-      console.log("[WAHA Webhook] Gagal kirim presence typing", err);
     }
   } catch (err) {
     console.log("[WAHA Webhook] Error saat memanggil /api/openrouter", err);
