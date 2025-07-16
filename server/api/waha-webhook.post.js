@@ -43,6 +43,7 @@ export default defineEventHandler(async (event) => {
       method: "GET",
       query: { phone_number: payloadFrom },
     });
+    console.log("[WAHA Webhook] Contact Response:", contactRes);
     if (
       contactRes &&
       contactRes.found &&

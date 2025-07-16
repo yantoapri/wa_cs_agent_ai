@@ -1,4 +1,4 @@
-import { serverSupabaseClient } from "#supabase/server";
+import { createClient } from "@supabase/supabase-js";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -9,7 +9,11 @@ export default defineEventHandler(async (event) => {
         message: "phone_number wajib diisi pada query",
       };
     }
-    const client = serverSupabaseClient(event);
+    const runtimeConfig = useRuntimeConfig();
+    const client = createClient(
+      runtimeConfig.public.supabaseUrl,
+      runtimeConfig.supabaseServiceRoleKey
+    );
     const { data, error } = await client
       .from("contacts")
       .select("*")

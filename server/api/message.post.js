@@ -1,4 +1,4 @@
-import { serverSupabaseClient } from "#supabase/server";
+import { createClient } from "@supabase/supabase-js";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -18,7 +18,11 @@ export default defineEventHandler(async (event) => {
           "agent_id, channel_id, contact_id, message_type, dan content wajib diisi",
       };
     }
-    const client = serverSupabaseClient(event);
+    const runtimeConfig = useRuntimeConfig();
+    const client = createClient(
+      runtimeConfig.public.supabaseUrl,
+      runtimeConfig.supabaseServiceRoleKey
+    );
     const { data, error } = await client
       .from("messages")
       .insert({
