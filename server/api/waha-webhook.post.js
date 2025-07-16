@@ -270,11 +270,7 @@ export default defineEventHandler(async (event) => {
       }
     } else {
       // Kirim text saja ke /api/sendText jika tidak ada gambar
-      const messageBody = {
-        session: sessionNameForPresence,
-        chatId: payloadFrom + "@c.us",
-        text: aiText,
-      };
+
       console.log("messageBody:", messageBody);
       await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
         method: "POST",
@@ -297,6 +293,7 @@ export default defineEventHandler(async (event) => {
             content: aiText,
           },
         });
+        console.log("[WAHA Webhook] Save Text Message Response:", messageRes);
         if (messageRes && messageRes.error === false) {
           console.log("[WAHA Webhook] Save Text Message Response:", {
             agent_id: conn.agent_id,
