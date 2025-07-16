@@ -253,10 +253,26 @@ export default defineEventHandler(async (event) => {
     if (images && images.length > 0) {
       message_type = "image";
       for (const imgUrl of images) {
+        // Ambil mimetype dan filename dari url
+        let mimetype = "image/jpeg";
+        let filename = "filename.jpg";
+        const extMatch = imgUrl.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
+        if (extMatch) {
+          const ext = extMatch[1].toLowerCase();
+          if (ext === "png") mimetype = "image/png";
+          else if (ext === "webp") mimetype = "image/webp";
+          else if (ext === "gif") mimetype = "image/gif";
+          else if (ext === "jpg" || ext === "jpeg") mimetype = "image/jpeg";
+          filename = `filename.${ext}`;
+        }
         const messageBody = {
           session: sessionNameForPresence,
           chatId: payloadFrom + "@c.us",
-          image: imgUrl, // string URL, bukan object
+          file: {
+            mimetype,
+            url: imgUrl,
+            filename,
+          },
           caption: aiText,
         };
         console.log("messageBody:", messageBody);
