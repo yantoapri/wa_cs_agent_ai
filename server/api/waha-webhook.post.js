@@ -23,7 +23,6 @@ export default defineEventHandler(async (event) => {
   const payloadFrom = body?.payload?.from?.replace("@c.us", "") || null;
   // Gunakan channel_id dari metadata, lalu URL param, lalu meId
   const channelIdToUse = metaChannelId;
-  console.log("channelIdToUse:", channelIdToUse);
   // Error handling jika channel_id dan meId tidak ada
   if (!channelIdToUse) {
     return {
@@ -36,8 +35,40 @@ export default defineEventHandler(async (event) => {
     return { status: "ok", results: [] };
   }
 
-  const results = [];
+  // --- PROSES CEK DAN SIMPAN CONTACT ---
+  let contact_id = null;
+  try {
+    // 1. Cek apakah sudah ada di contact
+    const contactRes = await $fetch("/api/contact", {
+      method: "GET",
+      query: { phone_number: payloadFrom },
+    });
+    if (
+      contactRes &&
+      contactRes.found &&
+      contactRes.data &&
+      contactRes.data.id
+    ) {
+      contact_id = contactRes.data.id;
+    } else {
+      // 2. Jika tidak ada, tambahkan ke contact
+      const createRes = await $fetch("/api/contact", {
+        method: "POST",
+        body: {
+          name: payloadFrom, // default name pakai nomor jika tidak ada nama
+          phone_number: payloadFrom,
+        },
+      });
+      if (createRes && createRes.data && createRes.data.id) {
+        contact_id = createRes.data.id;
+      }
+    }
+  } catch (err) {
+    console.log("[WAHA Webhook] Error cek/tambah contact", err);
+  }
+  // --- END PROSES CEK DAN SIMPAN CONTACT ---
 
+  // Ambil agent_id dari conn (nanti di bawah), tapi pastikan proses limit balasan AI dilakukan setelah dapat contact_id dan agent_id
   // 1. Cari agentai yang aktif di channel_agent_connections
   const { data: conn, error: connErr } = await client
     .from("channel_agent_connections")
@@ -53,9 +84,78 @@ export default defineEventHandler(async (event) => {
     });
     return { status: "ok", results: [] };
   }
-  // console.log("[WAHA Webhook] Agent aktif ditemukan", {
-  //   agent_id: conn.agent_id,
-  // });
+
+  // --- PROSES LIMIT BALASAN AI ---
+  // Ambil data channel (maksimal_balasan_ai, limit_balasan_ai)
+  const { data: channelDataLimit, error: channelErr } = await client
+    .from("channels")
+    .select("maksimal_balasan_ai, limit_balasan_ai")
+    .eq("id", channelIdToUse)
+    .maybeSingle();
+  if (channelErr) {
+    console.log(
+      "[WAHA Webhook] Gagal ambil data channel untuk limit balasan",
+      channelErr
+    );
+  }
+  if (channelDataLimit && channelDataLimit.limit_balasan_ai) {
+    // Hitung jumlah message untuk contact_id dan agent_id
+    const { count, error: countErr } = await client
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .eq("contact_id", contact_id)
+      .eq("agent_id", conn.agent_id);
+    if (countErr) {
+      console.log(
+        "[WAHA Webhook] Gagal hitung message untuk limit balasan",
+        countErr
+      );
+    }
+    if (
+      typeof count === "number" &&
+      count >= channelDataLimit.maksimal_balasan_ai
+    ) {
+      // Sudah mencapai limit, kirim peringatan ke WAHA
+      try {
+        const { data: channelData } = await client
+          .from("channels")
+          .select("session_name")
+          .eq("id", channelIdToUse)
+          .maybeSingle();
+        const sessionName = channelData?.session_name;
+        const warningText =
+          "Limit balasan AI untuk nomor ini telah tercapai. Silakan hubungi admin untuk membuka limit.";
+        await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": WAHA_API_KEY,
+          },
+          body: {
+            session: sessionName,
+            chatId: payloadFrom + "@c.us",
+            text: warningText,
+          },
+        });
+      } catch (err) {
+        console.log("[WAHA Webhook] Gagal kirim peringatan limit ke WAHA", err);
+      }
+      // Hentikan proses
+      return {
+        status: "ok",
+        results: [
+          {
+            contact_id,
+            agent_id: conn.agent_id,
+            message: `Limit balasan AI (${channelDataLimit.maksimal_balasan_ai}) sudah tercapai untuk contact ini.`,
+          },
+        ],
+      };
+    }
+  }
+  // --- END PROSES LIMIT BALASAN AI ---
+
+  const results = [];
 
   // 2. Ambil config agent_ai_configs
   const { data: config, error: configErr } = await client
@@ -72,10 +172,8 @@ export default defineEventHandler(async (event) => {
   // console.log("[WAHA Webhook] Config agent ditemukan", { config });
 
   // 3. Fetch ke /api/openrouter
+  let sessionNameForPresence = null;
   try {
-    // console.log("[WAHA Webhook] Memanggil /api/openrouter", {
-    //   prompt: payloadBody,
-    // });
     const aiRes = await $fetch("/api/openrouter", {
       method: "POST",
       body: {
@@ -89,44 +187,50 @@ export default defineEventHandler(async (event) => {
       return { status: "ok", results: [] };
     }
 
-    // 4. Kirim ke WhatsApp (WAHA)
+    // Kirim efek mengetik (presence: composing) sebelum kirim pesan ke WAHA
     try {
-      // Ambil session_name dari tabel channels
-      const { data: channelData } = await client
+      const { data: channelDataPresence } = await client
         .from("channels")
         .select("session_name")
         .eq("id", channelIdToUse)
         .maybeSingle();
-      const sessionName = channelData?.session_name;
-
-      if (aiRes?.images && aiRes.images.length > 0) {
-        // Kirim semua gambar satu per satu ke /api/sendImage
-        for (const imgUrl of aiRes.images) {
-          const messageBody = {
-            session: sessionName,
-            chatId: payloadFrom + "@c.us",
-            image: imgUrl, // string URL, bukan object
-            caption: aiText,
-          };
-          console.log("messageBody:", messageBody);
-          await $fetch(`${WAHA_BASE_URL}/api/sendImage`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Api-Key": WAHA_API_KEY,
-            },
-            body: messageBody,
-          });
-        }
-      } else {
-        // Kirim text saja ke /api/sendText jika tidak ada gambar
-        const messageBody = {
-          session: sessionName,
+      sessionNameForPresence = channelDataPresence?.session_name;
+      await $fetch(`${WAHA_BASE_URL}/api/sendPresenceUpdate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Api-Key": WAHA_API_KEY,
+        },
+        body: {
+          session: sessionNameForPresence,
           chatId: payloadFrom + "@c.us",
-          text: aiText,
+          presence: "composing",
+        },
+      });
+      // Hitung delay berdasarkan panjang aiText (1 detik per 15 karakter, min 2s, max 10s)
+      const charCount = aiText.length;
+      let delayMs = Math.ceil(charCount / 15) * 1000;
+      if (delayMs < 2000) delayMs = 2000;
+      if (delayMs > 10000) delayMs = 10000;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    } catch (err) {
+      console.log("[WAHA Webhook] Gagal kirim presence composing", err);
+    }
+
+    // 4. Kirim ke WhatsApp (WAHA)
+    let message_type = "text";
+    let media_url = null;
+    if (aiRes?.images && aiRes.images.length > 0) {
+      message_type = "image";
+      for (const imgUrl of aiRes.images) {
+        const messageBody = {
+          session: sessionNameForPresence,
+          chatId: payloadFrom + "@c.us",
+          image: imgUrl, // string URL, bukan object
+          caption: aiText,
         };
         console.log("messageBody:", messageBody);
-        await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
+        await $fetch(`${WAHA_BASE_URL}/api/sendImage`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -134,18 +238,56 @@ export default defineEventHandler(async (event) => {
           },
           body: messageBody,
         });
+        // Simpan message untuk setiap gambar
+        try {
+          await $fetch("/api/message", {
+            method: "POST",
+            body: {
+              agent_id: conn.agent_id,
+              channel_id: channelIdToUse,
+              contact_id,
+              message_type: "image",
+              media_url: imgUrl,
+              content: aiText,
+            },
+          });
+        } catch (err) {
+          console.log("[WAHA Webhook] Gagal simpan message image", err);
+        }
       }
-    } catch (err) {
-      console.log("[WAHA Webhook] Gagal mengirim pesan ke WAHA", err);
-      results.push({
-        meId,
-        payloadFrom,
-        error: "Failed to send WAHA message",
-        detail: err?.message,
+    } else {
+      // Kirim text saja ke /api/sendText jika tidak ada gambar
+      const messageBody = {
+        session: sessionNameForPresence,
+        chatId: payloadFrom + "@c.us",
+        text: aiText,
+      };
+      console.log("messageBody:", messageBody);
+      await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Api-Key": WAHA_API_KEY,
+        },
+        body: messageBody,
       });
-      return { status: "ok", results };
+      // Simpan message text
+      try {
+        await $fetch("/api/message", {
+          method: "POST",
+          body: {
+            agent_id: conn.agent_id,
+            channel_id: channelIdToUse,
+            contact_id,
+            message_type: "text",
+            media_url: null,
+            content: aiText,
+          },
+        });
+      } catch (err) {
+        console.log("[WAHA Webhook] Gagal simpan message text", err);
+      }
     }
-    results.push({ meId, payloadFrom, aiText });
   } catch (err) {
     console.log("[WAHA Webhook] Error saat memanggil /api/openrouter", err);
     results.push({
@@ -155,6 +297,26 @@ export default defineEventHandler(async (event) => {
       detail: err?.message,
     });
     return { status: "ok", results };
+  } finally {
+    // Setelah selesai, kirim presence available
+    if (sessionNameForPresence) {
+      try {
+        await $fetch(`${WAHA_BASE_URL}/api/sendPresenceUpdate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": WAHA_API_KEY,
+          },
+          body: {
+            session: sessionNameForPresence,
+            chatId: payloadFrom + "@c.us",
+            presence: "available",
+          },
+        });
+      } catch (err) {
+        console.log("[WAHA Webhook] Gagal kirim presence available", err);
+      }
+    }
   }
   console.log("[WAHA Webhook] Hasil", { results });
   return { status: "ok", results };

@@ -126,7 +126,7 @@
             <label>Nama</label>
             <input v-model="editData.nama" class="form-input" />
           </div>
-          <div class="form-group">
+          <!-- <div class="form-group">
             <label>Takeover AI</label>
             <select v-model="editData.takeoverAI" class="form-input">
               <option value="0">Tidak Aktif</option>
@@ -143,7 +143,7 @@
               />
               <span>menit</span>
             </div>
-          </div>
+          </div> -->
           <div class="form-group">
             <label>Limit Balasan AI</label>
             <select v-model="editData.limitBalasanAI" class="form-input">
@@ -335,8 +335,10 @@ async function onEditChannel() {
   try {
     await updateChannel(props.channel.id, {
       name: editData.value.nama,
-      takeover_ai: editData.value.takeoverAI === "1",
-      waktu_takeover: parseInt(editData.value.waktuTakeover) || 0,
+      // takeover_ai: editData.value.takeoverAI === "1",
+      // waktu_takeover: parseInt(editData.value.waktuTakeover) || 0,
+      takeover_ai: false,
+      waktu_takeover: 0,
       limit_balasan_ai: editData.value.limitBalasanAI === "1",
       maksimum_balasan_ai: parseInt(editData.value.maksimumBalasanAI) || 0,
     });
