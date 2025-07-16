@@ -196,6 +196,10 @@ export default defineEventHandler(async (event) => {
         .eq("id", channelIdToUse)
         .maybeSingle();
       sessionNameForPresence = channelDataPresence?.session_name;
+      console.log(
+        "[WAHA Webhook] Session name for presence:",
+        sessionNameForPresence
+      );
       await $fetch(`${WAHA_BASE_URL}/api/sendPresence`, {
         method: "POST",
         headers: {
@@ -282,7 +286,7 @@ export default defineEventHandler(async (event) => {
       });
       // Simpan message text
       try {
-        await $fetch("/api/message", {
+        const messageRes = await $fetch("/api/message", {
           method: "POST",
           body: {
             agent_id: conn.agent_id,
@@ -293,14 +297,16 @@ export default defineEventHandler(async (event) => {
             content: aiText,
           },
         });
-        console.log("[WAHA Webhook] Save Text Message Response:", {
-          agent_id: conn.agent_id,
-          channel_id: channelIdToUse,
-          contact_id,
-          message_type: "text",
-          media_url: null,
-          content: aiText,
-        });
+        if (messageRes && messageRes.error === false) {
+          console.log("[WAHA Webhook] Save Text Message Response:", {
+            agent_id: conn.agent_id,
+            channel_id: channelIdToUse,
+            contact_id,
+            message_type: "text",
+            media_url: null,
+            content: aiText,
+          });
+        }
       } catch (err) {
         console.log("[WAHA Webhook] Gagal simpan message text", err);
       }
