@@ -90,7 +90,7 @@ export default defineEventHandler(async (event) => {
   // Ambil data channel (maksimal_balasan_ai, limit_balasan_ai)
   const { data: channelDataLimit, error: channelErr } = await client
     .from("channels")
-    .select("maksimal_balasan_ai, limit_balasan_ai")
+    .select("maksimum_balasan_ai, limit_balasan_ai")
     .eq("id", channelIdToUse)
     .maybeSingle();
   if (channelErr) {
@@ -196,7 +196,7 @@ export default defineEventHandler(async (event) => {
         .eq("id", channelIdToUse)
         .maybeSingle();
       sessionNameForPresence = channelDataPresence?.session_name;
-      await $fetch(`${WAHA_BASE_URL}/api/sendPresenceUpdate`, {
+      await $fetch(`${WAHA_BASE_URL}/api/sendPresence`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -205,7 +205,7 @@ export default defineEventHandler(async (event) => {
         body: {
           session: sessionNameForPresence,
           chatId: payloadFrom + "@c.us",
-          presence: "composing",
+          type: "composing",
         },
       });
       // Hitung delay berdasarkan panjang aiText (1 detik per 15 karakter, min 2s, max 10s)
@@ -318,7 +318,7 @@ export default defineEventHandler(async (event) => {
     // Setelah selesai, kirim presence available
     if (sessionNameForPresence) {
       try {
-        await $fetch(`${WAHA_BASE_URL}/api/sendPresenceUpdate`, {
+        await $fetch(`${WAHA_BASE_URL}/api/sendPresence`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -327,7 +327,7 @@ export default defineEventHandler(async (event) => {
           body: {
             session: sessionNameForPresence,
             chatId: payloadFrom + "@c.us",
-            presence: "available",
+            type: "available",
           },
         });
       } catch (err) {
