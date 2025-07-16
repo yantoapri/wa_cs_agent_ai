@@ -196,7 +196,7 @@
         </div>
         <div class="px-8 pt-4 flex gap-6 mb-6 border-b border-gray-200">
           <button
-            v-for="t in ['gaya', 'pengetahuan', 'hubungkan', 'edit']"
+            v-for="t in ['gaya', 'pengetahuan', 'edit']"
             :key="t"
             :class="[
               'px-5 py-2 font-medium border-b-2',
@@ -554,42 +554,6 @@
             </div>
           </div>
           <div v-else-if="tab === 'pengetahuan'">
-            <div class="flex items-center justify-between mb-3">
-              <div>
-                <div class="font-semibold text-[1.2em] mb-1">
-                  Train Agent anda
-                </div>
-                <div class="text-gray-500">
-                  Klik tombol "Train" untuk memperbarui pengetahuan Agent.
-                  Terakhir dilatih pada Jul 8, 2025.
-                </div>
-              </div>
-              <button
-                class="bg-blue-300 text-white border-none rounded-lg px-4 py-2 text-base flex items-center gap-2 cursor-pointer"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="lucide"
-                  width="16"
-                  height="16"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M4.5 16.5 10 10" />
-                  <path d="M8 8v-5h8v5" />
-                  <rect width="16" height="12" x="4" y="8" rx="2" />
-                  <path d="M2 14h2" />
-                  <path d="M20 14h2" />
-                  <path d="M15 19v2" />
-                  <path d="M9 19v2" />
-                </svg>
-                Train
-              </button>
-            </div>
             <div class="font-semibold mb-0.5">Pengetahuan Agent</div>
             <div class="text-gray-500 mb-3">
               Tambahkan informasi Produk, Tutorial Penggunaan, SOP, FAQ, dan
@@ -603,113 +567,7 @@
 Add Agent's knowledege here</textarea
             >
           </div>
-          <div v-else-if="tab === 'hubungkan'">
-            <h3 class="mb-1">Hubungkan Agen ke Channel</h3>
-            <div class="text-gray-500 mb-4">
-              Klik Connect untuk menghubungkan agent ini ke channel. Agent lain
-              yang sudah terhubung akan otomatis dinonaktifkan.
-            </div>
 
-            <div v-if="channelConnectionsLoading" class="text-center py-8">
-              <div class="text-gray-500">Loading channels...</div>
-            </div>
-
-            <div v-else-if="channelConnectionsError" class="text-center py-8">
-              <div class="text-red-500">{{ channelConnectionsError }}</div>
-            </div>
-
-            <div v-else-if="channels.length === 0" class="text-center py-8">
-              <div class="text-gray-500">Belum ada channel yang tersedia</div>
-            </div>
-
-            <div v-else class="space-y-4">
-              <div
-                v-for="channel in channels"
-                :key="channel.id"
-                class="bg-blue-50 p-4 pl-5 rounded-lg flex items-center gap-3 max-w-[700px]"
-              >
-                <span class="text-[1.3em] flex items-center gap-1.5">
-                  <img
-                    src="https://img.icons8.com/color/32/000000/whatsapp--v1.png"
-                    class="w-6 h-6"
-                  />
-                  {{ channel.name }}
-                  <span
-                    v-if="channel.whatsapp_number"
-                    class="text-sm text-gray-500"
-                  >
-                    ({{ channel.whatsapp_number }})
-                  </span>
-                </span>
-
-                <div class="ml-auto flex items-center gap-3">
-                  <div
-                    v-if="getChannelConnectionStatus(channel.id)"
-                    class="text-green-600 text-sm font-medium"
-                  >
-                    ✓ Terhubung
-                  </div>
-                  <div
-                    v-else-if="hasActiveAgentInChannel(channel.id)"
-                    class="text-orange-600 text-sm font-medium"
-                  >
-                    ⚠ Agent lain aktif
-                  </div>
-
-                  <button
-                    v-if="getChannelConnectionStatus(channel.id)"
-                    @click="disconnectFromChannel(channel.id)"
-                    :disabled="connecting"
-                    class="bg-red-600 hover:bg-red-700 text-white border-none rounded-lg px-4 py-2 text-base cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {{ connecting ? "Memutuskan..." : "Disconnect" }}
-                  </button>
-
-                  <button
-                    v-else
-                    @click="connectToChannel(channel.id)"
-                    :disabled="connecting || !channel.whatsapp_number"
-                    class="bg-blue-700 hover:bg-blue-800 text-white border-none rounded-lg px-4 py-2 text-base cursor-pointer disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {{ connecting ? "Menghubungkan..." : "Connect" }}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Connection History -->
-            <div v-if="channelConnections.length > 0" class="mt-8">
-              <h4 class="font-semibold text-lg mb-4">Riwayat Koneksi</h4>
-              <div class="bg-gray-50 rounded-lg p-4">
-                <div
-                  v-for="connection in channelConnections"
-                  :key="connection.id"
-                  class="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0"
-                >
-                  <div>
-                    <span class="font-medium">{{
-                      connection.channel_name
-                    }}</span>
-                    <span class="text-gray-500 text-sm ml-2">
-                      {{ formatDate(connection.created_at) }}
-                    </span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span
-                      :class="[
-                        'px-2 py-1 rounded-full text-xs font-medium',
-                        connection.is_active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-600',
-                      ]"
-                    >
-                      {{ connection.is_active ? "Aktif" : "Nonaktif" }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
           <div v-else-if="tab === 'edit'">
             <h3 class="font-semibold text-lg mb-4">Edit Agen</h3>
             <form @submit.prevent style="max-width: 900px">
@@ -1194,14 +1052,37 @@ async function saveHandoverToLocal() {
     }
   }
 }
-function onDeleteAgent() {
+async function onDeleteAgent() {
   if (
     confirm(
-      "Yakin ingin menghapus agent ini? Tindakan ini tidak bisa dikembalikan."
+      "Yakin ingin menghapus agent ini beserta seluruh data terkait? Tindakan ini tidak bisa dikembalikan."
     )
   ) {
-    // TODO: Integrasi backend hapus agent
-    showToast({ message: "Agent dihapus (dummy)", type: "success" });
+    if (selectedAI.value.id) {
+      try {
+        const res = await fetch(`/api/agent/${selectedAI.value.id}`, {
+          method: "DELETE",
+        });
+        const data = await res.json();
+        if (!data.error) {
+          showToast({
+            message: "Agent dan seluruh data terkait berhasil dihapus!",
+            type: "success",
+          });
+          selectedAI.value = {};
+        } else {
+          showToast({
+            message: "Gagal menghapus agent: " + data.message,
+            type: "error",
+          });
+        }
+      } catch (err) {
+        showToast({ message: "Gagal menghapus agent", type: "error" });
+        console.error("Error deleting agent:", err);
+      }
+    } else {
+      selectedAI.value = {};
+    }
   }
 }
 async function onSaveAll() {
