@@ -148,10 +148,10 @@
           <div
             class="w-80 bg-white border-r border-gray-200 py-6 flex flex-col items-stretch overflow-y-auto"
           >
-            <chanelList ref="chanelListRef" @select-chanel="onSelectchanel" />
+            <ChanelList ref="chanelListRef" @select-chanel="onSelectchanel" />
           </div>
           <div class="flex-1 flex flex-col bg-gray-100">
-            <chanelMain
+            <ChanelMain
               :chanel="selectedchanel"
               @update-whatsapp-number="onUpdateWhatsAppNumber"
             />
@@ -181,12 +181,12 @@ import { useSupabaseUser, useSupabaseClient } from "#imports";
 import { useRouter } from "vue-router";
 import InboxList from "~/components/InboxList.vue";
 import KontakList from "~/components/KontakList.vue";
-import chanelList from "~/components/chanelList.vue";
+import ChanelList from "~/components/ChanelList.vue";
 import AgentAIList from "~/components/AgentAIList.vue";
 import AgentManusiaList from "~/components/AgentManusiaList.vue";
 import InboxMain from "~/components/InboxMain.vue";
 import KontakMain from "~/components/KontakMain.vue";
-import chanelMain from "~/components/chanelMain.vue";
+import ChanelMain from "~/components/ChanelMain.vue";
 import AgentAIMain from "~/components/AgentAIMain.vue";
 import AgentManusiaMain from "~/components/AgentManusiaMain.vue";
 
