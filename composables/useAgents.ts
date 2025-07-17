@@ -1,5 +1,6 @@
 import { ref, readonly } from "vue";
 import type { Agent } from "../types/supabase";
+import { useSupabaseUser } from "#imports";
 
 export const useAgentStore = () => {
   const agents = ref<Agent[]>([]);
@@ -7,6 +8,7 @@ export const useAgentStore = () => {
   const humanAgents = ref<Agent[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const user = useSupabaseUser();
 
   const supabase = useSupabaseClient();
 
@@ -20,6 +22,7 @@ export const useAgentStore = () => {
         .from("agents")
         .select("*")
         .eq("is_active", true)
+        .eq("created_by", user.value?.id)
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -48,6 +51,7 @@ export const useAgentStore = () => {
         .select("*")
         .eq("type", type)
         .eq("is_active", true)
+        .eq("created_by", user.value?.id)
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -83,13 +87,14 @@ export const useAgentStore = () => {
           {
             ...agentData,
             is_active: true,
+            created_by: user.value?.id,
           },
         ])
         .select()
         .single();
 
       if (insertError) throw insertError;
-      
+
       agents.value.unshift(data);
 
       if (data.type === "ai") {

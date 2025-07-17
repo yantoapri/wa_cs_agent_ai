@@ -1,10 +1,12 @@
 import { ref, readonly } from "vue";
 import type { Channel } from "../types/supabase";
+import { useSupabaseUser } from "#imports";
 
 export const useChannelStore = () => {
   const channels = ref<Channel[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const user = useSupabaseUser();
 
   const supabase = useSupabaseClient();
 
@@ -18,6 +20,7 @@ export const useChannelStore = () => {
         .from("channels")
         .select("*")
         .eq("is_active", true)
+        .eq("created_by", user.value?.id)
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -46,6 +49,7 @@ export const useChannelStore = () => {
           {
             ...channelData,
             is_active: true,
+            created_by: user.value?.id,
           },
         ])
         .select()

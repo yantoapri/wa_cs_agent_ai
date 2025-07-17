@@ -197,7 +197,7 @@ const baseUrl = import.meta.env.VITE_BASE_URL_WAHA;
 const wahaApiKey = import.meta.env.VITE_WAHA_API;
 
 const props = defineProps({ channel: Object });
-const emit = defineEmits(["update-whatsapp-number"]);
+const emit = defineEmits(["update-whatsapp-number", "channel-deleted"]);
 const { aiAgents, fetchAgentsByType } = useAgentStore();
 
 // Pindahkan ke atas sebelum watcher
@@ -436,7 +436,7 @@ async function onDeleteChannel() {
       }
       await deleteChannel(props.channel.id);
       showToast({ message: "Channel berhasil dihapus!", type: "success" });
-      emit("channel-deleted"); // Emit event ke parent untuk reset channel
+      emit("channel-deleted"); // Emit event ke parent untuk reset channel dan refresh list
     } catch (err) {
       console.error("Error deleting channel:", err);
       showToast({

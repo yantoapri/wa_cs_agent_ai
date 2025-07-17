@@ -70,7 +70,7 @@
   </div>
 </template>
 <script setup>
-import { ref, defineProps, defineEmits } from "vue";
+import { ref, defineProps, defineEmits, watch } from "vue";
 import { useAgentStore } from "~/composables/useAgents";
 import ChannelModal from "~/components/ChannelModal.vue";
 
@@ -78,6 +78,7 @@ const props = defineProps({
   aiList: { type: Array, default: () => [] },
   selected: { type: Object, default: null },
   sidebar: { type: Boolean, default: false }, // opsional, untuk styling sidebar
+  refreshKey: { type: Number, default: 0 }, // untuk trigger refresh dari parent
 });
 const emit = defineEmits(["select"]);
 const showForm = ref(false);
@@ -85,6 +86,13 @@ const newAI = ref({ name: "" });
 const loading = ref(false);
 
 const { addAgent, fetchAgentsByType } = useAgentStore();
+
+watch(
+  () => props.refreshKey,
+  async () => {
+    await fetchAgentsByType("ai");
+  }
+);
 
 async function addAI() {
   loading.value = true;

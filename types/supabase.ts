@@ -11,6 +11,7 @@ export interface Channel {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  created_by?: string;
 }
 
 export interface Agent {
@@ -25,6 +26,7 @@ export interface Agent {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  created_by?: string;
 }
 
 export interface AgentAIConfig {
@@ -68,13 +70,13 @@ export interface Conversation {
 
 export interface Message {
   id: string;
-  conversation_id: string;
+  contact_id?: string;
+  channel_id?: string;
   message_type: "text" | "image" | "document" | "audio" | "video";
   direction: "inbound" | "outbound";
   content: string;
   media_url?: string;
-  sender_id?: string;
-  sender_name?: string;
+  agent_id?: string;
   is_read: boolean;
   created_at: string;
 }

@@ -1,252 +1,258 @@
 import { ref, readonly } from "vue";
 import type { Conversation, Message } from "../types/supabase";
+import { useSupabaseUser } from "#imports";
 
 export const useConversationStore = () => {
   const conversations = ref<Conversation[]>([]);
   const messages = ref<Message[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const user = useSupabaseUser();
 
   const supabase = useSupabaseClient();
 
-  // Get all conversations
-  const fetchConversations = async () => {
+  // Get AI agent conversations from messages table grouped by agent, contact, channel
+  const fetchAIAgentConversations = async () => {
     loading.value = true;
     error.value = null;
 
     try {
+      // Query to get messages grouped by AI agents with contact and channel info
       const { data, error: fetchError } = await supabase
-        .from("conversations")
-        .select("*")
-        .eq("is_active", true)
-        .order("updated_at", { ascending: false });
+        .from("messages")
+        .select(
+          `
+          sender_id,
+          contact_id,
+          channel_id,
+          agents!inner(
+            id,
+            name,
+            type,
+            avatar_url,
+            created_by
+          ),
+          contacts!left(
+            id,
+            name,
+            phone_number,
+            avatar_url
+          ),
+          channels!left(
+            id,
+            name,
+            type,
+            icon_url
+          )
+        `
+        )
+        .eq("agents.type", "ai")
+        .eq("agents.created_by", user.value?.id)
+        .not("sender_id", "is", null);
 
       if (fetchError) throw fetchError;
 
-      conversations.value = data || [];
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to fetch conversations";
-      console.error("Error fetching conversations:", err);
-    } finally {
-      loading.value = false;
-    }
-  };
+      // Group by agent_id, contact_id, channel_id
+      const agentConversations = new Map();
 
-  // Get conversations by channel
-  const fetchConversationsByChannel = async (channelId: string) => {
-    loading.value = true;
-    error.value = null;
+      data?.forEach((item) => {
+        const agentId = item.sender_id;
+        const contactId = item.contact_id;
+        const channelId = item.channel_id;
+        const agent = item.agents;
+        const contact = item.contacts;
+        const channel = item.channels;
 
-    try {
-      const { data, error: fetchError } = await supabase
-        .from("conversations")
-        .select("*")
-        .eq("channel_id", channelId)
-        .eq("is_active", true)
-        .order("updated_at", { ascending: false });
+        const groupKey = `${agentId}-${contactId}-${channelId}`;
 
-      if (fetchError) throw fetchError;
+        if (!agentConversations.has(groupKey)) {
+          agentConversations.set(groupKey, {
+            agent: agent,
+            contact: contact,
+            channel: channel,
+            messages: [],
+            totalMessages: 0,
+            unreadCount: 0,
+            lastActivity: 0,
+          });
+        }
 
-      conversations.value = data || [];
-      return data || [];
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to fetch conversations";
-      console.error("Error fetching conversations:", err);
-      throw err;
-    } finally {
-      loading.value = false;
-    }
-  };
+        const groupData = agentConversations.get(groupKey);
+        groupData.messages.push(item);
+        groupData.totalMessages++;
+        groupData.lastActivity = Math.max(
+          groupData.lastActivity,
+          new Date(item.created_at).getTime()
+        );
+      });
 
-  // Get conversations by agent
-  const fetchConversationsByAgent = async (agentId: string) => {
-    loading.value = true;
-    error.value = null;
+      // Convert to array format for easier use in UI
+      const result = Array.from(agentConversations.values()).map((item) => ({
+        agent: item.agent,
+        contact: item.contact,
+        channel: item.channel,
+        messages: item.messages,
+        totalMessages: item.totalMessages,
+        unreadCount: item.unreadCount,
+        lastActivity: item.lastActivity,
+      }));
 
-    try {
-      const { data, error: fetchError } = await supabase
-        .from("conversations")
-        .select("*")
-        .eq("assigned_agent_id", agentId)
-        .eq("is_active", true)
-        .order("updated_at", { ascending: false });
+      // Sort by last activity
+      result.sort((a, b) => b.lastActivity - a.lastActivity);
 
-      if (fetchError) throw fetchError;
-
-      conversations.value = data || [];
-      return data || [];
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to fetch conversations";
-      console.error("Error fetching conversations:", err);
-      throw err;
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  // Get conversation by ID
-  const getConversationById = async (id: string) => {
-    try {
-      const { data, error: fetchError } = await supabase
-        .from("conversations")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      return data;
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to fetch conversation";
-      console.error("Error fetching conversation:", err);
-      throw err;
-    }
-  };
-
-  // Create new conversation
-  const createConversation = async (
-    conversationData: Omit<Conversation, "id" | "created_at" | "updated_at">
-  ) => {
-    loading.value = true;
-    error.value = null;
-
-    try {
-      const { data, error: insertError } = await supabase
-        .from("conversations")
-        .insert([
-          {
-            ...conversationData,
-            is_active: true,
-          },
-        ])
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-
-      conversations.value.unshift(data);
-      return data;
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to create conversation";
-      console.error("Error creating conversation:", err);
-      throw err;
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  // Update conversation
-  const updateConversation = async (
-    id: string,
-    updates: Partial<Conversation>
-  ) => {
-    loading.value = true;
-    error.value = null;
-
-    try {
-      const { data, error: updateError } = await supabase
-        .from("conversations")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-
-      const index = conversations.value.findIndex(
-        (conversation) => conversation.id === id
-      );
-      if (index !== -1) {
-        conversations.value[index] = data;
-      }
-
-      return data;
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to update conversation";
-      console.error("Error updating conversation:", err);
-      throw err;
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  // Assign conversation to agent
-  const assignConversationToAgent = async (
-    conversationId: string,
-    agentId: string
-  ) => {
-    try {
-      const { data, error: updateError } = await supabase
-        .from("conversations")
-        .update({ assigned_agent_id: agentId })
-        .eq("id", conversationId)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-
-      const index = conversations.value.findIndex(
-        (conversation) => conversation.id === conversationId
-      );
-      if (index !== -1) {
-        conversations.value[index] = data;
-      }
-
-      return data;
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to assign conversation";
-      console.error("Error assigning conversation:", err);
-      throw err;
-    }
-  };
-
-  // Mark conversation as read
-  const markConversationAsRead = async (conversationId: string) => {
-    try {
-      const { data, error: updateError } = await supabase
-        .from("conversations")
-        .update({ unread_count: 0 })
-        .eq("id", conversationId)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-
-      const index = conversations.value.findIndex(
-        (conversation) => conversation.id === conversationId
-      );
-      if (index !== -1) {
-        conversations.value[index] = data;
-      }
-
-      return data;
+      return result;
     } catch (err) {
       error.value =
         err instanceof Error
           ? err.message
-          : "Failed to mark conversation as read";
-      console.error("Error marking conversation as read:", err);
+          : "Failed to fetch AI agent conversations";
+      console.error("Error fetching AI agent conversations:", err);
       throw err;
+    } finally {
+      loading.value = false;
     }
   };
 
-  // Get messages for conversation
-  const fetchMessages = async (conversationId: string) => {
+  // Get Human agent conversations from messages table grouped by agent, contact, channel
+  const fetchHumanAgentConversations = async () => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      // Query to get messages grouped by Human agents with contact and channel info
+      const { data, error: fetchError } = await supabase
+        .from("messages")
+        .select(
+          `
+          sender_id,
+          contact_id,
+          channel_id,
+          agents!inner(
+            id,
+            name,
+            type,
+            avatar_url,
+            created_by
+          ),
+          contacts!left(
+            id,
+            name,
+            phone_number,
+            avatar_url
+          ),
+          channels!left(
+            id,
+            name,
+            type,
+            icon_url
+          )
+        `
+        )
+        .eq("agents.type", "manusia")
+        .eq("agents.created_by", user.value?.id)
+        .not("sender_id", "is", null);
+
+      if (fetchError) throw fetchError;
+
+      // Group by agent_id, contact_id, channel_id
+      const agentConversations = new Map();
+
+      data?.forEach((item) => {
+        const agentId = item.sender_id;
+        const contactId = item.contact_id;
+        const channelId = item.channel_id;
+        const agent = item.agents;
+        const contact = item.contacts;
+        const channel = item.channels;
+
+        const groupKey = `${agentId}-${contactId}-${channelId}`;
+
+        if (!agentConversations.has(groupKey)) {
+          agentConversations.set(groupKey, {
+            agent: agent,
+            contact: contact,
+            channel: channel,
+            messages: [],
+            totalMessages: 0,
+            unreadCount: 0,
+            lastActivity: 0,
+          });
+        }
+
+        const groupData = agentConversations.get(groupKey);
+        groupData.messages.push(item);
+        groupData.totalMessages++;
+        groupData.lastActivity = Math.max(
+          groupData.lastActivity,
+          new Date(item.created_at).getTime()
+        );
+      });
+
+      // Convert to array format for easier use in UI
+      const result = Array.from(agentConversations.values()).map((item) => ({
+        agent: item.agent,
+        contact: item.contact,
+        channel: item.channel,
+        messages: item.messages,
+        totalMessages: item.totalMessages,
+        unreadCount: item.unreadCount,
+        lastActivity: item.lastActivity,
+      }));
+
+      // Sort by last activity
+      result.sort((a, b) => b.lastActivity - a.lastActivity);
+
+      return result;
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch Human agent conversations";
+      console.error("Error fetching Human agent conversations:", err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // Get messages for a specific agent-contact-channel group
+  const fetchMessagesByGroup = async (
+    agentId: string,
+    contactId: string,
+    channelId: string
+  ) => {
     loading.value = true;
     error.value = null;
 
     try {
       const { data, error: fetchError } = await supabase
         .from("messages")
-        .select("*")
-        .eq("conversation_id", conversationId)
+        .select(
+          `
+          *,
+          agents!left(
+            id,
+            name,
+            type,
+            avatar_url
+          ),
+          contacts!left(
+            id,
+            name,
+            phone_number,
+            avatar_url
+          ),
+          channels!left(
+            id,
+            name,
+            type,
+            icon_url
+          )
+        `
+        )
+        .eq("sender_id", agentId)
+        .eq("contact_id", contactId)
+        .eq("channel_id", channelId)
         .order("created_at", { ascending: true });
 
       if (fetchError) throw fetchError;
@@ -255,15 +261,17 @@ export const useConversationStore = () => {
       return data || [];
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : "Failed to fetch messages";
-      console.error("Error fetching messages:", err);
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch messages by group";
+      console.error("Error fetching messages by group:", err);
       throw err;
     } finally {
       loading.value = false;
     }
   };
 
-  // Add message to conversation
+  // Add message to a specific agent-contact-channel group
   const addMessage = async (
     messageData: Omit<Message, "id" | "created_at">
   ) => {
@@ -291,13 +299,19 @@ export const useConversationStore = () => {
     }
   };
 
-  // Mark messages as read
-  const markMessagesAsRead = async (conversationId: string) => {
+  // Mark messages as read for a specific group
+  const markMessagesAsRead = async (
+    agentId: string,
+    contactId: string,
+    channelId: string
+  ) => {
     try {
       const { error: updateError } = await supabase
         .from("messages")
         .update({ is_read: true })
-        .eq("conversation_id", conversationId)
+        .eq("sender_id", agentId)
+        .eq("contact_id", contactId)
+        .eq("channel_id", channelId)
         .eq("direction", "inbound");
 
       if (updateError) throw updateError;
@@ -305,7 +319,9 @@ export const useConversationStore = () => {
       // Update local messages
       messages.value.forEach((message) => {
         if (
-          message.conversation_id === conversationId &&
+          message.sender_id === agentId &&
+          message.contact_id === contactId &&
+          message.channel_id === channelId &&
           message.direction === "inbound"
         ) {
           message.is_read = true;
@@ -324,15 +340,9 @@ export const useConversationStore = () => {
     messages: readonly(messages),
     loading: readonly(loading),
     error: readonly(error),
-    fetchConversations,
-    fetchConversationsByChannel,
-    fetchConversationsByAgent,
-    getConversationById,
-    createConversation,
-    updateConversation,
-    assignConversationToAgent,
-    markConversationAsRead,
-    fetchMessages,
+    fetchAIAgentConversations,
+    fetchHumanAgentConversations,
+    fetchMessagesByGroup,
     addMessage,
     markMessagesAsRead,
   };

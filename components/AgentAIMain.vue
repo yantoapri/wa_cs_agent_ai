@@ -700,6 +700,7 @@ const activeAgentsPerChannel = ref({});
 const tab = ref("gaya");
 const subtab = ref("gaya");
 const selectedAI = ref({});
+const emit = defineEmits(["refresh-ai-list"]);
 
 // Load AI agents from database
 onMounted(async () => {
@@ -1070,6 +1071,7 @@ async function onDeleteAgent() {
             type: "success",
           });
           selectedAI.value = {};
+          emit("refresh-ai-list"); // trigger refresh list di parent
         } else {
           showToast({
             message: "Gagal menghapus agent: " + data.message,

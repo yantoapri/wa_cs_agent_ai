@@ -53,7 +53,7 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useChannelStore } from "~/composables/useChannels";
 import ChannelModal from "~/components/ChannelModal.vue";
 import { useToast } from "~/composables/useToast";
@@ -75,13 +75,16 @@ const showForm = ref(false);
 const newChannel = ref({ name: "", type: "whatsapp" });
 const emit = defineEmits(["select-channel"]);
 
+const props = defineProps({
+  refreshKey: { type: Number, default: 0 }, // untuk trigger refresh dari parent
+});
+
 // Ambil config WAHA hanya dari import.meta.env
 const wahaUsername = import.meta.env.VITE_WAHA_USERNAME || "";
 const wahaPassword = import.meta.env.VITE_WAHA_PASSWORD || "";
 const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
 const baseUrl = import.meta.env.VITE_BASE_URL_WAHA;
-const publicBaseUrl =
-  import.meta.env.VITE_PUBLIC_BASE_URL ;
+const publicBaseUrl = import.meta.env.VITE_PUBLIC_BASE_URL;
 
 const wahaAuth =
   wahaUsername && wahaPassword
@@ -232,4 +235,11 @@ defineExpose({
 onMounted(async () => {
   await fetchChannels();
 });
+
+watch(
+  () => props.refreshKey,
+  async () => {
+    await fetchChannels();
+  }
+);
 </script>

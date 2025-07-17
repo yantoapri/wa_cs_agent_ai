@@ -1,20 +1,79 @@
 <template>
   <div class="flex flex-col h-screen bg-gray-100">
-    <div class="flex items-center bg-white border-b border-gray-200 px-8 h-16">
-      <div class="text-lg font-bold text-gray-800 mr-8">OsmoChat</div>
-      <div class="flex gap-1">
+    <div
+      class="flex items-center justify-between bg-white border-b border-gray-200 px-8 h-16"
+    >
+      <div class="flex items-center">
+        <div class="text-lg font-bold text-gray-800 mr-8">OsmoChat</div>
+        <div class="flex gap-1">
+          <button
+            v-for="t in tabs"
+            :key="t.value"
+            class="px-6 py-2 text-base font-medium rounded-t-md border-b-2 transition-colors duration-200 focus:outline-none"
+            :class="
+              tab === t.value
+                ? 'text-blue-600 border-blue-600 bg-white'
+                : 'text-gray-700 border-transparent bg-gray-100 hover:bg-gray-200'
+            "
+            @click="tab = t.value"
+          >
+            {{ t.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- User Profile Section -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <img
+            :src="userAvatar"
+            :alt="userName"
+            class="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+          />
+          <span class="text-sm font-medium text-gray-700">{{ userName }}</span>
+        </div>
         <button
-          v-for="t in tabs"
-          :key="t.value"
-          class="px-6 py-2 text-base font-medium rounded-t-md border-b-2 transition-colors duration-200 focus:outline-none"
-          :class="
-            tab === t.value
-              ? 'text-blue-600 border-blue-600 bg-white'
-              : 'text-gray-700 border-transparent bg-gray-100 hover:bg-gray-200'
-          "
-          @click="tab = t.value"
+          @click="handleLogout"
+          class="flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:text-red-700 bg-red-50 rounded-md transition-colors duration-200"
+          :disabled="logoutLoading"
         >
-          {{ t.label }}
+          <svg
+            v-if="logoutLoading"
+            class="animate-spin h-4 w-4 text-red-600"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12h16M4 12a8 8 0 018-8V0C7.16 0 4 3.16 4 8z"
+            ></path>
+          </svg>
+          <svg
+            v-else
+            class="h-4 w-4 text-red-600"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3"
+            ></path>
+          </svg>
+          {{ logoutLoading ? "Logging out..." : "Logout" }}
         </button>
       </div>
     </div>
@@ -120,8 +179,9 @@
 
 <script setup>
 definePageMeta({ middleware: "auth" });
-import { ref, onMounted } from "vue";
-import { useAgentStore } from "~/composables/useAgents";
+import { ref, computed } from "vue";
+import { useSupabaseUser, useSupabaseClient } from "#imports";
+import { useRouter } from "vue-router";
 import InboxList from "~/components/InboxList.vue";
 import KontakList from "~/components/KontakList.vue";
 import ChannelList from "~/components/ChannelList.vue";
@@ -151,7 +211,45 @@ const channelListRef = ref(null);
 const agentAIListRef = ref(null);
 const agentManusiaListRef = ref(null);
 
-const { fetchAgents } = useAgentStore();
+// User authentication
+const user = useSupabaseUser();
+const supabase = useSupabaseClient();
+const router = useRouter();
+const logoutLoading = ref(false);
+
+// Computed properties for user info
+const userName = computed(() => {
+  if (!user.value) return "User";
+  return (
+    user.value.user_metadata?.name || user.value.email?.split("@")[0] || "User"
+  );
+});
+
+const userAvatar = computed(() => {
+  if (!user.value)
+    return "https://ui-avatars.com/api/?name=User&background=random";
+  return (
+    user.value.user_metadata?.avatar_url ||
+    `https://ui-avatars.com/api/?name=${userName.value}&background=random`
+  );
+});
+
+// Logout function
+const handleLogout = async () => {
+  logoutLoading.value = true;
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Logout error:", error);
+    } else {
+      await router.push("/login");
+    }
+  } catch (err) {
+    console.error("Logout error:", err);
+  } finally {
+    logoutLoading.value = false;
+  }
+};
 
 function onSelectConversation(conversation) {
   selectedConversation.value = conversation;
@@ -178,9 +276,4 @@ function onUpdateWhatsAppNumber(channelId, whatsappNumber) {
     channelListRef.value.updateChannelWhatsAppNumber(channelId, whatsappNumber);
   }
 }
-
-onMounted(async () => {
-  // Load initial data
-  await fetchAgents();
-});
 </script>
