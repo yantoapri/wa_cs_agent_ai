@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@nuxtjs/supabase": "^1.5.0",
+    "@vueuse/core": "^13.5.0",
     "openai": "^4.104.0"
   },
   "devDependencies": {

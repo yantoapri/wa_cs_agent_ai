@@ -23,58 +23,48 @@
       </div>
 
       <!-- User Profile Section -->
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3 relative" ref="userMenuRef">
+        <button
+          @click="toggleDropdown"
+          class="flex items-center gap-2 focus:outline-none"
+        >
           <img
             :src="userAvatar"
             :alt="userName"
             class="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
           />
           <span class="text-sm font-medium text-gray-700">{{ userName }}</span>
-        </div>
-        <button
-          @click="handleLogout"
-          class="flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:text-red-700 bg-red-50 rounded-md transition-colors duration-200"
-          :disabled="logoutLoading"
-        >
           <svg
-            v-if="logoutLoading"
-            class="animate-spin h-4 w-4 text-red-600"
-            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4 ml-1 text-gray-500"
             fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            ></circle>
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12h16M4 12a8 8 0 018-8V0C7.16 0 4 3.16 4 8z"
-            ></path>
-          </svg>
-          <svg
-            v-else
-            class="h-4 w-4 text-red-600"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
             stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
           >
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
-              stroke-width="2"
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3"
-            ></path>
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
-          {{ logoutLoading ? "Logging out..." : "Logout" }}
         </button>
+        <div
+          v-if="dropdownOpen"
+          class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+        >
+          <button
+            class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+            @click="closeDropdown"
+          >
+            My Profile
+          </button>
+          <button
+            class="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+            @click="handleLogout"
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </div>
     <div class="flex flex-1 min-h-0">
@@ -177,6 +167,7 @@
 <script setup>
 definePageMeta({ middleware: "auth" });
 import { ref, computed } from "vue";
+import { onClickOutside } from "@vueuse/core";
 import { useSupabaseUser, useSupabaseClient } from "#imports";
 import { useRouter } from "vue-router";
 import InboxList from "~/components/InboxList.vue";
@@ -273,6 +264,20 @@ function onUpdateWhatsAppNumber(chanelId, whatsappNumber) {
     chanelListRef.value.updatechanelWhatsAppNumber(chanelId, whatsappNumber);
   }
 }
+
+const dropdownOpen = ref(false);
+const userMenuRef = ref(null);
+
+function toggleDropdown() {
+  dropdownOpen.value = !dropdownOpen.value;
+}
+
+function closeDropdown() {
+  dropdownOpen.value = false;
+}
+
+onClickOutside(userMenuRef, closeDropdown);
+
 onMounted(async () => {
   console.log("env import", import.meta.env);
   console.log("env runtimeConfig", runtimeConfig);

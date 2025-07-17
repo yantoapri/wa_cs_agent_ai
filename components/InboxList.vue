@@ -35,12 +35,17 @@
             <div class="font-medium text-gray-900">
               {{ agentData.agent.name }}
             </div>
+            <div class="text-xs text-gray-400">
+              Chanel: {{ agentData.chanel?.name || "-" }}<br />
+              Kontak:
+              {{
+                agentData.contact?.name ||
+                agentData.contact?.phone_number ||
+                "-"
+              }}
+            </div>
             <div class="text-sm text-gray-500">
-              {{ agentData.conversations.length }} percakapan •
               {{ agentData.totalMessages }} pesan
-              <span v-if="agentData.unreadCount > 0" class="ml-2">
-                • {{ agentData.unreadCount }} belum dibaca
-              </span>
             </div>
           </div>
         </div>
@@ -88,6 +93,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useConversationStore } from "~/composables/useConversationStore";
+import { onClickOutside } from "@vueuse/core";
 
 const emit = defineEmits(["select-conversation"]);
 const props = defineProps({

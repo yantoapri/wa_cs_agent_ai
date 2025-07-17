@@ -1,6 +1,6 @@
 import { ref, readonly } from "vue";
+import { useSupabaseUser, useSupabaseClient } from "#imports";
 import type { Conversation, Message } from "../types/supabase";
-import { useSupabaseUser } from "#imports";
 
 export const useConversationStore = () => {
   const conversations = ref<Conversation[]>([]);
@@ -22,7 +22,7 @@ export const useConversationStore = () => {
         .from("messages")
         .select(
           `
-          sender_id,
+          agent_id,
           contact_id,
           chanel_id,
           agents!inner(
@@ -48,7 +48,7 @@ export const useConversationStore = () => {
         )
         .eq("agents.type", "ai")
         .eq("agents.created_by", user.value?.id)
-        .not("sender_id", "is", null);
+        .not("agent_id", "is", null);
 
       if (fetchError) throw fetchError;
 
@@ -56,7 +56,7 @@ export const useConversationStore = () => {
       const agentConversations = new Map();
 
       data?.forEach((item) => {
-        const agentId = item.sender_id;
+        const agentId = item.agent_id;
         const contactId = item.contact_id;
         const chanelId = item.chanel_id;
         const agent = item.agents;
@@ -124,7 +124,7 @@ export const useConversationStore = () => {
         .from("messages")
         .select(
           `
-          sender_id,
+          agent_id,
           contact_id,
           chanel_id,
           agents!inner(
@@ -150,7 +150,7 @@ export const useConversationStore = () => {
         )
         .eq("agents.type", "manusia")
         .eq("agents.created_by", user.value?.id)
-        .not("sender_id", "is", null);
+        .not("agent_id", "is", null);
 
       if (fetchError) throw fetchError;
 
@@ -158,7 +158,7 @@ export const useConversationStore = () => {
       const agentConversations = new Map();
 
       data?.forEach((item) => {
-        const agentId = item.sender_id;
+        const agentId = item.agent_id;
         const contactId = item.contact_id;
         const chanelId = item.chanel_id;
         const agent = item.agents;
@@ -250,7 +250,7 @@ export const useConversationStore = () => {
           )
         `
         )
-        .eq("sender_id", agentId)
+        .eq("agent_id", agentId)
         .eq("contact_id", contactId)
         .eq("chanel_id", chanelId)
         .order("created_at", { ascending: true });
@@ -309,7 +309,7 @@ export const useConversationStore = () => {
       const { error: updateError } = await supabase
         .from("messages")
         .update({ is_read: true })
-        .eq("sender_id", agentId)
+        .eq("agent_id", agentId)
         .eq("contact_id", contactId)
         .eq("chanel_id", chanelId)
         .eq("direction", "inbound");
@@ -319,7 +319,7 @@ export const useConversationStore = () => {
       // Update local messages
       messages.value.forEach((message) => {
         if (
-          message.sender_id === agentId &&
+          message.agent_id === agentId &&
           message.contact_id === contactId &&
           message.chanel_id === chanelId &&
           message.direction === "inbound"
