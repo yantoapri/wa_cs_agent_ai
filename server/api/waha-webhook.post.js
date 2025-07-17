@@ -300,7 +300,7 @@ export default defineEventHandler(async (event) => {
           });
           console.log("[WAHA Webhook] Save Image Message Response:", {
             agent_id: conn.agent_id,
-            channel_id: channelIdToUse,
+            chanel_id: channelIdToUse,
             contact_id,
             message_type: "image",
             media_url: imgUrl,
@@ -332,7 +332,7 @@ export default defineEventHandler(async (event) => {
           method: "POST",
           body: {
             agent_id: conn.agent_id,
-            channel_id: channelIdToUse,
+            chanel_id: channelIdToUse,
             contact_id,
             message_type: "text",
             media_url: null,
