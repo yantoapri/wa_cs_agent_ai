@@ -98,7 +98,7 @@
     </div>
 
     <!-- Add/Edit Contact Modal -->
-    <chanelModal :show="showAddModal || showEditModal" @close="closeModal">
+    <ChanelModal :show="showAddModal || showEditModal" @close="closeModal">
       <div class="p-6">
         <h3 class="text-lg font-semibold mb-4">
           {{ showEditModal ? "Edit Kontak" : "Tambah Kontak Baru" }}
@@ -213,10 +213,10 @@
           </div>
         </form>
       </div>
-    </chanelModal>
+    </ChanelModal>
 
     <!-- Delete Confirmation Modal -->
-    <chanelModal :show="showDeleteModal" @close="showDeleteModal = false">
+    <ChanelModal :show="showDeleteModal" @close="showDeleteModal = false">
       <div class="p-6">
         <h3 class="text-lg font-semibold mb-4 text-red-600">Hapus Kontak</h3>
         <p class="text-gray-600 mb-6">
@@ -242,14 +242,14 @@
           </button>
         </div>
       </div>
-    </chanelModal>
+    </ChanelModal>
   </div>
 </template>
 <script setup>
 import { ref, onMounted, reactive } from "vue";
 import { useContactStore } from "~/composables/useContacts";
 import { useChanelstore } from "~/composables/useChanels";
-import chanelModal from "~/components/chanelModal.vue";
+import ChanelModal from "~/components/ChanelModal.vue";
 
 const {
   contacts,

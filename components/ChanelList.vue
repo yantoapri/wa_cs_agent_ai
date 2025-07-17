@@ -7,7 +7,7 @@
     >
       Buat chanel
     </button>
-    <chanelModal :show="showForm" @close="showForm = false">
+    <ChanelModal :show="showForm" @close="showForm = false">
       <form @submit.prevent="addchanel">
         <input
           v-model="newchanel.name"
@@ -24,7 +24,7 @@
           Simpan
         </button>
       </form>
-    </chanelModal>
+    </ChanelModal>
     <div class="mt-6">
       <div
         class="flex items-center mb-4 relative cursor-pointer"
@@ -55,7 +55,7 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import { useChanelstore } from "~/composables/useChanels";
-import chanelModal from "~/components/chanelModal.vue";
+import ChanelModal from "~/components/ChanelModal.vue";
 import { useToast } from "~/composables/useToast";
 // HAPUS: import { useRuntimeConfig } from "#app";
 const { showToast } = useToast();

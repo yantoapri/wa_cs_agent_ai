@@ -169,7 +169,7 @@
     </div>
 
     <!-- Edit Contact Modal -->
-    <chanelModal :show="showEditModal" @close="showEditModal = false">
+    <ChanelModal :show="showEditModal" @close="showEditModal = false">
       <div class="p-6">
         <h3 class="text-lg font-semibold mb-4">Edit Kontak</h3>
 
@@ -276,7 +276,7 @@
           </div>
         </form>
       </div>
-    </chanelModal>
+    </ChanelModal>
   </div>
 </template>
 <script setup>
@@ -284,7 +284,7 @@ import { ref, watch, reactive, onMounted } from "vue";
 import { useConversationStore } from "~/composables/useConversationStore";
 import { useContactStore } from "~/composables/useContacts";
 import { useChanelstore } from "~/composables/useChanels";
-import chanelModal from "~/components/chanelModal.vue";
+import ChanelModal from "~/components/ChanelModal.vue";
 
 const props = defineProps({
   selectedContact: Object,
