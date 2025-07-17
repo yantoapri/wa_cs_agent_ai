@@ -671,7 +671,7 @@ import AgentAIList from "./AgentAIList.vue";
 import { useAgentStore } from "~/composables/useAgents";
 import { useAgentAIStore } from "~/composables/useAgentAI";
 import { useChanelstore } from "~/composables/useChanels";
-import { usechanelAgentConnectionStore } from "~/composables/usechanelAgentConnections";
+import { useChanelAgentConnectionStore } from "~/composables/useChanelAgentConnections";
 import { useToast } from "~/composables/useToast";
 // Ambil config WAHA hanya dari import.meta.env
 const baseUrl = import.meta.env.VITE_BASE_URL_WAHA;

@@ -1,4 +1,5 @@
 import { ref, readonly } from "vue";
+import { useSupabaseClient } from "#imports";
 import type { chanelAgentConnection } from "../types/supabase";
 
 export const usechanelAgentConnectionStore = () => {
