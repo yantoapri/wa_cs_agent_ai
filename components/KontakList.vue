@@ -98,7 +98,7 @@
     </div>
 
     <!-- Add/Edit Contact Modal -->
-    <ChannelModal :show="showAddModal || showEditModal" @close="closeModal">
+    <chanelModal :show="showAddModal || showEditModal" @close="closeModal">
       <div class="p-6">
         <h3 class="text-lg font-semibold mb-4">
           {{ showEditModal ? "Edit Kontak" : "Tambah Kontak Baru" }}
@@ -162,19 +162,19 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
-                Channel
+                chanel
               </label>
               <select
-                v-model="contactForm.channel_id"
+                v-model="contactForm.chanel_id"
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Pilih channel</option>
+                <option value="">Pilih chanel</option>
                 <option
-                  v-for="channel in channels"
-                  :key="channel.id"
-                  :value="channel.id"
+                  v-for="chanel in chanels"
+                  :key="chanel.id"
+                  :value="chanel.id"
                 >
-                  {{ channel.name }}
+                  {{ chanel.name }}
                 </option>
               </select>
             </div>
@@ -213,10 +213,10 @@
           </div>
         </form>
       </div>
-    </ChannelModal>
+    </chanelModal>
 
     <!-- Delete Confirmation Modal -->
-    <ChannelModal :show="showDeleteModal" @close="showDeleteModal = false">
+    <chanelModal :show="showDeleteModal" @close="showDeleteModal = false">
       <div class="p-6">
         <h3 class="text-lg font-semibold mb-4 text-red-600">Hapus Kontak</h3>
         <p class="text-gray-600 mb-6">
@@ -242,14 +242,14 @@
           </button>
         </div>
       </div>
-    </ChannelModal>
+    </chanelModal>
   </div>
 </template>
 <script setup>
 import { ref, onMounted, reactive } from "vue";
 import { useContactStore } from "~/composables/useContacts";
-import { useChannelStore } from "~/composables/useChannels";
-import ChannelModal from "~/components/ChannelModal.vue";
+import { useChanelstore } from "~/composables/useChanels";
+import chanelModal from "~/components/chanelModal.vue";
 
 const {
   contacts,
@@ -260,7 +260,7 @@ const {
   updateContact,
   deleteContact,
 } = useContactStore();
-const { channels, fetchChannels } = useChannelStore();
+const { chanels, fetchchanels } = useChanelstore();
 
 const emit = defineEmits(["select-contact"]);
 
@@ -278,7 +278,7 @@ const contactForm = reactive({
   phone_number: "",
   email: "",
   avatar: "",
-  channel_id: "",
+  chanel_id: "",
   notes: "",
 });
 
@@ -302,7 +302,7 @@ const editContact = (contact) => {
   contactForm.phone_number = contact.phone_number || "";
   contactForm.email = contact.email || "";
   contactForm.avatar = contact.avatar || "";
-  contactForm.channel_id = contact.channel_id || "";
+  contactForm.chanel_id = contact.chanel_id || "";
   contactForm.notes = contact.notes || "";
 
   // Store contact ID for update
@@ -326,7 +326,7 @@ const resetForm = () => {
   contactForm.phone_number = "";
   contactForm.email = "";
   contactForm.avatar = "";
-  contactForm.channel_id = "";
+  contactForm.chanel_id = "";
   contactForm.notes = "";
   delete contactForm.id;
 };
@@ -339,7 +339,7 @@ const addContactData = async () => {
       phone_number: contactForm.phone_number,
       email: contactForm.email || null,
       avatar: contactForm.avatar || null,
-      channel_id: contactForm.channel_id || null,
+      chanel_id: contactForm.chanel_id || null,
       notes: contactForm.notes || null,
     });
     closeModal();
@@ -358,7 +358,7 @@ const updateContactData = async () => {
       phone_number: contactForm.phone_number,
       email: contactForm.email || null,
       avatar: contactForm.avatar || null,
-      channel_id: contactForm.channel_id || null,
+      chanel_id: contactForm.chanel_id || null,
       notes: contactForm.notes || null,
     });
     closeModal();
@@ -383,6 +383,6 @@ const confirmDelete = async () => {
 };
 
 onMounted(async () => {
-  await Promise.all([fetchContacts(), fetchChannels()]);
+  await Promise.all([fetchContacts(), fetchchanels()]);
 });
 </script>

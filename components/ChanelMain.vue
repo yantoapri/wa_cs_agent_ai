@@ -1,6 +1,6 @@
 <template>
   <div class="p-2">
-    <div v-if="channel">
+    <div v-if="chanel">
       <div class="flex gap-2 mb-4">
         <button
           class="px-5 py-2 font-medium border-b-2"
@@ -22,7 +22,7 @@
           "
           @click="activeTab = 'edit'"
         >
-          Edit Channel
+          Edit chanel
         </button>
       </div>
       <div v-if="activeTab === 'integrasi'">
@@ -127,7 +127,7 @@
         </div>
       </div>
       <div v-else-if="activeTab === 'edit'">
-        <form class="edit-channel-form" @submit.prevent="onEditChannel">
+        <form class="edit-chanel-form" @submit.prevent="onEditchanel">
           <div class="form-group">
             <label>Nama</label>
             <input v-model="editData.nama" class="form-input" />
@@ -168,45 +168,45 @@
               <span>balasan</span>
             </div>
           </div>
-          <button class="edit-btn" type="submit">Edit Channel</button>
+          <button class="edit-btn" type="submit">Edit chanel</button>
         </form>
         <div style="margin-top: 32px">
           <div style="color: #888; font-size: 1em; margin-bottom: 8px">
-            Hapus Channel
+            Hapus chanel
           </div>
           <div style="color: #aaa; font-size: 0.95em; margin-bottom: 8px">
             Bila dilakukan, tindakan ini tidak bisa dikembalikan
           </div>
-          <button class="delete-btn" @click="onDeleteChannel">Hapus</button>
+          <button class="delete-btn" @click="onDeletechanel">Hapus</button>
         </div>
       </div>
     </div>
     <div v-else style="padding: 32px; color: #888; text-align: center">
-      Pilih channel untuk melihat detail.
+      Pilih chanel untuk melihat detail.
     </div>
   </div>
 </template>
 <script setup>
 import { defineProps, ref, watch, onMounted, onUnmounted } from "vue";
 import { useAgentStore } from "~/composables/useAgents";
-import { useChannelStore } from "~/composables/useChannels";
-import { useChannelAgentConnectionStore } from "~/composables/useChannelAgentConnections";
+import { useChanelstore } from "~/composables/useChanels";
+import { usechanelAgentConnectionStore } from "~/composables/usechanelAgentConnections";
 import { useToast } from "~/composables/useToast";
 // Ambil config WAHA hanya dari import.meta.env
 const baseUrl = import.meta.env.VITE_BASE_URL_WAHA;
 const wahaApiKey = import.meta.env.VITE_WAHA_API;
 
-const props = defineProps({ channel: Object });
-const emit = defineEmits(["update-whatsapp-number", "channel-deleted"]);
+const props = defineProps({ chanel: Object });
+const emit = defineEmits(["update-whatsapp-number", "chanel-deleted"]);
 const { aiAgents, fetchAgentsByType } = useAgentStore();
 
 // Pindahkan ke atas sebelum watcher
-const { updateChannel, deleteChannel } = useChannelStore();
+const { updatechanel, deletechanel } = useChanelstore();
 const {
-  connectAgentToChannel,
-  disconnectAgentFromChannel,
-  getActiveAgentForChannel,
-} = useChannelAgentConnectionStore();
+  connectAgentTochanel,
+  disconnectAgentFromchanel,
+  getActiveAgentForchanel,
+} = usechanelAgentConnectionStore();
 
 const qrCode = ref("");
 const status = ref("");
@@ -221,7 +221,7 @@ const restartingWaha = ref(false);
 
 const activeTab = ref("integrasi");
 
-// Data untuk edit channel
+// Data untuk edit chanel
 const editData = ref({
   nama: "",
   takeoverAI: "0",
@@ -233,9 +233,9 @@ const editData = ref({
 const activeAgentId = ref(null);
 
 watch(
-  () => props.channel,
+  () => props.chanel,
   async (val) => {
-    // Reset form saat channel berubah
+    // Reset form saat chanel berubah
     if (val) {
       editData.value = {
         nama: val.nama || "",
@@ -246,7 +246,7 @@ watch(
       };
       // Cek agent aktif
       if (val.id) {
-        const active = await getActiveAgentForChannel(val.id);
+        const active = await getActiveAgentForchanel(val.id);
         activeAgentId.value = active ? active.agent_id : null;
       }
     }
@@ -313,7 +313,7 @@ async function fetchSessionStatus(sessionName) {
         });
         status.value = "SCAN_QR_CODE";
       } catch (restartErr) {
-        console.error("[ChannelMain] Gagal restart WAHA/session:", restartErr);
+        console.error("[chanelMain] Gagal restart WAHA/session:", restartErr);
         status.value = data.status;
       } finally {
         restartingSession.value = false;
@@ -355,9 +355,9 @@ async function fetchSessionStatus(sessionName) {
       qrCode.value = "";
     }
     // Update nomor WA jika ada
-    if (data.me && data.me.id && props.channel && props.channel.id) {
+    if (data.me && data.me.id && props.chanel && props.chanel.id) {
       const whatsappNumber = data.me.id.replace("@c.us", "");
-      emit("update-whatsapp-number", props.channel.id, whatsappNumber);
+      emit("update-whatsapp-number", props.chanel.id, whatsappNumber);
     }
     // Restart polling jika status berubah
     if (pollingInterval.value) {
@@ -377,7 +377,7 @@ async function fetchSessionStatus(sessionName) {
 }
 
 watch(
-  () => props.channel,
+  () => props.chanel,
   (val) => {
     stopPolling();
     if (val && val.session_name) {
@@ -396,9 +396,9 @@ onMounted(async () => {
   await fetchAgentsByType("ai");
 });
 
-async function onEditChannel() {
+async function onEditchanel() {
   try {
-    await updateChannel(props.channel.id, {
+    await updatechanel(props.chanel.id, {
       name: editData.value.nama,
       // takeover_ai: editData.value.takeoverAI === "1",
       // waktu_takeover: parseInt(editData.value.waktuTakeover) || 0,
@@ -407,23 +407,23 @@ async function onEditChannel() {
       limit_balasan_ai: editData.value.limitBalasanAI === "1",
       maksimum_balasan_ai: parseInt(editData.value.maksimumBalasanAI) || 0,
     });
-    showToast({ message: "Channel berhasil diupdate!", type: "success" });
+    showToast({ message: "chanel berhasil diupdate!", type: "success" });
   } catch (err) {
-    console.error("Error updating channel:", err);
+    console.error("Error updating chanel:", err);
     showToast({
-      message: "Gagal mengupdate channel: " + err.message,
+      message: "Gagal mengupdate chanel: " + err.message,
       type: "error",
     });
   }
 }
 
-async function onDeleteChannel() {
-  if (confirm("Yakin ingin menghapus channel ini?")) {
+async function onDeletechanel() {
+  if (confirm("Yakin ingin menghapus chanel ini?")) {
     try {
-      // Jika channel WhatsApp dan punya session_name, hapus session di WAHA
-      if (props.channel.type === "whatsapp" && props.channel.session_name) {
+      // Jika chanel WhatsApp dan punya session_name, hapus session di WAHA
+      if (props.chanel.type === "whatsapp" && props.chanel.session_name) {
         try {
-          await fetch(`${baseUrl}/api/sessions/${props.channel.session_name}`, {
+          await fetch(`${baseUrl}/api/sessions/${props.chanel.session_name}`, {
             method: "DELETE",
             headers: {
               "Content-Type": "application/json",
@@ -434,13 +434,13 @@ async function onDeleteChannel() {
           console.error("Gagal menghapus session WAHA:", e);
         }
       }
-      await deleteChannel(props.channel.id);
-      showToast({ message: "Channel berhasil dihapus!", type: "success" });
-      emit("channel-deleted"); // Emit event ke parent untuk reset channel dan refresh list
+      await deletechanel(props.chanel.id);
+      showToast({ message: "chanel berhasil dihapus!", type: "success" });
+      emit("chanel-deleted"); // Emit event ke parent untuk reset chanel dan refresh list
     } catch (err) {
-      console.error("Error deleting channel:", err);
+      console.error("Error deleting chanel:", err);
       showToast({
-        message: "Gagal menghapus channel: " + err.message,
+        message: "Gagal menghapus chanel: " + err.message,
         type: "error",
       });
     }
@@ -450,8 +450,8 @@ async function onDisconnect() {
   // Panggil API logout, lalu refresh status session
   try {
     const sessionName =
-      props.channel && props.channel.session_name
-        ? props.channel.session_name
+      props.chanel && props.chanel.session_name
+        ? props.chanel.session_name
         : "default";
     await fetch(`${baseUrl}/api/sessions/${sessionName}/logout`, {
       method: "POST",
@@ -467,15 +467,15 @@ async function onDisconnect() {
 }
 
 async function onConnectAgentAI(agentId) {
-  if (!props.channel || !props.channel.id) return;
+  if (!props.chanel || !props.chanel.id) return;
   try {
-    await connectAgentToChannel(props.channel.id, agentId);
-    await fetchSessionStatus(props.channel.session_name);
+    await connectAgentTochanel(props.chanel.id, agentId);
+    await fetchSessionStatus(props.chanel.session_name);
     // Refresh agent aktif
-    const active = await getActiveAgentForChannel(props.channel.id);
+    const active = await getActiveAgentForchanel(props.chanel.id);
     activeAgentId.value = active ? active.agent_id : null;
     showToast({
-      message: "Agent AI berhasil dihubungkan ke channel!",
+      message: "Agent AI berhasil dihubungkan ke chanel!",
       type: "success",
     });
   } catch (err) {
@@ -487,15 +487,15 @@ async function onConnectAgentAI(agentId) {
 }
 
 async function onDisconnectAgentAI(agentId) {
-  if (!props.channel || !props.channel.id) return;
+  if (!props.chanel || !props.chanel.id) return;
   try {
-    await disconnectAgentFromChannel(props.channel.id, agentId);
-    await fetchSessionStatus(props.channel.session_name);
+    await disconnectAgentFromchanel(props.chanel.id, agentId);
+    await fetchSessionStatus(props.chanel.session_name);
     // Refresh agent aktif
-    const active = await getActiveAgentForChannel(props.channel.id);
+    const active = await getActiveAgentForchanel(props.chanel.id);
     activeAgentId.value = active ? active.agent_id : null;
     showToast({
-      message: "Agent AI berhasil diputuskan dari channel!",
+      message: "Agent AI berhasil diputuskan dari chanel!",
       type: "success",
     });
   } catch (err) {
@@ -507,7 +507,7 @@ async function onDisconnectAgentAI(agentId) {
 }
 </script>
 <style scoped>
-.edit-channel-form {
+.edit-chanel-form {
   margin-top: 32px;
   background: #fff;
   border-radius: 8px;

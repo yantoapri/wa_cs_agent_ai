@@ -1,18 +1,18 @@
 <template>
   <div class="p-8">
-    <h2 class="mt-0 text-xl font-bold">Channel</h2>
+    <h2 class="mt-0 text-xl font-bold">chanel</h2>
     <button
       @click="showForm = !showForm"
       class="mb-6 px-5 py-2.5 bg-blue-500 text-white rounded-lg cursor-pointer text-base border-none"
     >
-      Buat Channel
+      Buat chanel
     </button>
-    <ChannelModal :show="showForm" @close="showForm = false">
-      <form @submit.prevent="addChannel">
+    <chanelModal :show="showForm" @close="showForm = false">
+      <form @submit.prevent="addchanel">
         <input
-          v-model="newChannel.name"
+          v-model="newchanel.name"
           type="text"
-          placeholder="Nama Channel"
+          placeholder="Nama chanel"
           required
           class="px-3 mb-3 py-2 text-base border border-gray-300 rounded w-full"
         />
@@ -24,38 +24,38 @@
           Simpan
         </button>
       </form>
-    </ChannelModal>
+    </chanelModal>
     <div class="mt-6">
       <div
         class="flex items-center mb-4 relative cursor-pointer"
-        v-for="(channel, idx) in channels"
+        v-for="(chanel, idx) in chanels"
         :key="idx"
-        @click="selectChannel(channel)"
+        @click="selectchanel(chanel)"
       >
         <img
-          :src="channel.icon_url || '/default-channel-icon.png'"
+          :src="chanel.icon_url || '/default-chanel-icon.png'"
           class="w-10 h-10"
         />
         <div class="ml-4 flex-1">
-          <div class="font-medium">{{ channel.name || "Unnamed Channel" }}</div>
+          <div class="font-medium">{{ chanel.name || "Unnamed chanel" }}</div>
           <div class="text-gray-500">
-            {{ channel.whatsapp_number || "Belum terhubung" }}
+            {{ chanel.whatsapp_number || "Belum terhubung" }}
           </div>
         </div>
       </div>
       <div
-        v-if="!channels || channels.length === 0"
+        v-if="!chanels || chanels.length === 0"
         class="text-gray-500 text-center py-8"
       >
-        No channels found. Create your first channel above.
+        No chanels found. Create your first chanel above.
       </div>
     </div>
   </div>
 </template>
 <script setup>
 import { ref, onMounted, watch } from "vue";
-import { useChannelStore } from "~/composables/useChannels";
-import ChannelModal from "~/components/ChannelModal.vue";
+import { useChanelstore } from "~/composables/useChanels";
+import chanelModal from "~/components/chanelModal.vue";
 import { useToast } from "~/composables/useToast";
 // HAPUS: import { useRuntimeConfig } from "#app";
 const { showToast } = useToast();
@@ -63,17 +63,17 @@ const { showToast } = useToast();
 // HAPUS: const runtimeConfig = useRuntimeConfig();
 
 const {
-  channels,
+  chanels,
   loading,
   error,
-  fetchChannels,
-  addChannel: addChannelToDB,
-  updateChannel,
-  deleteChannel,
-} = useChannelStore();
+  fetchchanels,
+  addchanel: addchanelToDB,
+  updatechanel,
+  deletechanel,
+} = useChanelstore();
 const showForm = ref(false);
-const newChannel = ref({ name: "", type: "whatsapp" });
-const emit = defineEmits(["select-channel"]);
+const newchanel = ref({ name: "", type: "whatsapp" });
+const emit = defineEmits(["select-chanel"]);
 
 const props = defineProps({
   refreshKey: { type: Number, default: 0 }, // untuk trigger refresh dari parent
@@ -91,19 +91,19 @@ const wahaAuth =
     ? "Basic " + btoa(`${wahaUsername}:${wahaPassword}`)
     : undefined;
 
-async function addChannel() {
+async function addchanel() {
   try {
     let iconUrl = "";
-    if (newChannel.value.type === "whatsapp") {
+    if (newchanel.value.type === "whatsapp") {
       iconUrl = "https://img.icons8.com/color/48/000000/whatsapp--v1.png";
-    } else if (newChannel.value.type === "messenger") {
+    } else if (newchanel.value.type === "messenger") {
       iconUrl =
         "https://img.icons8.com/color/48/000000/facebook-messenger--v1.png";
     }
 
-    await addChannelToDB({
-      name: newChannel.value.name,
-      type: newChannel.value.type,
+    await addchanelToDB({
+      name: newchanel.value.name,
+      type: newchanel.value.type,
       icon_url: iconUrl,
       whatsapp_number: "",
       takeover_ai: false,
@@ -112,16 +112,16 @@ async function addChannel() {
       maksimum_balasan_ai: 0,
     });
 
-    await fetchChannels();
+    await fetchchanels();
 
-    // Jika channel WhatsApp, buat session baru di WAHA
-    if (newChannel.value.type === "whatsapp") {
+    // Jika chanel WhatsApp, buat session baru di WAHA
+    if (newchanel.value.type === "whatsapp") {
       const webhookUrl = `${publicBaseUrl}/api/waha-webhook`;
-      // Cari channel yang baru saja dibuat
-      const createdChannel = channels.value.find(
-        (c) => c.name === newChannel.value.name && c.type === "whatsapp"
+      // Cari chanel yang baru saja dibuat
+      const createdchanel = chanels.value.find(
+        (c) => c.name === newchanel.value.name && c.type === "whatsapp"
       );
-      if (createdChannel) {
+      if (createdchanel) {
         try {
           const res = await fetch(`${baseUrl}/api/sessions`, {
             method: "POST",
@@ -130,7 +130,7 @@ async function addChannel() {
               "X-Api-Key": wahaApiKey,
             },
             body: JSON.stringify({
-              name: createdChannel.name,
+              name: createdchanel.name,
               config: {
                 webhooks: [
                   {
@@ -145,7 +145,7 @@ async function addChannel() {
                     customHeaders: null,
                   },
                 ],
-                metadata: { channel_id: createdChannel.id },
+                metadata: { chanel_id: createdchanel.id },
                 noweb: {
                   markOnline: true,
                   store: {
@@ -158,8 +158,8 @@ async function addChannel() {
           });
           const sessionResp = await res.json();
           if (sessionResp && sessionResp.name) {
-            // Update channel di database, set session_name
-            await updateChannel(createdChannel.id, {
+            // Update chanel di database, set session_name
+            await updatechanel(createdchanel.id, {
               session_name: sessionResp.name,
             });
           }
@@ -169,20 +169,20 @@ async function addChannel() {
       }
     }
 
-    newChannel.value = { name: "", type: "whatsapp" };
+    newchanel.value = { name: "", type: "whatsapp" };
     showForm.value = false;
   } catch (err) {
-    console.error("Error adding channel:", err);
-    showToast({ message: "Gagal menambahkan channel", type: "error" });
+    console.error("Error adding chanel:", err);
+    showToast({ message: "Gagal menambahkan chanel", type: "error" });
   }
 }
 
-async function removeChannel(channel) {
+async function removechanel(chanel) {
   try {
-    // Jika channel WhatsApp dan punya session_name, hapus session di WAHA
-    if (channel.type === "whatsapp" && channel.session_name) {
+    // Jika chanel WhatsApp dan punya session_name, hapus session di WAHA
+    if (chanel.type === "whatsapp" && chanel.session_name) {
       try {
-        await fetch(`${baseUrl}/api/sessions/${channel.session_name}`, {
+        await fetch(`${baseUrl}/api/sessions/${chanel.session_name}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -193,18 +193,18 @@ async function removeChannel(channel) {
         console.error("Gagal menghapus session WAHA:", e);
       }
     }
-    await deleteChannel(channel.id);
-    await fetchChannels();
+    await deletechanel(chanel.id);
+    await fetchchanels();
   } catch (err) {
-    console.error("Error deleting channel:", err);
-    showToast({ message: "Gagal menghapus channel", type: "error" });
+    console.error("Error deleting chanel:", err);
+    showToast({ message: "Gagal menghapus chanel", type: "error" });
   }
 }
 
-function selectChannel(channel) {
-  // Start session di WAHA jika channel bertipe WhatsApp
-  if (channel.type === "whatsapp") {
-    fetch(`${baseUrl}/api/sessions/${channel.session_name}/start`, {
+function selectchanel(chanel) {
+  // Start session di WAHA jika chanel bertipe WhatsApp
+  if (chanel.type === "whatsapp") {
+    fetch(`${baseUrl}/api/sessions/${chanel.session_name}/start`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -215,31 +215,31 @@ function selectChannel(channel) {
     });
   }
 
-  emit("select-channel", channel);
+  emit("select-chanel", chanel);
 }
 
-// Function to update WhatsApp number for a channel
-async function updateChannelWhatsAppNumber(channelId, whatsappNumber) {
+// Function to update WhatsApp number for a chanel
+async function updatechanelWhatsAppNumber(chanelId, whatsappNumber) {
   try {
-    const { updateWhatsAppNumber } = useChannelStore();
-    await updateWhatsAppNumber(channelId, whatsappNumber);
+    const { updateWhatsAppNumber } = useChanelstore();
+    await updateWhatsAppNumber(chanelId, whatsappNumber);
   } catch (err) {
     console.error("Error updating WhatsApp number:", err);
   }
 }
 
 defineExpose({
-  updateChannelWhatsAppNumber,
+  updatechanelWhatsAppNumber,
 });
 
 onMounted(async () => {
-  await fetchChannels();
+  await fetchchanels();
 });
 
 watch(
   () => props.refreshKey,
   async () => {
-    await fetchChannels();
+    await fetchchanels();
   }
 );
 </script>

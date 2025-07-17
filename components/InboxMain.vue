@@ -146,7 +146,7 @@ const sendMessage = async () => {
     await addMessage({
       sender_id: props.selectedConversation.agent.id,
       contact_id: props.selectedConversation.contact.id,
-      channel_id: props.selectedConversation.channel.id,
+      chanel_id: props.selectedConversation.chanel.id,
       content: newMessage.value.trim(),
       direction: "outbound",
       message_type: "text",
@@ -168,13 +168,13 @@ watch(
       await fetchMessagesByGroup(
         newConversation.agent.id,
         newConversation.contact.id,
-        newConversation.channel.id
+        newConversation.chanel.id
       );
       // Mark messages as read when conversation is selected
       await markMessagesAsRead(
         newConversation.agent.id,
         newConversation.contact.id,
-        newConversation.channel.id
+        newConversation.chanel.id
       );
     }
   },

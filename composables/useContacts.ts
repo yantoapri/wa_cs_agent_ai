@@ -32,8 +32,8 @@ export const useContactStore = () => {
     }
   };
 
-  // Get contacts by channel
-  const fetchContactsByChannel = async (channelId: string) => {
+  // Get contacts by chanel
+  const fetchContactsBychanel = async (chanelId: string) => {
     loading.value = true;
     error.value = null;
 
@@ -41,7 +41,7 @@ export const useContactStore = () => {
       const { data, error: fetchError } = await supabase
         .from("contacts")
         .select("*")
-        .eq("channel_id", channelId)
+        .eq("chanel_id", chanelId)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
@@ -193,7 +193,7 @@ export const useContactStore = () => {
     loading: readonly(loading),
     error: readonly(error),
     fetchContacts,
-    fetchContactsByChannel,
+    fetchContactsBychanel,
     addContact,
     updateContact,
     deleteContact,

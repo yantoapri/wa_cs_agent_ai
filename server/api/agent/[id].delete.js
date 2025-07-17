@@ -11,8 +11,8 @@ export default defineEventHandler(async (event) => {
   // Hapus dari tabel agent_ai_configs
   await client.from("agent_ai_configs").delete().eq("agent_id", id);
 
-  // Hapus dari tabel channel_agent_connections
-  await client.from("channel_agent_connections").delete().eq("agent_id", id);
+  // Hapus dari tabel chanel_agent_connections
+  await client.from("chanel_agent_connections").delete().eq("agent_id", id);
 
   // Hapus dari tabel messages
   await client.from("messages").delete().eq("agent_id", id);

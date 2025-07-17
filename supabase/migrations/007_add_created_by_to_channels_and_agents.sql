@@ -1,20 +1,20 @@
--- Add created_by to channels and agents
-ALTER TABLE channels ADD COLUMN created_by UUID REFERENCES users(id);
+-- Add created_by to chanels and agents
+ALTER TABLE chanels ADD COLUMN created_by UUID REFERENCES users(id);
 ALTER TABLE agents ADD COLUMN created_by UUID REFERENCES users(id);
 
--- Update RLS policies for channels
-DROP POLICY IF EXISTS "Enable read access for all users" ON channels;
-DROP POLICY IF EXISTS "Enable insert for authenticated users" ON channels;
-DROP POLICY IF EXISTS "Enable update for authenticated users" ON channels;
-DROP POLICY IF EXISTS "Enable delete for authenticated users" ON channels;
+-- Update RLS policies for chanels
+DROP POLICY IF EXISTS "Enable read access for all users" ON chanels;
+DROP POLICY IF EXISTS "Enable insert for authenticated users" ON chanels;
+DROP POLICY IF EXISTS "Enable update for authenticated users" ON chanels;
+DROP POLICY IF EXISTS "Enable delete for authenticated users" ON chanels;
 
-CREATE POLICY "Channels: Users can read their own channels" ON channels
+CREATE POLICY "chanels: Users can read their own chanels" ON chanels
   FOR SELECT USING (created_by = auth.uid());
-CREATE POLICY "Channels: Users can insert their own channels" ON channels
+CREATE POLICY "chanels: Users can insert their own chanels" ON chanels
   FOR INSERT WITH CHECK (created_by = auth.uid());
-CREATE POLICY "Channels: Users can update their own channels" ON channels
+CREATE POLICY "chanels: Users can update their own chanels" ON chanels
   FOR UPDATE USING (created_by = auth.uid());
-CREATE POLICY "Channels: Users can delete their own channels" ON channels
+CREATE POLICY "chanels: Users can delete their own chanels" ON chanels
   FOR DELETE USING (created_by = auth.uid());
 
 -- Update RLS policies for agents

@@ -12,22 +12,22 @@ export default defineEventHandler(async (event) => {
     runtimeConfig.supabaseServiceRoleKey
   );
 
-  // Ambil channel_id dari metadata jika ada
-  const metaChannelId = body?.metadata?.channel_id || null;
-  // Ambil channel_id dari param URL jika ada
-  const urlChannelId =
-    event.context?.params?.channel_id || event.context?.params?.id || null;
+  // Ambil chanel_id dari metadata jika ada
+  const metachanelId = body?.metadata?.chanel_id || null;
+  // Ambil chanel_id dari param URL jika ada
+  const urlchanelId =
+    event.context?.params?.chanel_id || event.context?.params?.id || null;
   // Format baru: body langsung berisi event object
   const meId = body?.me?.id?.replace("@c.us", "") || null;
   const payloadBody = body?.payload?.body || null;
   const payloadFrom = body?.payload?.from?.replace("@c.us", "") || null;
-  // Gunakan channel_id dari metadata, lalu URL param, lalu meId
-  const channelIdToUse = metaChannelId;
-  // Error handling jika channel_id dan meId tidak ada
-  if (!channelIdToUse) {
+  // Gunakan chanel_id dari metadata, lalu URL param, lalu meId
+  const chanelIdToUse = metachanelId;
+  // Error handling jika chanel_id dan meId tidak ada
+  if (!chanelIdToUse) {
     return {
       status: "error",
-      error: "channel_id tidak ditemukan di URL maupun body event (me.id)",
+      error: "chanel_id tidak ditemukan di URL maupun body event (me.id)",
     };
   }
 
@@ -71,36 +71,36 @@ export default defineEventHandler(async (event) => {
   // --- END PROSES CEK DAN SIMPAN CONTACT ---
 
   // Ambil agent_id dari conn (nanti di bawah), tapi pastikan proses limit balasan AI dilakukan setelah dapat contact_id dan agent_id
-  // 1. Cari agentai yang aktif di channel_agent_connections
+  // 1. Cari agentai yang aktif di chanel_agent_connections
   const { data: conn, error: connErr } = await client
-    .from("channel_agent_connections")
+    .from("chanel_agent_connections")
     .select("agent_id")
-    .eq("channel_id", channelIdToUse)
+    .eq("chanel_id", chanelIdToUse)
     .eq("is_active", true)
     .maybeSingle();
   if (connErr || !conn || !conn.agent_id) {
-    console.log("[WAHA Webhook] Tidak ada agent aktif di channel", {
+    console.log("[WAHA Webhook] Tidak ada agent aktif di chanel", {
       meId,
-      channel_id: channelIdToUse,
+      chanel_id: chanelIdToUse,
       agent_id: conn?.agent_id,
     });
     return { status: "ok", results: [] };
   }
 
   // --- PROSES LIMIT BALASAN AI ---
-  // Ambil data channel (maksimum_balasan_ai, limit_balasan_ai)
-  const { data: channelDataLimit, error: channelErr } = await client
-    .from("channels")
+  // Ambil data chanel (maksimum_balasan_ai, limit_balasan_ai)
+  const { data: chanelDataLimit, error: chanelErr } = await client
+    .from("chanels")
     .select("maksimum_balasan_ai, limit_balasan_ai")
-    .eq("id", channelIdToUse)
+    .eq("id", chanelIdToUse)
     .maybeSingle();
-  if (channelErr) {
+  if (chanelErr) {
     console.log(
-      "[WAHA Webhook] Gagal ambil data channel untuk limit balasan",
-      channelErr
+      "[WAHA Webhook] Gagal ambil data chanel untuk limit balasan",
+      chanelErr
     );
   }
-  if (channelDataLimit && channelDataLimit.limit_balasan_ai) {
+  if (chanelDataLimit && chanelDataLimit.limit_balasan_ai) {
     // Hitung jumlah message untuk contact_id dan agent_id
     const { count, error: countErr } = await client
       .from("messages")
@@ -115,16 +115,16 @@ export default defineEventHandler(async (event) => {
     }
     if (
       typeof count === "number" &&
-      count >= channelDataLimit.maksimum_balasan_ai
+      count >= chanelDataLimit.maksimum_balasan_ai
     ) {
       // Sudah mencapai limit, kirim peringatan ke WAHA
       try {
-        const { data: channelData } = await client
-          .from("channels")
+        const { data: chanelData } = await client
+          .from("chanels")
           .select("session_name")
-          .eq("id", channelIdToUse)
+          .eq("id", chanelIdToUse)
           .maybeSingle();
-        const sessionName = channelData?.session_name;
+        const sessionName = chanelData?.session_name;
         const warningText =
           "Limit balasan AI untuk nomor ini telah tercapai. Silakan hubungi admin untuk membuka limit.";
         await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
@@ -149,7 +149,7 @@ export default defineEventHandler(async (event) => {
           {
             contact_id,
             agent_id: conn.agent_id,
-            message: `Limit balasan AI (${channelDataLimit.maksimum_balasan_ai}) sudah tercapai untuk contact ini.`,
+            message: `Limit balasan AI (${chanelDataLimit.maksimum_balasan_ai}) sudah tercapai untuk contact ini.`,
           },
         ],
       };
@@ -179,12 +179,12 @@ export default defineEventHandler(async (event) => {
   try {
     // Pastikan sessionNameForPresence sudah terisi
     if (!sessionNameForPresence) {
-      const { data: channelDataPresence } = await client
-        .from("channels")
+      const { data: chanelDataPresence } = await client
+        .from("chanels")
         .select("session_name")
-        .eq("id", channelIdToUse)
+        .eq("id", chanelIdToUse)
         .maybeSingle();
-      sessionNameForPresence = channelDataPresence?.session_name;
+      sessionNameForPresence = chanelDataPresence?.session_name;
     }
 
     // Kirim efek mengetik (presence: typing) sebelum proses AI
@@ -291,7 +291,7 @@ export default defineEventHandler(async (event) => {
             method: "POST",
             body: {
               agent_id: conn.agent_id,
-              chanel_id: channelIdToUse,
+              chanel_id: chanelIdToUse,
               contact_id,
               message_type: "image",
               media_url: imgUrl,
@@ -300,7 +300,7 @@ export default defineEventHandler(async (event) => {
           });
           console.log("[WAHA Webhook] Save Image Message Response:", {
             agent_id: conn.agent_id,
-            chanel_id: channelIdToUse,
+            chanel_id: chanelIdToUse,
             contact_id,
             message_type: "image",
             media_url: imgUrl,
@@ -332,7 +332,7 @@ export default defineEventHandler(async (event) => {
           method: "POST",
           body: {
             agent_id: conn.agent_id,
-            chanel_id: channelIdToUse,
+            chanel_id: chanelIdToUse,
             contact_id,
             message_type: "text",
             media_url: null,
@@ -343,7 +343,7 @@ export default defineEventHandler(async (event) => {
         if (messageRes && messageRes.error === false) {
           console.log("[WAHA Webhook] Save Text Message Response:", {
             agent_id: conn.agent_id,
-            channel_id: channelIdToUse,
+            chanel_id: chanelIdToUse,
             contact_id,
             message_type: "text",
             media_url: null,

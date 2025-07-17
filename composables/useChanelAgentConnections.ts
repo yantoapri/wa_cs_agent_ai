@@ -1,8 +1,8 @@
 import { ref, readonly } from "vue";
-import type { ChannelAgentConnection } from "../types/supabase";
+import type { chanelAgentConnection } from "../types/supabase";
 
-export const useChannelAgentConnectionStore = () => {
-  const connections = ref<ChannelAgentConnection[]>([]);
+export const usechanelAgentConnectionStore = () => {
+  const connections = ref<chanelAgentConnection[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -15,7 +15,7 @@ export const useChannelAgentConnectionStore = () => {
 
     try {
       const { data, error: fetchError } = await supabase
-        .from("channel_agent_connections")
+        .from("chanel_agent_connections")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -31,16 +31,16 @@ export const useChannelAgentConnectionStore = () => {
     }
   };
 
-  // Get connections by channel
-  const fetchConnectionsByChannel = async (channelId: string) => {
+  // Get connections by chanel
+  const fetchConnectionsBychanel = async (chanelId: string) => {
     loading.value = true;
     error.value = null;
 
     try {
       const { data, error: fetchError } = await supabase
-        .from("channel_agent_connections")
+        .from("chanel_agent_connections")
         .select("*")
-        .eq("channel_id", channelId)
+        .eq("chanel_id", chanelId)
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -57,13 +57,13 @@ export const useChannelAgentConnectionStore = () => {
     }
   };
 
-  // Get active agent for a channel
-  const getActiveAgentForChannel = async (channelId: string) => {
+  // Get active agent for a chanel
+  const getActiveAgentForchanel = async (chanelId: string) => {
     try {
       const { data, error: fetchError } = await supabase
-        .from("channel_agent_connections")
+        .from("chanel_agent_connections")
         .select("*")
-        .eq("channel_id", channelId)
+        .eq("chanel_id", chanelId)
         .eq("is_active", true)
         .single();
 
@@ -78,25 +78,25 @@ export const useChannelAgentConnectionStore = () => {
     }
   };
 
-  // Connect agent to channel (with automatic deactivation of other agents)
-  const connectAgentToChannel = async (channelId: string, agentId: string) => {
+  // Connect agent to chanel (with automatic deactivation of other agents)
+  const connectAgentTochanel = async (chanelId: string, agentId: string) => {
     loading.value = true;
     error.value = null;
 
     try {
-      // First, deactivate all other agents for this channel
+      // First, deactivate all other agents for this chanel
       const { error: deactivateError } = await supabase
-        .from("channel_agent_connections")
+        .from("chanel_agent_connections")
         .update({ is_active: false })
-        .eq("channel_id", channelId);
+        .eq("chanel_id", chanelId);
 
       if (deactivateError) throw deactivateError;
 
       // Check if connection already exists
       const { data: existingConnection, error: checkError } = await supabase
-        .from("channel_agent_connections")
+        .from("chanel_agent_connections")
         .select("*")
-        .eq("channel_id", channelId)
+        .eq("chanel_id", chanelId)
         .eq("agent_id", agentId)
         .single();
 
@@ -105,7 +105,7 @@ export const useChannelAgentConnectionStore = () => {
       if (existingConnection) {
         // Update existing connection to active
         const { data, error: updateError } = await supabase
-          .from("channel_agent_connections")
+          .from("chanel_agent_connections")
           .update({ is_active: true })
           .eq("id", existingConnection.id)
           .select()
@@ -127,10 +127,10 @@ export const useChannelAgentConnectionStore = () => {
       } else {
         // Create new connection
         const { data, error: insertError } = await supabase
-          .from("channel_agent_connections")
+          .from("chanel_agent_connections")
           .insert([
             {
-              channel_id: channelId,
+              chanel_id: chanelId,
               agent_id: agentId,
               is_active: true,
             },
@@ -153,9 +153,9 @@ export const useChannelAgentConnectionStore = () => {
     }
   };
 
-  // Disconnect agent from channel
-  const disconnectAgentFromChannel = async (
-    channelId: string,
+  // Disconnect agent from chanel
+  const disconnectAgentFromchanel = async (
+    chanelId: string,
     agentId: string
   ) => {
     loading.value = true;
@@ -163,16 +163,16 @@ export const useChannelAgentConnectionStore = () => {
 
     try {
       const { error: deleteError } = await supabase
-        .from("channel_agent_connections")
+        .from("chanel_agent_connections")
         .delete()
-        .eq("channel_id", channelId)
+        .eq("chanel_id", chanelId)
         .eq("agent_id", agentId);
 
       if (deleteError) throw deleteError;
 
       // Remove from local state
       connections.value = connections.value.filter(
-        (conn) => !(conn.channel_id === channelId && conn.agent_id === agentId)
+        (conn) => !(conn.chanel_id === chanelId && conn.agent_id === agentId)
       );
     } catch (err) {
       error.value =
@@ -184,16 +184,16 @@ export const useChannelAgentConnectionStore = () => {
     }
   };
 
-  // Check if agent is connected to channel
-  const isAgentConnectedToChannel = async (
-    channelId: string,
+  // Check if agent is connected to chanel
+  const isAgentConnectedTochanel = async (
+    chanelId: string,
     agentId: string
   ) => {
     try {
       const { data, error: fetchError } = await supabase
-        .from("channel_agent_connections")
+        .from("chanel_agent_connections")
         .select("is_active")
-        .eq("channel_id", channelId)
+        .eq("chanel_id", chanelId)
         .eq("agent_id", agentId)
         .single();
 
@@ -208,15 +208,15 @@ export const useChannelAgentConnectionStore = () => {
     }
   };
 
-  // Get all channels for an agent
-  const getChannelsForAgent = async (agentId: string) => {
+  // Get all chanels for an agent
+  const getchanelsForAgent = async (agentId: string) => {
     try {
       const { data, error: fetchError } = await supabase
-        .from("channel_agent_connections")
+        .from("chanel_agent_connections")
         .select(
           `
           *,
-          channels (
+          chanels (
             id,
             name,
             type,
@@ -232,17 +232,17 @@ export const useChannelAgentConnectionStore = () => {
       return data || [];
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : "Failed to fetch agent channels";
-      console.error("Error fetching agent channels:", err);
+        err instanceof Error ? err.message : "Failed to fetch agent chanels";
+      console.error("Error fetching agent chanels:", err);
       throw err;
     }
   };
 
-  // Get all agents for a channel
-  const getAgentsForChannel = async (channelId: string) => {
+  // Get all agents for a chanel
+  const getAgentsForchanel = async (chanelId: string) => {
     try {
       const { data, error: fetchError } = await supabase
-        .from("channel_agent_connections")
+        .from("chanel_agent_connections")
         .select(
           `
           *,
@@ -255,15 +255,15 @@ export const useChannelAgentConnectionStore = () => {
           )
         `
         )
-        .eq("channel_id", channelId);
+        .eq("chanel_id", chanelId);
 
       if (fetchError) throw fetchError;
 
       return data || [];
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : "Failed to fetch channel agents";
-      console.error("Error fetching channel agents:", err);
+        err instanceof Error ? err.message : "Failed to fetch chanel agents";
+      console.error("Error fetching chanel agents:", err);
       throw err;
     }
   };
@@ -273,12 +273,12 @@ export const useChannelAgentConnectionStore = () => {
     loading: readonly(loading),
     error: readonly(error),
     fetchConnections,
-    fetchConnectionsByChannel,
-    getActiveAgentForChannel,
-    connectAgentToChannel,
-    disconnectAgentFromChannel,
-    isAgentConnectedToChannel,
-    getChannelsForAgent,
-    getAgentsForChannel,
+    fetchConnectionsBychanel,
+    getActiveAgentForchanel,
+    connectAgentTochanel,
+    disconnectAgentFromchanel,
+    isAgentConnectedTochanel,
+    getchanelsForAgent,
+    getAgentsForchanel,
   };
 };

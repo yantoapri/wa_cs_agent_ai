@@ -4,8 +4,8 @@
 CREATE VIEW conversation_summary AS
 SELECT 
     c.id,
-    c.channel_id,
-    ch.name as channel_name,
+    c.chanel_id,
+    ch.name as chanel_name,
     c.contact_id,
     co.name as contact_name,
     c.contact_phone,
@@ -20,7 +20,7 @@ SELECT
     c.created_at,
     c.updated_at
 FROM conversations c
-LEFT JOIN channels ch ON c.channel_id = ch.id
+LEFT JOIN chanels ch ON c.chanel_id = ch.id
 LEFT JOIN contacts co ON c.contact_id = co.id
 LEFT JOIN agents a ON c.assigned_agent_id = a.id;
 
@@ -42,24 +42,24 @@ LEFT JOIN conversation_metrics cm ON c.id = cm.conversation_id AND cm.agent_id =
 WHERE a.is_active = true
 GROUP BY a.id, a.name, a.type;
 
--- View for channel statistics
-CREATE VIEW channel_statistics AS
+-- View for chanel statistics
+CREATE VIEW chanel_statistics AS
 SELECT 
-    ch.id as channel_id,
-    ch.name as channel_name,
-    ch.type as channel_type,
+    ch.id as chanel_id,
+    ch.name as chanel_name,
+    ch.type as chanel_type,
     COUNT(DISTINCT c.id) as total_conversations,
     COUNT(DISTINCT CASE WHEN c.unread_count > 0 THEN c.id END) as unread_conversations,
     COUNT(DISTINCT co.id) as total_contacts,
     COUNT(DISTINCT a.id) as connected_agents,
     ws.status as whatsapp_status,
     ws.is_authenticated as whatsapp_authenticated
-FROM channels ch
-LEFT JOIN conversations c ON ch.id = c.channel_id
-LEFT JOIN contacts co ON ch.id = co.channel_id
-LEFT JOIN channel_agent_connections cac ON ch.id = cac.channel_id
+FROM chanels ch
+LEFT JOIN conversations c ON ch.id = c.chanel_id
+LEFT JOIN contacts co ON ch.id = co.chanel_id
+LEFT JOIN chanel_agent_connections cac ON ch.id = cac.chanel_id
 LEFT JOIN agents a ON cac.agent_id = a.id
-LEFT JOIN whatsapp_sessions ws ON ch.id = ws.channel_id AND ws.session_name = 'default'
+LEFT JOIN whatsapp_sessions ws ON ch.id = ws.chanel_id AND ws.session_name = 'default'
 WHERE ch.is_active = true
 GROUP BY ch.id, ch.name, ch.type, ws.status, ws.is_authenticated;
 
@@ -197,8 +197,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to get auto-reply rules for a channel
-CREATE OR REPLACE FUNCTION get_auto_reply_rules(channel_uuid UUID)
+-- Function to get auto-reply rules for a chanel
+CREATE OR REPLACE FUNCTION get_auto_reply_rules(chanel_uuid UUID)
 RETURNS TABLE (
     rule_id UUID,
     agent_id UUID,
@@ -220,7 +220,7 @@ BEGIN
         arr.priority
     FROM auto_reply_rules arr
     LEFT JOIN agents a ON arr.agent_id = a.id
-    WHERE arr.channel_id = channel_uuid 
+    WHERE arr.chanel_id = chanel_uuid 
     AND arr.is_active = true
     ORDER BY arr.priority DESC;
 END;

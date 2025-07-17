@@ -1,23 +1,23 @@
 import { ref, readonly } from "vue";
-import type { Channel } from "../types/supabase";
+import type { chanel } from "../types/supabase";
 import { useSupabaseUser } from "#imports";
 
-export const useChannelStore = () => {
-  const channels = ref<Channel[]>([]);
+export const useChanelstore = () => {
+  const chanels = ref<chanel[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
   const user = useSupabaseUser();
 
   const supabase = useSupabaseClient();
 
-  // Get all channels
-  const fetchChannels = async () => {
+  // Get all chanels
+  const fetchchanels = async () => {
     loading.value = true;
     error.value = null;
 
     try {
       const { data, error: fetchError } = await supabase
-        .from("channels")
+        .from("chanels")
         .select("*")
         .eq("is_active", true)
         .eq("created_by", user.value?.id)
@@ -25,29 +25,29 @@ export const useChannelStore = () => {
 
       if (fetchError) throw fetchError;
 
-      channels.value = data || [];
+      chanels.value = data || [];
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : "Failed to fetch channels";
-      console.error("Error fetching channels:", err);
+        err instanceof Error ? err.message : "Failed to fetch chanels";
+      console.error("Error fetching chanels:", err);
     } finally {
       loading.value = false;
     }
   };
 
-  // Add new channel
-  const addChannel = async (
-    channelData: Omit<Channel, "id" | "created_at" | "updated_at">
+  // Add new chanel
+  const addchanel = async (
+    chanelData: Omit<chanel, "id" | "created_at" | "updated_at">
   ) => {
     loading.value = true;
     error.value = null;
 
     try {
       const { data, error: insertError } = await supabase
-        .from("channels")
+        .from("chanels")
         .insert([
           {
-            ...channelData,
+            ...chanelData,
             is_active: true,
             created_by: user.value?.id,
           },
@@ -57,26 +57,25 @@ export const useChannelStore = () => {
 
       if (insertError) throw insertError;
 
-      channels.value.unshift(data);
+      chanels.value.unshift(data);
       return data;
     } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to add channel";
-      console.error("Error adding channel:", err);
+      error.value = err instanceof Error ? err.message : "Failed to add chanel";
+      console.error("Error adding chanel:", err);
       throw err;
     } finally {
       loading.value = false;
     }
   };
 
-  // Update channel
-  const updateChannel = async (id: string, updates: Partial<Channel>) => {
+  // Update chanel
+  const updatechanel = async (id: string, updates: Partial<chanel>) => {
     loading.value = true;
     error.value = null;
 
     try {
       const { data, error: updateError } = await supabase
-        .from("channels")
+        .from("chanels")
         .update(updates)
         .eq("id", id)
         .select()
@@ -84,51 +83,51 @@ export const useChannelStore = () => {
 
       if (updateError) throw updateError;
 
-      const index = channels.value.findIndex((channel) => channel.id === id);
+      const index = chanels.value.findIndex((chanel) => chanel.id === id);
       if (index !== -1) {
-        channels.value[index] = data;
+        chanels.value[index] = data;
       }
 
       return data;
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : "Failed to update channel";
-      console.error("Error updating channel:", err);
+        err instanceof Error ? err.message : "Failed to update chanel";
+      console.error("Error updating chanel:", err);
       throw err;
     } finally {
       loading.value = false;
     }
   };
 
-  // Delete channel (soft delete)
-  const deleteChannel = async (id: string) => {
+  // Delete chanel (soft delete)
+  const deletechanel = async (id: string) => {
     loading.value = true;
     error.value = null;
 
     try {
       const { error: deleteError } = await supabase
-        .from("channels")
+        .from("chanels")
         .update({ is_active: false })
         .eq("id", id);
 
       if (deleteError) throw deleteError;
 
-      channels.value = channels.value.filter((channel) => channel.id !== id);
+      chanels.value = chanels.value.filter((chanel) => chanel.id !== id);
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : "Failed to delete channel";
-      console.error("Error deleting channel:", err);
+        err instanceof Error ? err.message : "Failed to delete chanel";
+      console.error("Error deleting chanel:", err);
       throw err;
     } finally {
       loading.value = false;
     }
   };
 
-  // Get channel by ID
-  const getChannelById = async (id: string) => {
+  // Get chanel by ID
+  const getchanelById = async (id: string) => {
     try {
       const { data, error: fetchError } = await supabase
-        .from("channels")
+        .from("chanels")
         .select("*")
         .eq("id", id)
         .single();
@@ -138,32 +137,30 @@ export const useChannelStore = () => {
       return data;
     } catch (err) {
       error.value =
-        err instanceof Error ? err.message : "Failed to fetch channel";
-      console.error("Error fetching channel:", err);
+        err instanceof Error ? err.message : "Failed to fetch chanel";
+      console.error("Error fetching chanel:", err);
       throw err;
     }
   };
 
-  // Update WhatsApp number for channel
+  // Update WhatsApp number for chanel
   const updateWhatsAppNumber = async (
-    channelId: string,
+    chanelId: string,
     whatsappNumber: string
   ) => {
     try {
       const { data, error: updateError } = await supabase
-        .from("channels")
+        .from("chanels")
         .update({ whatsapp_number: whatsappNumber })
-        .eq("id", channelId)
+        .eq("id", chanelId)
         .select()
         .single();
 
       if (updateError) throw updateError;
 
-      const index = channels.value.findIndex(
-        (channel) => channel.id === channelId
-      );
+      const index = chanels.value.findIndex((chanel) => chanel.id === chanelId);
       if (index !== -1) {
-        channels.value[index] = data;
+        chanels.value[index] = data;
       }
 
       return data;
@@ -176,14 +173,14 @@ export const useChannelStore = () => {
   };
 
   return {
-    channels: readonly(channels),
+    chanels: readonly(chanels),
     loading: readonly(loading),
     error: readonly(error),
-    fetchChannels,
-    addChannel,
-    updateChannel,
-    deleteChannel,
-    getChannelById,
+    fetchchanels,
+    addchanel,
+    updatechanel,
+    deletechanel,
+    getchanelById,
     updateWhatsAppNumber,
   };
 };

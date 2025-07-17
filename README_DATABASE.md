@@ -6,7 +6,7 @@ Database schema untuk aplikasi OsmoChat yang menggunakan Supabase sebagai backen
 
 Aplikasi OsmoChat adalah platform chat WhatsApp dengan integrasi AI yang memungkinkan:
 
-- Manajemen channel WhatsApp
+- Manajemen chanel WhatsApp
 - Agent AI dan manusia
 - Auto-reply dan template pesan
 - Analisis performa dan metrik
@@ -21,9 +21,9 @@ Aplikasi OsmoChat adalah platform chat WhatsApp dengan integrasi AI yang memungk
 - Menyimpan data pengguna sistem
 - Digunakan untuk autentikasi dan manajemen user
 
-#### 2. `channels`
+#### 2. `chanels`
 
-- Menyimpan data channel komunikasi (WhatsApp, Messenger, dll)
+- Menyimpan data chanel komunikasi (WhatsApp, Messenger, dll)
 - Konfigurasi takeover AI dan limit balasan
 
 #### 3. `agents`
@@ -39,7 +39,7 @@ Aplikasi OsmoChat adalah platform chat WhatsApp dengan integrasi AI yang memungk
 #### 5. `contacts`
 
 - Data kontak pelanggan
-- Terhubung dengan channel tertentu
+- Terhubung dengan chanel tertentu
 
 #### 6. `conversations`
 
@@ -55,7 +55,7 @@ Aplikasi OsmoChat adalah platform chat WhatsApp dengan integrasi AI yang memungk
 
 #### 8. `whatsapp_sessions`
 
-- Status koneksi WhatsApp per channel
+- Status koneksi WhatsApp per chanel
 - QR code dan autentikasi
 
 #### 9. `whatsapp_message_templates`
@@ -109,15 +109,15 @@ Aplikasi OsmoChat adalah platform chat WhatsApp dengan integrasi AI yang memungk
 
 ### 1. `conversation_summary`
 
-View untuk menampilkan ringkasan percakapan dengan informasi agent dan channel.
+View untuk menampilkan ringkasan percakapan dengan informasi agent dan chanel.
 
 ### 2. `agent_performance`
 
 View untuk analisis performa agent (response time, satisfaction, handover).
 
-### 3. `channel_statistics`
+### 3. `chanel_statistics`
 
-View untuk statistik channel (total conversations, unread, connected agents).
+View untuk statistik chanel (total conversations, unread, connected agents).
 
 ### 4. `ai_conversation_analysis`
 
@@ -137,9 +137,9 @@ Mengambil konfigurasi AI untuk agent tertentu.
 
 Menandai percakapan sebagai sudah dibaca.
 
-### 4. `get_auto_reply_rules(channel_uuid)`
+### 4. `get_auto_reply_rules(chanel_uuid)`
 
-Mengambil aturan auto-reply untuk channel tertentu.
+Mengambil aturan auto-reply untuk chanel tertentu.
 
 ### 5. `log_ai_conversation(...)`
 
@@ -202,11 +202,11 @@ WHERE agent_type = 'ai'
 ORDER BY avg_satisfaction DESC;
 ```
 
-### 3. Ambil statistik channel
+### 3. Ambil statistik chanel
 
 ```sql
-SELECT * FROM channel_statistics
-WHERE channel_type = 'whatsapp';
+SELECT * FROM chanel_statistics
+WHERE chanel_type = 'whatsapp';
 ```
 
 ### 4. Analisis percakapan AI
@@ -229,11 +229,11 @@ const supabase = createClient("YOUR_SUPABASE_URL", "YOUR_SUPABASE_ANON_KEY");
 
 ### 2. Contoh CRUD Operations
 
-#### Ambil Channels
+#### Ambil chanels
 
 ```typescript
-const { data: channels, error } = await supabase
-  .from("channels")
+const { data: chanels, error } = await supabase
+  .from("chanels")
   .select("*")
   .eq("is_active", true);
 ```
@@ -299,7 +299,7 @@ supabase db dump --data-only > backup_$(date +%Y%m%d).sql
 
 ### 2. Monitor Performance
 
-- Gunakan views `agent_performance` dan `channel_statistics`
+- Gunakan views `agent_performance` dan `chanel_statistics`
 - Monitor query performance dengan Supabase dashboard
 - Set up alerts untuk error rates
 

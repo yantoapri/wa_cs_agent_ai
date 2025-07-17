@@ -34,7 +34,7 @@ localStorage.setItem("agentAIList", JSON.stringify(props.aiList));
 const { addAgent, updateAgent, deleteAgent } = useAgentStore();
 ```
 
-#### 3. **ChannelList.vue**
+#### 3. **chanelList.vue**
 
 ```javascript
 // SEBELUM:
@@ -47,19 +47,19 @@ aiList.value = stored ? JSON.parse(stored) : [];
 const { agents, loading, error, fetchAgents } = useAgentStore();
 ```
 
-#### 4. **ChannelMain.vue**
+#### 4. **chanelMain.vue**
 
 ```javascript
 // SEBELUM:
 // Save ke localStorage
-localStorage.setItem("channelList", JSON.stringify(channelList.value));
+localStorage.setItem("chanelList", JSON.stringify(chanelList.value));
 
 // Load dari localStorage
-channelList.value = JSON.parse(localStorage.getItem("channelList")) || [];
+chanelList.value = JSON.parse(localStorage.getItem("chanelList")) || [];
 
 // SESUDAH:
 // Save ke database
-const { addChannel, updateChannel, deleteChannel } = useChannelStore();
+const { addchanel, updatechanel, deletechanel } = useChanelstore();
 ```
 
 #### 5. **AgenAiMain.vue**
@@ -227,9 +227,9 @@ function onSelectConversation(conversation) {
 - Type definitions untuk semua tabel
 - Error handling yang konsisten
 
-### **2. useChannels.ts**
+### **2. useChanels.ts**
 
-- CRUD operations untuk channels
+- CRUD operations untuk chanels
 - WhatsApp integration
 - Auto-reply rules management
 
@@ -243,7 +243,7 @@ function onSelectConversation(conversation) {
 
 - CRUD operations untuk contacts
 - Contact search dan filtering
-- Channel-based contact management
+- chanel-based contact management
 
 ### **5. useConversations.ts**
 
@@ -262,7 +262,7 @@ function onSelectConversation(conversation) {
 ### **Tables Created:**
 
 1. `users` - User management
-2. `channels` - WhatsApp channels
+2. `chanels` - WhatsApp chanels
 3. `agents` - AI and human agents
 4. `contacts` - Contact management
 5. `conversations` - Chat conversations
@@ -311,7 +311,7 @@ npm install @supabase/supabase-js
 
 ### **Manual Testing Checklist:**
 
-- [x] Channel CRUD operations
+- [x] chanel CRUD operations
 - [x] Agent CRUD operations
 - [x] Contact management
 - [x] Conversation creation

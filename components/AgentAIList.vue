@@ -7,7 +7,7 @@
     >
       Buat Agent AI
     </button>
-    <ChannelModal :show="showForm" @close="showForm = false">
+    <chanelModal :show="showForm" @close="showForm = false">
       <form @submit.prevent="addAI">
         <input
           v-model="newAI.name"
@@ -25,7 +25,7 @@
           Simpan
         </button>
       </form>
-    </ChannelModal>
+    </chanelModal>
     <div v-if="loading" class="flex justify-center my-4">
       <svg
         class="animate-spin h-8 w-8 text-blue-600"
@@ -72,7 +72,7 @@
 <script setup>
 import { ref, defineProps, defineEmits, watch } from "vue";
 import { useAgentStore } from "~/composables/useAgents";
-import ChannelModal from "~/components/ChannelModal.vue";
+import chanelModal from "~/components/chanelModal.vue";
 
 const props = defineProps({
   aiList: { type: Array, default: () => [] },

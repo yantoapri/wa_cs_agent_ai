@@ -1,4 +1,4 @@
-export interface Channel {
+export interface chanel {
   id: string;
   name: string;
   type: "whatsapp" | "messenger" | "telegram";
@@ -47,7 +47,7 @@ export interface Contact {
   email?: string;
   phone_number?: string;
   avatar_url?: string;
-  channel_id: string;
+  chanel_id: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -55,7 +55,7 @@ export interface Contact {
 
 export interface Conversation {
   id: string;
-  channel_id: string;
+  chanel_id: string;
   contact_id?: string;
   contact_phone: string;
   contact_name?: string;
@@ -71,7 +71,7 @@ export interface Conversation {
 export interface Message {
   id: string;
   contact_id?: string;
-  channel_id?: string;
+  chanel_id?: string;
   message_type: "text" | "image" | "document" | "audio" | "video";
   direction: "inbound" | "outbound";
   content: string;
@@ -81,9 +81,9 @@ export interface Message {
   created_at: string;
 }
 
-export interface ChannelAgentConnection {
+export interface chanelAgentConnection {
   id: string;
-  channel_id: string;
+  chanel_id: string;
   agent_id: string;
   is_active: boolean;
   created_at: string;

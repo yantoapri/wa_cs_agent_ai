@@ -143,19 +143,16 @@
           </div>
         </div>
       </template>
-      <template v-else-if="tab === 'channel'">
+      <template v-else-if="tab === 'chanel'">
         <div class="flex flex-1 min-h-0">
           <div
             class="w-80 bg-white border-r border-gray-200 py-6 flex flex-col items-stretch overflow-y-auto"
           >
-            <ChannelList
-              ref="channelListRef"
-              @select-channel="onSelectChannel"
-            />
+            <chanelList ref="chanelListRef" @select-chanel="onSelectchanel" />
           </div>
           <div class="flex-1 flex flex-col bg-gray-100">
-            <ChannelMain
-              :channel="selectedChannel"
+            <chanelMain
+              :chanel="selectedchanel"
               @update-whatsapp-number="onUpdateWhatsAppNumber"
             />
           </div>
@@ -184,19 +181,19 @@ import { useSupabaseUser, useSupabaseClient } from "#imports";
 import { useRouter } from "vue-router";
 import InboxList from "~/components/InboxList.vue";
 import KontakList from "~/components/KontakList.vue";
-import ChannelList from "~/components/ChannelList.vue";
+import chanelList from "~/components/chanelList.vue";
 import AgentAIList from "~/components/AgentAIList.vue";
 import AgentManusiaList from "~/components/AgentManusiaList.vue";
 import InboxMain from "~/components/InboxMain.vue";
 import KontakMain from "~/components/KontakMain.vue";
-import ChannelMain from "~/components/ChannelMain.vue";
+import chanelMain from "~/components/chanelMain.vue";
 import AgentAIMain from "~/components/AgentAIMain.vue";
 import AgentManusiaMain from "~/components/AgentManusiaMain.vue";
 
 const tabs = [
   { value: "inbox", label: "Inbox" },
   { value: "kontak", label: "Kontak" },
-  { value: "channel", label: "Channel" },
+  { value: "chanel", label: "chanel" },
   { value: "agent-ai", label: "Agent AI" },
   { value: "agent-manusia", label: "Agent Manusia" },
 ];
@@ -205,9 +202,9 @@ const tab = ref("inbox");
 const agentTab = ref("ai");
 const selectedConversation = ref(null);
 const selectedAgent = ref(null);
-const selectedChannel = ref(null);
+const selectedchanel = ref(null);
 const selectedContact = ref(null);
-const channelListRef = ref(null);
+const chanelListRef = ref(null);
 const agentAIListRef = ref(null);
 const agentManusiaListRef = ref(null);
 
@@ -263,17 +260,17 @@ function onAddAgent() {
   selectedAgent.value = {};
 }
 
-function onSelectChannel(channel) {
-  selectedChannel.value = channel;
+function onSelectchanel(chanel) {
+  selectedchanel.value = chanel;
 }
 
 function onSelectContact(contact) {
   selectedContact.value = contact;
 }
 
-function onUpdateWhatsAppNumber(channelId, whatsappNumber) {
-  if (channelListRef.value) {
-    channelListRef.value.updateChannelWhatsAppNumber(channelId, whatsappNumber);
+function onUpdateWhatsAppNumber(chanelId, whatsappNumber) {
+  if (chanelListRef.value) {
+    chanelListRef.value.updatechanelWhatsAppNumber(chanelId, whatsappNumber);
   }
 }
 onMounted(async () => {

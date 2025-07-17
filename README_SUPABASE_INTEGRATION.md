@@ -49,7 +49,7 @@ supabase db push
 ### Composables
 
 - `composables/useSupabase.ts` - Konfigurasi client Supabase dan types
-- `composables/useChannelStore.ts` - Operasi CRUD untuk channels
+- `composables/useChanelstore.ts` - Operasi CRUD untuk chanels
 - `composables/useAgentStore.ts` - Operasi CRUD untuk agents (AI & Manusia)
 - `composables/useAgentAIStore.ts` - Operasi khusus untuk AI agent configurations
 
@@ -61,17 +61,17 @@ supabase db push
 
 ## 🔧 Cara Menggunakan
 
-### 1. Channels
+### 1. chanels
 
-#### Tambah Channel Baru
+#### Tambah chanel Baru
 
 ```javascript
-import { useChannelStore } from "~/composables/useChannels";
+import { useChanelstore } from "~/composables/useChanels";
 
-const { addChannel } = useChannelStore();
+const { addchanel } = useChanelstore();
 
-const newChannel = await addChannel({
-  name: "WhatsApp Channel 1",
+const newchanel = await addchanel({
+  name: "WhatsApp chanel 1",
   type: "whatsapp",
   icon_url: "https://img.icons8.com/color/48/000000/whatsapp.png",
   whatsapp_number: "",
@@ -82,29 +82,29 @@ const newChannel = await addChannel({
 });
 ```
 
-#### Ambil Semua Channels
+#### Ambil Semua chanels
 
 ```javascript
-import { useChannelStore } from "~/composables/useChannels";
+import { useChanelstore } from "~/composables/useChanels";
 
-const { channels, fetchChannels } = useChannelStore();
+const { chanels, fetchchanels } = useChanelstore();
 
-// Load channels
-await fetchChannels();
+// Load chanels
+await fetchchanels();
 
-// Access channels data
-console.log(channels.value);
+// Access chanels data
+console.log(chanels.value);
 ```
 
-#### Update Channel
+#### Update chanel
 
 ```javascript
-import { useChannelStore } from "~/composables/useChannels";
+import { useChanelstore } from "~/composables/useChanels";
 
-const { updateChannel } = useChannelStore();
+const { updatechanel } = useChanelstore();
 
-await updateChannel(channelId, {
-  name: "Updated Channel Name",
+await updatechanel(chanelId, {
+  name: "Updated chanel Name",
   takeover_ai: true,
   waktu_takeover: 5,
 });
@@ -211,10 +211,10 @@ console.log(aiConfig);
 
 ## 🔄 Update Komponen
 
-### ChannelList.vue
+### chanelList.vue
 
-- ✅ Menggunakan `useChannels` composable
-- ✅ CRUD operations untuk channels
+- ✅ Menggunakan `useChanels` composable
+- ✅ CRUD operations untuk chanels
 - ✅ Real-time data dari database
 
 ### AgentAIList.vue
@@ -238,13 +238,13 @@ console.log(aiConfig);
 
 ## 🛠️ Troubleshooting
 
-### 1. Error: "Failed to fetch channels"
+### 1. Error: "Failed to fetch chanels"
 
 - Pastikan environment variables sudah diset dengan benar
 - Cek koneksi internet
 - Pastikan Supabase project aktif
 
-### 2. Error: "Failed to add channel"
+### 2. Error: "Failed to add chanel"
 
 - Pastikan semua required fields terisi
 - Cek RLS policies di Supabase

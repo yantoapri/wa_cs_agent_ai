@@ -86,10 +86,10 @@
             <span class="text-gray-500">Email:</span>
             <span class="ml-2 font-medium">{{ selectedContact.email }}</span>
           </div>
-          <div v-if="selectedContact.channel_id">
-            <span class="text-gray-500">Channel:</span>
+          <div v-if="selectedContact.chanel_id">
+            <span class="text-gray-500">chanel:</span>
             <span class="ml-2 font-medium">{{
-              getChannelName(selectedContact.channel_id)
+              getchanelName(selectedContact.chanel_id)
             }}</span>
           </div>
           <div v-if="selectedContact.notes" class="col-span-2">
@@ -169,7 +169,7 @@
     </div>
 
     <!-- Edit Contact Modal -->
-    <ChannelModal :show="showEditModal" @close="showEditModal = false">
+    <chanelModal :show="showEditModal" @close="showEditModal = false">
       <div class="p-6">
         <h3 class="text-lg font-semibold mb-4">Edit Kontak</h3>
 
@@ -227,19 +227,19 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
-                Channel
+                chanel
               </label>
               <select
-                v-model="editForm.channel_id"
+                v-model="editForm.chanel_id"
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Pilih channel</option>
+                <option value="">Pilih chanel</option>
                 <option
-                  v-for="channel in channels"
-                  :key="channel.id"
-                  :value="channel.id"
+                  v-for="chanel in chanels"
+                  :key="chanel.id"
+                  :value="chanel.id"
                 >
-                  {{ channel.name }}
+                  {{ chanel.name }}
                 </option>
               </select>
             </div>
@@ -276,15 +276,15 @@
           </div>
         </form>
       </div>
-    </ChannelModal>
+    </chanelModal>
   </div>
 </template>
 <script setup>
 import { ref, watch, reactive, onMounted } from "vue";
 import { useConversationStore } from "~/composables/useConversationStore";
 import { useContactStore } from "~/composables/useContacts";
-import { useChannelStore } from "~/composables/useChannels";
-import ChannelModal from "~/components/ChannelModal.vue";
+import { useChanelstore } from "~/composables/useChanels";
+import chanelModal from "~/components/chanelModal.vue";
 
 const props = defineProps({
   selectedContact: Object,
@@ -293,7 +293,7 @@ const props = defineProps({
 const { messages, loading, addMessage, fetchMessages, createConversation } =
   useConversationStore();
 const { updateContact } = useContactStore();
-const { channels, fetchChannels } = useChannelStore();
+const { chanels, fetchchanels } = useChanelstore();
 
 const newMessage = ref("");
 const sending = ref(false);
@@ -308,7 +308,7 @@ const editForm = reactive({
   phone_number: "",
   email: "",
   avatar: "",
-  channel_id: "",
+  chanel_id: "",
   notes: "",
 });
 
@@ -331,9 +331,9 @@ const formatDate = (dateString) => {
   });
 };
 
-const getChannelName = (channelId) => {
-  const channel = channels.value.find((c) => c.id === channelId);
-  return channel ? channel.name : "Unknown Channel";
+const getchanelName = (chanelId) => {
+  const chanel = chanels.value.find((c) => c.id === chanelId);
+  return chanel ? chanel.name : "Unknown chanel";
 };
 
 const sendMessage = async () => {
@@ -364,7 +364,7 @@ const startConversation = async () => {
       contact_id: props.selectedContact.id,
       contact_name: props.selectedContact.name,
       contact_phone: props.selectedContact.phone_number,
-      channel_id: props.selectedContact.channel_id,
+      chanel_id: props.selectedContact.chanel_id,
       status: "active",
       unread_count: 0,
     });
@@ -386,7 +386,7 @@ const updateContactData = async () => {
       phone_number: editForm.phone_number,
       email: editForm.email || null,
       avatar: editForm.avatar || null,
-      channel_id: editForm.channel_id || null,
+      chanel_id: editForm.chanel_id || null,
       notes: editForm.notes || null,
     });
 
@@ -396,7 +396,7 @@ const updateContactData = async () => {
       phone_number: editForm.phone_number,
       email: editForm.email || null,
       avatar: editForm.avatar || null,
-      channel_id: editForm.channel_id || null,
+      chanel_id: editForm.chanel_id || null,
       notes: editForm.notes || null,
     });
 
@@ -418,7 +418,7 @@ watch(
       editForm.phone_number = newContact.phone_number || "";
       editForm.email = newContact.email || "";
       editForm.avatar = newContact.avatar || "";
-      editForm.channel_id = newContact.channel_id || "";
+      editForm.chanel_id = newContact.chanel_id || "";
       editForm.notes = newContact.notes || "";
 
       // For now, we'll create a simple conversation ID based on contact
@@ -433,6 +433,6 @@ watch(
 );
 
 onMounted(async () => {
-  await fetchChannels();
+  await fetchchanels();
 });
 </script>

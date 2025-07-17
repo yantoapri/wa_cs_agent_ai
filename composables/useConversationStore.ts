@@ -11,20 +11,20 @@ export const useConversationStore = () => {
 
   const supabase = useSupabaseClient();
 
-  // Get AI agent conversations from messages table grouped by agent, contact, channel
+  // Get AI agent conversations from messages table grouped by agent, contact, chanel
   const fetchAIAgentConversations = async () => {
     loading.value = true;
     error.value = null;
 
     try {
-      // Query to get messages grouped by AI agents with contact and channel info
+      // Query to get messages grouped by AI agents with contact and chanel info
       const { data, error: fetchError } = await supabase
         .from("messages")
         .select(
           `
           sender_id,
           contact_id,
-          channel_id,
+          chanel_id,
           agents!inner(
             id,
             name,
@@ -38,7 +38,7 @@ export const useConversationStore = () => {
             phone_number,
             avatar_url
           ),
-          channels!left(
+          chanels!left(
             id,
             name,
             type,
@@ -52,24 +52,24 @@ export const useConversationStore = () => {
 
       if (fetchError) throw fetchError;
 
-      // Group by agent_id, contact_id, channel_id
+      // Group by agent_id, contact_id, chanel_id
       const agentConversations = new Map();
 
       data?.forEach((item) => {
         const agentId = item.sender_id;
         const contactId = item.contact_id;
-        const channelId = item.channel_id;
+        const chanelId = item.chanel_id;
         const agent = item.agents;
         const contact = item.contacts;
-        const channel = item.channels;
+        const chanel = item.chanels;
 
-        const groupKey = `${agentId}-${contactId}-${channelId}`;
+        const groupKey = `${agentId}-${contactId}-${chanelId}`;
 
         if (!agentConversations.has(groupKey)) {
           agentConversations.set(groupKey, {
             agent: agent,
             contact: contact,
-            channel: channel,
+            chanel: chanel,
             messages: [],
             totalMessages: 0,
             unreadCount: 0,
@@ -90,7 +90,7 @@ export const useConversationStore = () => {
       const result = Array.from(agentConversations.values()).map((item) => ({
         agent: item.agent,
         contact: item.contact,
-        channel: item.channel,
+        chanel: item.chanel,
         messages: item.messages,
         totalMessages: item.totalMessages,
         unreadCount: item.unreadCount,
@@ -113,20 +113,20 @@ export const useConversationStore = () => {
     }
   };
 
-  // Get Human agent conversations from messages table grouped by agent, contact, channel
+  // Get Human agent conversations from messages table grouped by agent, contact, chanel
   const fetchHumanAgentConversations = async () => {
     loading.value = true;
     error.value = null;
 
     try {
-      // Query to get messages grouped by Human agents with contact and channel info
+      // Query to get messages grouped by Human agents with contact and chanel info
       const { data, error: fetchError } = await supabase
         .from("messages")
         .select(
           `
           sender_id,
           contact_id,
-          channel_id,
+          chanel_id,
           agents!inner(
             id,
             name,
@@ -140,7 +140,7 @@ export const useConversationStore = () => {
             phone_number,
             avatar_url
           ),
-          channels!left(
+          chanels!left(
             id,
             name,
             type,
@@ -154,24 +154,24 @@ export const useConversationStore = () => {
 
       if (fetchError) throw fetchError;
 
-      // Group by agent_id, contact_id, channel_id
+      // Group by agent_id, contact_id, chanel_id
       const agentConversations = new Map();
 
       data?.forEach((item) => {
         const agentId = item.sender_id;
         const contactId = item.contact_id;
-        const channelId = item.channel_id;
+        const chanelId = item.chanel_id;
         const agent = item.agents;
         const contact = item.contacts;
-        const channel = item.channels;
+        const chanel = item.chanels;
 
-        const groupKey = `${agentId}-${contactId}-${channelId}`;
+        const groupKey = `${agentId}-${contactId}-${chanelId}`;
 
         if (!agentConversations.has(groupKey)) {
           agentConversations.set(groupKey, {
             agent: agent,
             contact: contact,
-            channel: channel,
+            chanel: chanel,
             messages: [],
             totalMessages: 0,
             unreadCount: 0,
@@ -192,7 +192,7 @@ export const useConversationStore = () => {
       const result = Array.from(agentConversations.values()).map((item) => ({
         agent: item.agent,
         contact: item.contact,
-        channel: item.channel,
+        chanel: item.chanel,
         messages: item.messages,
         totalMessages: item.totalMessages,
         unreadCount: item.unreadCount,
@@ -215,11 +215,11 @@ export const useConversationStore = () => {
     }
   };
 
-  // Get messages for a specific agent-contact-channel group
+  // Get messages for a specific agent-contact-chanel group
   const fetchMessagesByGroup = async (
     agentId: string,
     contactId: string,
-    channelId: string
+    chanelId: string
   ) => {
     loading.value = true;
     error.value = null;
@@ -242,7 +242,7 @@ export const useConversationStore = () => {
             phone_number,
             avatar_url
           ),
-          channels!left(
+          chanels!left(
             id,
             name,
             type,
@@ -252,7 +252,7 @@ export const useConversationStore = () => {
         )
         .eq("sender_id", agentId)
         .eq("contact_id", contactId)
-        .eq("channel_id", channelId)
+        .eq("chanel_id", chanelId)
         .order("created_at", { ascending: true });
 
       if (fetchError) throw fetchError;
@@ -271,7 +271,7 @@ export const useConversationStore = () => {
     }
   };
 
-  // Add message to a specific agent-contact-channel group
+  // Add message to a specific agent-contact-chanel group
   const addMessage = async (
     messageData: Omit<Message, "id" | "created_at">
   ) => {
@@ -303,7 +303,7 @@ export const useConversationStore = () => {
   const markMessagesAsRead = async (
     agentId: string,
     contactId: string,
-    channelId: string
+    chanelId: string
   ) => {
     try {
       const { error: updateError } = await supabase
@@ -311,7 +311,7 @@ export const useConversationStore = () => {
         .update({ is_read: true })
         .eq("sender_id", agentId)
         .eq("contact_id", contactId)
-        .eq("channel_id", channelId)
+        .eq("chanel_id", chanelId)
         .eq("direction", "inbound");
 
       if (updateError) throw updateError;
@@ -321,7 +321,7 @@ export const useConversationStore = () => {
         if (
           message.sender_id === agentId &&
           message.contact_id === contactId &&
-          message.channel_id === channelId &&
+          message.chanel_id === chanelId &&
           message.direction === "inbound"
         ) {
           message.is_read = true;

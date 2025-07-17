@@ -3,7 +3,7 @@
 -- Create WhatsApp sessions table
 CREATE TABLE whatsapp_sessions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+    chanel_id UUID NOT NULL REFERENCES chanels(id) ON DELETE CASCADE,
     session_name VARCHAR(255) NOT NULL DEFAULT 'default',
     status VARCHAR(50) NOT NULL DEFAULT 'STOPPED', -- STOPPED, SCAN_QR_CODE, WORKING
     qr_code_url TEXT,
@@ -13,13 +13,13 @@ CREATE TABLE whatsapp_sessions (
     last_activity TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(channel_id, session_name)
+    UNIQUE(chanel_id, session_name)
 );
 
 -- Create WhatsApp message templates table
 CREATE TABLE whatsapp_message_templates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+    chanel_id UUID NOT NULL REFERENCES chanels(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     variables JSONB DEFAULT '[]', -- Array of variable names that can be replaced
@@ -31,7 +31,7 @@ CREATE TABLE whatsapp_message_templates (
 -- Create auto-reply rules table
 CREATE TABLE auto_reply_rules (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+    chanel_id UUID NOT NULL REFERENCES chanels(id) ON DELETE CASCADE,
     agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
     trigger_keywords TEXT[] NOT NULL, -- Array of keywords that trigger this rule
     reply_message TEXT NOT NULL,
@@ -72,10 +72,10 @@ CREATE TABLE ai_conversation_logs (
 );
 
 -- Create indexes for new tables
-CREATE INDEX idx_whatsapp_sessions_channel_id ON whatsapp_sessions(channel_id);
+CREATE INDEX idx_whatsapp_sessions_chanel_id ON whatsapp_sessions(chanel_id);
 CREATE INDEX idx_whatsapp_sessions_status ON whatsapp_sessions(status);
-CREATE INDEX idx_whatsapp_message_templates_channel_id ON whatsapp_message_templates(channel_id);
-CREATE INDEX idx_auto_reply_rules_channel_id ON auto_reply_rules(channel_id);
+CREATE INDEX idx_whatsapp_message_templates_chanel_id ON whatsapp_message_templates(chanel_id);
+CREATE INDEX idx_auto_reply_rules_chanel_id ON auto_reply_rules(chanel_id);
 CREATE INDEX idx_auto_reply_rules_agent_id ON auto_reply_rules(agent_id);
 CREATE INDEX idx_auto_reply_rules_priority ON auto_reply_rules(priority);
 CREATE INDEX idx_conversation_metrics_conversation_id ON conversation_metrics(conversation_id);
@@ -105,26 +105,26 @@ CREATE POLICY "Allow all operations on conversation_metrics" ON conversation_met
 CREATE POLICY "Allow all operations on ai_conversation_logs" ON ai_conversation_logs FOR ALL USING (true);
 
 -- Insert sample data
-INSERT INTO whatsapp_sessions (channel_id, session_name, status) 
-SELECT id, 'default', 'STOPPED' FROM channels WHERE name = 'WhatsApp Channel 1';
+INSERT INTO whatsapp_sessions (chanel_id, session_name, status) 
+SELECT id, 'default', 'STOPPED' FROM chanels WHERE name = 'WhatsApp chanel 1';
 
-INSERT INTO whatsapp_message_templates (channel_id, name, content, variables) VALUES 
+INSERT INTO whatsapp_message_templates (chanel_id, name, content, variables) VALUES 
 (
-    (SELECT id FROM channels WHERE name = 'WhatsApp Channel 1' LIMIT 1),
+    (SELECT id FROM chanels WHERE name = 'WhatsApp chanel 1' LIMIT 1),
     'Welcome Message',
     'Halo {{customer_name}}, terima kasih telah menghubungi kami. Ada yang bisa kami bantu?',
     '["customer_name"]'
 ),
 (
-    (SELECT id FROM channels WHERE name = 'WhatsApp Channel 1' LIMIT 1),
+    (SELECT id FROM chanels WHERE name = 'WhatsApp chanel 1' LIMIT 1),
     'Order Confirmation',
     'Terima kasih {{customer_name}}, pesanan Anda dengan nomor {{order_number}} telah dikonfirmasi.',
     '["customer_name", "order_number"]'
 );
 
-INSERT INTO auto_reply_rules (channel_id, agent_id, trigger_keywords, reply_message, delay_seconds, priority) VALUES 
+INSERT INTO auto_reply_rules (chanel_id, agent_id, trigger_keywords, reply_message, delay_seconds, priority) VALUES 
 (
-    (SELECT id FROM channels WHERE name = 'WhatsApp Channel 1' LIMIT 1),
+    (SELECT id FROM chanels WHERE name = 'WhatsApp chanel 1' LIMIT 1),
     (SELECT id FROM agents WHERE name = 'AI Bot 1' LIMIT 1),
     ARRAY['halo', 'hai', 'hello'],
     'Halo! Terima kasih telah menghubungi kami. Ada yang bisa saya bantu?',
@@ -132,7 +132,7 @@ INSERT INTO auto_reply_rules (channel_id, agent_id, trigger_keywords, reply_mess
     1
 ),
 (
-    (SELECT id FROM channels WHERE name = 'WhatsApp Channel 1' LIMIT 1),
+    (SELECT id FROM chanels WHERE name = 'WhatsApp chanel 1' LIMIT 1),
     (SELECT id FROM agents WHERE name = 'AI Bot 1' LIMIT 1),
     ARRAY['harga', 'berapa', 'cost'],
     'Untuk informasi harga, silakan beri tahu saya produk yang Anda minati.',

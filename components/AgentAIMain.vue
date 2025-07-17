@@ -670,8 +670,8 @@ import { ref, onMounted } from "vue";
 import AgentAIList from "./AgentAIList.vue";
 import { useAgentStore } from "~/composables/useAgents";
 import { useAgentAIStore } from "~/composables/useAgentAI";
-import { useChannelStore } from "~/composables/useChannels";
-import { useChannelAgentConnectionStore } from "~/composables/useChannelAgentConnections";
+import { useChanelstore } from "~/composables/useChanels";
+import { usechanelAgentConnectionStore } from "~/composables/usechanelAgentConnections";
 import { useToast } from "~/composables/useToast";
 // Ambil config WAHA hanya dari import.meta.env
 const baseUrl = import.meta.env.VITE_BASE_URL_WAHA;
@@ -679,23 +679,23 @@ const wahaApiKey = import.meta.env.VITE_WAHA_API;
 
 const { aiAgents, fetchAgentsByType, updateAgent } = useAgentStore();
 const { getAIConfigByAgentId, saveAIConfig } = useAgentAIStore();
-const { channels, fetchChannels } = useChannelStore();
+const { chanels, fetchchanels } = useChanelstore();
 const {
-  connections: channelConnectionsData,
-  loading: channelConnectionsLoading,
-  error: channelConnectionsError,
-  connectAgentToChannel,
-  disconnectAgentFromChannel,
-  isAgentConnectedToChannel,
-  getActiveAgentForChannel,
-  fetchConnectionsByChannel,
+  connections: chanelConnectionsData,
+  loading: chanelConnectionsLoading,
+  error: chanelConnectionsError,
+  connectAgentTochanel,
+  disconnectAgentFromchanel,
+  isAgentConnectedTochanel,
+  getActiveAgentForchanel,
+  fetchConnectionsBychanel,
   fetchConnections,
-} = useChannelAgentConnectionStore();
+} = usechanelAgentConnectionStore();
 
 // Local state for connection management
 const connecting = ref(false);
-const channelConnections = ref([]);
-const activeAgentsPerChannel = ref({});
+const chanelConnections = ref([]);
+const activeAgentsPerchanel = ref({});
 
 const tab = ref("gaya");
 const subtab = ref("gaya");
@@ -705,48 +705,48 @@ const emit = defineEmits(["refresh-ai-list"]);
 // Load AI agents from database
 onMounted(async () => {
   await fetchAgentsByType("ai");
-  // Channel connections will be loaded only when an agent is selected
+  // chanel connections will be loaded only when an agent is selected
 });
 
-// Helper functions for channel connections
-const getChannelConnectionStatus = (channelId) => {
-  return channelConnections.value.some(
+// Helper functions for chanel connections
+const getchanelConnectionStatus = (chanelId) => {
+  return chanelConnections.value.some(
     (conn) =>
-      conn.channel_id === channelId &&
+      conn.chanel_id === chanelId &&
       conn.agent_id === selectedAI.value.id &&
       conn.is_active
   );
 };
 
-const hasActiveAgentInChannel = (channelId) => {
+const hasActiveAgentInchanel = (chanelId) => {
   return (
-    activeAgentsPerChannel.value[channelId] &&
-    activeAgentsPerChannel.value[channelId] !== selectedAI.value.id
+    activeAgentsPerchanel.value[chanelId] &&
+    activeAgentsPerchanel.value[chanelId] !== selectedAI.value.id
   );
 };
 
-const loadActiveAgentsForChannels = async () => {
+const loadActiveAgentsForchanels = async () => {
   try {
     const allConnections = await fetchConnections();
     const connections = Array.isArray(allConnections) ? allConnections : [];
 
-    // Group active agents by channel
+    // Group active agents by chanel
     const activeAgents = {};
     connections.forEach((conn) => {
       if (conn.is_active) {
-        activeAgents[conn.channel_id] = conn.agent_id;
+        activeAgents[conn.chanel_id] = conn.agent_id;
       }
     });
 
-    activeAgentsPerChannel.value = activeAgents;
+    activeAgentsPerchanel.value = activeAgents;
   } catch (error) {
     console.error("Error loading active agents:", error);
   }
 };
 
-const getChannelName = (channelId) => {
-  const channel = (channels.value || []).find((c) => c.id === channelId);
-  return channel ? channel.name : "Unknown Channel";
+const getchanelName = (chanelId) => {
+  const chanel = (chanels.value || []).find((c) => c.id === chanelId);
+  return chanel ? chanel.name : "Unknown chanel";
 };
 
 const formatDate = (dateString) => {
@@ -761,31 +761,31 @@ const formatDate = (dateString) => {
   });
 };
 
-const connectToChannel = async (channelId) => {
+const connectTochanel = async (chanelId) => {
   if (!selectedAI.value.id) return;
 
   connecting.value = true;
   try {
-    await connectAgentToChannel(channelId, selectedAI.value.id);
+    await connectAgentTochanel(chanelId, selectedAI.value.id);
     // Refresh connections and active agents
-    await Promise.all([loadAgentConnections(), loadActiveAgentsForChannels()]);
+    await Promise.all([loadAgentConnections(), loadActiveAgentsForchanels()]);
   } catch (error) {
-    console.error("Error connecting agent to channel:", error);
+    console.error("Error connecting agent to chanel:", error);
   } finally {
     connecting.value = false;
   }
 };
 
-const disconnectFromChannel = async (channelId) => {
+const disconnectFromchanel = async (chanelId) => {
   if (!selectedAI.value.id) return;
 
   connecting.value = true;
   try {
-    await disconnectAgentFromChannel(channelId, selectedAI.value.id);
+    await disconnectAgentFromchanel(chanelId, selectedAI.value.id);
     // Refresh connections and active agents
-    await Promise.all([loadAgentConnections(), loadActiveAgentsForChannels()]);
+    await Promise.all([loadAgentConnections(), loadActiveAgentsForchanels()]);
   } catch (error) {
-    console.error("Error disconnecting agent from channel:", error);
+    console.error("Error disconnecting agent from chanel:", error);
   } finally {
     connecting.value = false;
   }
@@ -795,29 +795,28 @@ const loadAgentConnections = async () => {
   if (!selectedAI.value.id) return;
 
   try {
-    // Get all connections to show status for all channels
+    // Get all connections to show status for all chanels
     const allConnections = await fetchConnections();
 
-    // Create connections for all channels, showing if this agent is connected
-    const channelConnectionsList = (channels.value || []).map((channel) => {
+    // Create connections for all chanels, showing if this agent is connected
+    const chanelConnectionsList = (chanels.value || []).map((chanel) => {
       const existingConnection = (allConnections || []).find(
         (conn) =>
-          conn.channel_id === channel.id &&
-          conn.agent_id === selectedAI.value.id
+          conn.chanel_id === chanel.id && conn.agent_id === selectedAI.value.id
       );
 
       return {
-        id: existingConnection?.id || `temp_${channel.id}`,
-        channel_id: channel.id,
+        id: existingConnection?.id || `temp_${chanel.id}`,
+        chanel_id: chanel.id,
         agent_id: selectedAI.value.id,
         is_active: existingConnection?.is_active || false,
         created_at: existingConnection?.created_at || null,
         updated_at: existingConnection?.updated_at || null,
-        channel_name: channel.name,
+        chanel_name: chanel.name,
       };
     });
 
-    channelConnections.value = channelConnectionsList;
+    chanelConnections.value = chanelConnectionsList;
   } catch (error) {
     console.error("Error loading agent connections:", error);
   }
@@ -853,9 +852,9 @@ async function onSelectAI(ai) {
     console.error("Error loading AI config:", err);
   }
 
-  // Load channel_agent_connection data only when agent is selected
-  await fetchChannels();
-  await Promise.all([loadAgentConnections(), loadActiveAgentsForChannels()]);
+  // Load chanel_agent_connection data only when agent is selected
+  await fetchchanels();
+  await Promise.all([loadAgentConnections(), loadActiveAgentsForchanels()]);
 }
 
 async function onAddAI() {

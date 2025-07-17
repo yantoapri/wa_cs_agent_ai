@@ -5,17 +5,17 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event);
     const {
       agent_id,
-      channel_id,
+      chanel_id,
       contact_id,
       message_type,
       media_url,
       content,
     } = body;
-    if (!agent_id || !channel_id || !contact_id || !message_type || !content) {
+    if (!agent_id || !chanel_id || !contact_id || !message_type || !content) {
       return {
         error: true,
         message:
-          "agent_id, channel_id, contact_id, message_type, dan content wajib diisi",
+          "agent_id, chanel_id, contact_id, message_type, dan content wajib diisi",
       };
     }
     const runtimeConfig = useRuntimeConfig();
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
       .from("messages")
       .insert({
         agent_id,
-        channel_id,
+        chanel_id,
         contact_id,
         message_type,
         media_url: media_url || null,
