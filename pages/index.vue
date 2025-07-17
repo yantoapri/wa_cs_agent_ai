@@ -200,7 +200,7 @@ const tabs = [
   { value: "agent-ai", label: "Agent AI" },
   { value: "agent-manusia", label: "Agent Manusia" },
 ];
-
+const runtimeConfig = useRuntimeConfig();
 const tab = ref("inbox");
 const agentTab = ref("ai");
 const selectedConversation = ref(null);
@@ -276,4 +276,8 @@ function onUpdateWhatsAppNumber(channelId, whatsappNumber) {
     channelListRef.value.updateChannelWhatsAppNumber(channelId, whatsappNumber);
   }
 }
+onMounted(async () => {
+  console.log("env import", import.meta.env);
+  console.log("env runtimeConfig", runtimeConfig);
+});
 </script>
