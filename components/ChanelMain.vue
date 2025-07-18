@@ -206,7 +206,7 @@ const {
   connectAgentTochanel,
   disconnectAgentFromchanel,
   getActiveAgentForchanel,
-} = usechanelAgentConnectionStore();
+} = useChanelAgentConnectionStore();
 
 const qrCode = ref("");
 const status = ref("");
