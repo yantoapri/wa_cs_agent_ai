@@ -371,7 +371,7 @@ async function onSave() {
       // Tambah agent baru
       const newAgent = await addAgent({
         ...form.value,
-        type: "manusia",
+        type: "agent_ai",
         is_active: true,
       });
       form.value = JSON.parse(JSON.stringify(newAgent));

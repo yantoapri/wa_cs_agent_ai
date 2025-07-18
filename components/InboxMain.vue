@@ -45,14 +45,14 @@
               <div
                 :class="[
                   ' max-w-[70%] px-4 py-2 rounded-lg mb-2 align-top',
-                  message.sender === 'agent'
+                  message.sender === 'agent_ai'
                     ? 'bg-blue-50 ml-auto text-right'
                     : 'bg-gray-100 text-left',
                 ]"
               >
                 <div class="text-xs text-gray-500 mb-1">
                   {{
-                    message.sender === "agent"
+                    message.sender === "agent_ai"
                       ? selectedConversation.agent?.name || "Agent"
                       : selectedConversation.contact?.name ||
                         selectedConversation.contact?.phone_number ||
@@ -64,7 +64,9 @@
                     :src="message.media_url"
                     alt="media"
                     class="max-w-full max-h-60 rounded-lg border"
-                    :class="message.sender === 'agent' ? 'ml-auto' : 'mr-auto'"
+                    :class="
+                      message.sender === 'agent_ai' ? 'ml-auto' : 'mr-auto'
+                    "
                   />
                 </div>
                 <div class="text-sm whitespace-pre-line">
