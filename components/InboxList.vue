@@ -18,11 +18,20 @@
     <div v-else>
       <div
         v-for="agentData in currentAgentConversations"
-        :key="agentData.agent.id"
-        class="mb-6"
+        :key="
+          agentData.agent.id +
+          '-' +
+          agentData.contact?.id +
+          '-' +
+          agentData.chanel?.id
+        "
+        class="mb-6 cursor-pointer"
       >
-        <!-- Agent Header -->
-        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-3">
+        <!-- Agent Header (klik untuk pilih percakapan) -->
+        <div
+          class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-3 cursor-pointer"
+          @click="handleAgentHeaderClick(agentData)"
+        >
           <img
             class="w-10 h-10 rounded-full"
             :src="
@@ -47,43 +56,6 @@
             <div class="text-sm text-gray-500">
               {{ agentData.totalMessages }} pesan
             </div>
-          </div>
-        </div>
-
-        <!-- Conversations for this agent -->
-        <div
-          v-for="conversation in agentData.conversations"
-          :key="conversation.id"
-          @click="selectConversation(conversation)"
-          :class="[
-            'flex items-center gap-4 p-4 rounded-lg cursor-pointer mb-2 transition ml-4',
-            selectedConversation && selectedConversation.id === conversation.id
-              ? 'bg-blue-50 border border-blue-200'
-              : 'hover:bg-gray-50',
-          ]"
-        >
-          <img
-            class="w-12 h-12 rounded-full"
-            :src="getConversationAvatar(conversation)"
-            :alt="getConversationName(conversation)"
-          />
-          <div class="flex-1">
-            <div class="flex items-center font-medium">
-              <span class="text-base">{{
-                getConversationName(conversation)
-              }}</span>
-              <span
-                v-if="conversation.unread_count > 0"
-                class="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full"
-                >{{ conversation.unread_count }}</span
-              >
-            </div>
-            <div class="text-gray-500 text-sm">
-              {{ conversation.last_message || "Belum ada pesan" }}
-            </div>
-          </div>
-          <div class="text-gray-400 text-xs w-16 text-right">
-            {{ formatTime(conversation.updated_at) }}
           </div>
         </div>
       </div>
@@ -155,6 +127,24 @@ const formatTime = (dateString) => {
 
 const selectConversation = (conversation) => {
   emit("select-conversation", conversation);
+};
+
+const selectConversationWithContext = (conversation, agentData) => {
+  console.log("[InboxList] Clicked conversation:", conversation, agentData);
+  emit("select-conversation", {
+    ...conversation,
+    agent: agentData.agent,
+    contact: agentData.contact,
+    chanel: agentData.chanel,
+  });
+};
+
+const handleAgentHeaderClick = (agentData) => {
+  emit("select-conversation", {
+    agent: agentData.agent,
+    contact: agentData.contact,
+    chanel: agentData.chanel,
+  });
 };
 
 // Load agent conversations based on active tab

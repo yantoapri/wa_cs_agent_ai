@@ -10,12 +10,20 @@ export default defineEventHandler(async (event) => {
       message_type,
       media_url,
       content,
+      sender,
     } = body;
-    if (!agent_id || !chanel_id || !contact_id || !message_type || !content) {
+    if (
+      !agent_id ||
+      !chanel_id ||
+      !contact_id ||
+      !message_type ||
+      !content ||
+      !sender
+    ) {
       return {
         error: true,
         message:
-          "agent_id, chanel_id, contact_id, message_type, dan content wajib diisi",
+          "agent_id, chanel_id, contact_id, message_type, content, dan sender wajib diisi",
       };
     }
     const runtimeConfig = useRuntimeConfig();
@@ -32,6 +40,7 @@ export default defineEventHandler(async (event) => {
         message_type,
         media_url: media_url || null,
         content,
+        sender,
       })
       .select()
       .single();

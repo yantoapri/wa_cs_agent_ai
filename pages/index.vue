@@ -50,7 +50,7 @@
         </button>
         <div
           v-if="dropdownOpen"
-          class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+          class="fixed right-8 top-16 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
         >
           <button
             class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"

@@ -23,8 +23,13 @@ export const useConversationStore = () => {
         .select(
           `
           agent_id,
+          sender,
           contact_id,
           chanel_id,
+          message_type,
+          content,
+          media_url,
+          created_at,
           agents!inner(
             id,
             name,
@@ -48,7 +53,8 @@ export const useConversationStore = () => {
         )
         .eq("agents.type", "ai")
         .eq("agents.created_by", user.value?.id)
-        .not("agent_id", "is", null);
+        .not("agent_id", "is", null)
+        .order("created_at", { ascending: true });
 
       if (fetchError) throw fetchError;
 
@@ -150,7 +156,8 @@ export const useConversationStore = () => {
         )
         .eq("agents.type", "manusia")
         .eq("agents.created_by", user.value?.id)
-        .not("agent_id", "is", null);
+        .not("agent_id", "is", null)
+        .order("created_at", { ascending: true });
 
       if (fetchError) throw fetchError;
 
@@ -254,7 +261,6 @@ export const useConversationStore = () => {
         .eq("contact_id", contactId)
         .eq("chanel_id", chanelId)
         .order("created_at", { ascending: true });
-
       if (fetchError) throw fetchError;
 
       messages.value = data || [];
