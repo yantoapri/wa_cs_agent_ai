@@ -353,24 +353,7 @@ export default defineEventHandler(async (event) => {
     } catch (err) {
       console.log("[WAHA Webhook] Gagal simpan user prompt", err);
     }
-    // Simpan prompt user ke database sebelum proses AI
-    try {
-      await $fetch("/api/message", {
-        method: "POST",
-        body: {
-          agent_id: conn.agent_id,
-          chanel_id: chanelIdToUse,
-          contact_id,
-          message_type: "text",
-          sender: "user",
-          media_url: null,
-          content: payloadBody,
-        },
-      });
-      console.log("[WAHA Webhook] User prompt saved to database");
-    } catch (err) {
-      console.log("[WAHA Webhook] Gagal simpan user prompt", err);
-    }
+
     if (images && images.length > 0) {
       console.log("[WAHA Webhook] Sending image message(s)");
       message_type = "image";
