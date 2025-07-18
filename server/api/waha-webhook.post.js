@@ -26,7 +26,8 @@ export default defineEventHandler(async (event) => {
   const meId = body?.me?.id?.replace("@c.us", "") || null;
   const payloadBody = body?.payload?.body || null;
   const payloadFrom = body?.payload?.from?.replace("@c.us", "") || null;
-
+  console.log("[WAHA Webhook] Payload body:", body);
+  return;
   console.log("[WAHA Webhook] Extracted data:", {
     metachanelId,
     urlchanelId,
@@ -285,13 +286,30 @@ export default defineEventHandler(async (event) => {
     let aiText, images;
     console.log("[WAHA Webhook] Calling AI service with prompt:", payloadBody);
     try {
-      const aiRes = await $fetch("/api/openrouter", {
-        method: "POST",
-        body: {
-          prompt: payloadBody,
-          knowledge: JSON.stringify(config),
-        },
-      });
+      let aiRes;
+      // Jika user mengirim media, kirim juga media ke openrouter
+      if (body?.payload?.hasMedia && body?.payload?.media?.url) {
+        aiRes = await $fetch("/api/openrouter", {
+          method: "POST",
+          body: {
+            prompt: payloadBody,
+            knowledge: JSON.stringify(config),
+            media: {
+              url: body.payload.media.url,
+              mimetype: body.payload.media.mimetype,
+              filename: body.payload.media.filename,
+            },
+          },
+        });
+      } else {
+        aiRes = await $fetch("/api/openrouter", {
+          method: "POST",
+          body: {
+            prompt: payloadBody,
+            knowledge: JSON.stringify(config),
+          },
+        });
+      }
       aiText = aiRes?.result;
       images = aiRes?.images;
       console.log("[WAHA Webhook] AI response received:", {
@@ -337,16 +355,36 @@ export default defineEventHandler(async (event) => {
     let media_url = null;
     // Simpan prompt user ke database sebelum proses AI
     try {
+      // Cek jika user mengirim media
+      let userMessageType = "text";
+      let userMediaUrl = null;
+      let userContent = payloadBody;
+      if (body?.payload?.hasMedia && body?.payload?.media?.url) {
+        const mimetype = body.payload.media.mimetype || "";
+        if (mimetype.includes("image")) {
+          userMessageType = "image";
+        } else if (mimetype.includes("pdf") || mimetype === "application/pdf") {
+          userMessageType = "document";
+        } else if (mimetype.includes("video")) {
+          userMessageType = "video";
+        } else if (mimetype.includes("audio")) {
+          userMessageType = "audio";
+        } else {
+          userMessageType = "text";
+        }
+        userMediaUrl = body.payload.media.url;
+        userContent = payloadBody; // caption
+      }
       await $fetch("/api/message", {
         method: "POST",
         body: {
           agent_id: conn.agent_id,
           chanel_id: chanelIdToUse,
           contact_id,
-          message_type: "text",
+          message_type: userMessageType,
           sender: "user",
-          media_url: null,
-          content: payloadBody,
+          media_url: userMediaUrl,
+          content: userContent,
         },
       });
       console.log("[WAHA Webhook] User prompt saved to database");
@@ -391,37 +429,6 @@ export default defineEventHandler(async (event) => {
           body: messageBody,
         });
         console.log("[WAHA Webhook] Image sent successfully via WAHA");
-
-        // Simpan message untuk setiap gambar
-        console.log("[WAHA Webhook] Saving image message to database");
-        try {
-          await $fetch("/api/message", {
-            method: "POST",
-            body: {
-              agent_id: conn.agent_id,
-              chanel_id: chanelIdToUse,
-              contact_id,
-              sender: "agent",
-              message_type: "image",
-              media_url: imgUrl,
-              content: aiText,
-            },
-          });
-          console.log(
-            "[WAHA Webhook] Image message saved to database successfully"
-          );
-          console.log("[WAHA Webhook] Save Image Message Response:", {
-            agent_id: conn.agent_id,
-            chanel_id: chanelIdToUse,
-            contact_id,
-            message_type: "image",
-            sender: "agent",
-            media_url: imgUrl,
-            content: aiText,
-          });
-        } catch (err) {
-          console.log("[WAHA Webhook] Gagal simpan message image", err);
-        }
       }
     } else {
       console.log("[WAHA Webhook] Sending text message");
@@ -442,39 +449,6 @@ export default defineEventHandler(async (event) => {
         body: messageBody,
       });
       console.log("[WAHA Webhook] Text sent successfully via WAHA");
-
-      // Simpan message text
-      console.log("[WAHA Webhook] Saving text message to database");
-      try {
-        const messageRes = await $fetch("/api/message", {
-          method: "POST",
-          body: {
-            agent_id: conn.agent_id,
-            chanel_id: chanelIdToUse,
-            contact_id,
-            message_type: "text",
-            sender: "agent",
-            media_url: null,
-            content: aiText,
-          },
-        });
-        console.log(
-          "[WAHA Webhook] Text message saved to database successfully"
-        );
-        console.log("[WAHA Webhook] Save Text Message Response:", messageRes);
-        if (messageRes && messageRes.error === false) {
-          console.log("[WAHA Webhook] Save Text Message Response:", {
-            agent_id: conn.agent_id,
-            chanel_id: chanelIdToUse,
-            contact_id,
-            message_type: "text",
-            media_url: null,
-            content: aiText,
-          });
-        }
-      } catch (err) {
-        console.log("[WAHA Webhook] Gagal simpan message text", err);
-      }
     }
   } catch (err) {
     console.log("[WAHA Webhook] Error saat memanggil /api/openrouter", err);

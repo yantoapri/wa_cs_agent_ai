@@ -1,12 +1,22 @@
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { prompt, knowledge } = body;
+  const { prompt, knowledge, media } = body;
   const apiKey = useRuntimeConfig().openAiKey;
   if (!apiKey) {
     return { error: "OPEN_AI_KEY not set in env" };
   }
   if (!prompt) {
     return { error: "Prompt is required" };
+  }
+  // Jika ada media dari user, hanya proses jika image
+  if (media) {
+    if (media.mimetype && media.mimetype.includes("image")) {
+      console.log("[OpenRouter] User sent image media:", media);
+      // Di sini bisa tambahkan logic jika ingin memproses image lebih lanjut
+    } else {
+      console.log("[OpenRouter] User sent non-image media, ignored:", media);
+      // Media bukan image, diabaikan
+    }
   }
   // Compose system prompt agar AI memahami struktur knowledge
   let systemPrompt = `

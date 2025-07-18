@@ -132,7 +132,7 @@
             <label>Nama</label>
             <input v-model="editData.nama" class="form-input" />
           </div>
-          <!-- <div class="form-group">
+          <div class="form-group">
             <label>Takeover AI</label>
             <select v-model="editData.takeoverAI" class="form-input">
               <option value="0">Tidak Aktif</option>
@@ -149,7 +149,7 @@
               />
               <span>menit</span>
             </div>
-          </div> -->
+          </div>
           <div class="form-group">
             <label>Limit Balasan AI</label>
             <select v-model="editData.limitBalasanAI" class="form-input">
@@ -394,16 +394,30 @@ onUnmounted(() => {
 
 onMounted(async () => {
   await fetchAgentsByType("ai");
+  // Inisialisasi editData.nama dengan nama chanel saat komponen dimount
+  if (props.chanel) {
+    editData.value = {
+      nama: props.chanel.nama || "",
+      takeoverAI: props.chanel.takeoverAI?.toString() || "0",
+      waktuTakeover: props.chanel.waktuTakeover?.toString() || "",
+      limitBalasanAI: props.chanel.limitBalasanAI?.toString() || "0",
+      maksimumBalasanAI: props.chanel.maksimumBalasanAI?.toString() || "",
+    };
+    // Cek agent aktif
+    if (props.chanel.id) {
+      const active = await getActiveAgentForchanel(props.chanel.id);
+      activeAgentId.value = active ? active.agent_id : null;
+    }
+  }
 });
 
 async function onEditchanel() {
   try {
     await updatechanel(props.chanel.id, {
       name: editData.value.nama,
-      // takeover_ai: editData.value.takeoverAI === "1",
-      // waktu_takeover: parseInt(editData.value.waktuTakeover) || 0,
-      takeover_ai: false,
-      waktu_takeover: 0,
+      takeover_ai: editData.value.takeoverAI === "1",
+      waktu_takeover: parseInt(editData.value.waktuTakeover) || 0,
+
       limit_balasan_ai: editData.value.limitBalasanAI === "1",
       maksimum_balasan_ai: parseInt(editData.value.maksimumBalasanAI) || 0,
     });

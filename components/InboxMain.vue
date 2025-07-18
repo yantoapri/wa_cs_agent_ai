@@ -41,26 +41,38 @@
                 >
               </div>
             </template>
-            <div
-              :class="[
-                'px-4 py-2 rounded-lg max-w-[70%] mb-2',
-                message.sender === 'agent'
-                  ? 'bg-blue-50 ml-auto text-right'
-                  : 'bg-gray-100 text-left',
-              ]"
-            >
-              <div class="text-xs text-gray-500 mb-1">
-                {{
-                  message.sender === "agent"
-                    ? selectedConversation.agent?.name || "Agent"
-                    : selectedConversation.contact?.name ||
-                      selectedConversation.contact?.phone_number ||
-                      "User"
-                }}
-              </div>
-              <div class="text-sm">{{ message.content }}</div>
-              <div class="text-xs text-gray-400 mt-1">
-                {{ formatTime(message.created_at) }}
+            <div class="w-full flex">
+              <div
+                :class="[
+                  ' max-w-[70%] px-4 py-2 rounded-lg mb-2 align-top',
+                  message.sender === 'agent'
+                    ? 'bg-blue-50 ml-auto text-right'
+                    : 'bg-gray-100 text-left',
+                ]"
+              >
+                <div class="text-xs text-gray-500 mb-1">
+                  {{
+                    message.sender === "agent"
+                      ? selectedConversation.agent?.name || "Agent"
+                      : selectedConversation.contact?.name ||
+                        selectedConversation.contact?.phone_number ||
+                        "User"
+                  }}
+                </div>
+                <div v-if="message.media_url" class="mb-2">
+                  <img
+                    :src="message.media_url"
+                    alt="media"
+                    class="max-w-full max-h-60 rounded-lg border"
+                    :class="message.sender === 'agent' ? 'ml-auto' : 'mr-auto'"
+                  />
+                </div>
+                <div class="text-sm whitespace-pre-line">
+                  {{ message.content }}
+                </div>
+                <div class="text-xs text-gray-400 mt-1">
+                  {{ formatTime(message.created_at) }}
+                </div>
               </div>
             </div>
           </template>
