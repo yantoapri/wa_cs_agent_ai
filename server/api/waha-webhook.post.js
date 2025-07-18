@@ -26,8 +26,7 @@ export default defineEventHandler(async (event) => {
   const meId = body?.me?.id?.replace("@c.us", "") || null;
   const payloadBody = body?.payload?.body || null;
   const payloadFrom = body?.payload?.from?.replace("@c.us", "") || null;
-  console.log("[WAHA Webhook] Payload body:", body);
-  return;
+
   console.log("[WAHA Webhook] Extracted data:", {
     metachanelId,
     urlchanelId,
@@ -53,6 +52,58 @@ export default defineEventHandler(async (event) => {
     console.log("[WAHA Webhook] No payload body or from, skipping");
     return { status: "ok", results: [] };
   }
+
+  // Cek apakah pesan dari chanel (fromMe: true) atau dari user (fromMe: false)
+  const fromMe = body?.payload?.fromMe || false;
+  console.log("[WAHA Webhook] Message fromMe:", fromMe);
+
+  if (fromMe) {
+    // Pesan dari chanel (manusia membalas manual)
+    console.log("[WAHA Webhook] === MANUAL REPLY FROM CHANEL ===");
+
+    // Ambil agent_id dari tabel agents where type='manusia' dan no_hp=meId
+    const { data: agentData, error: agentErr } = await client
+      .from("agents")
+      .select("id")
+      .eq("type", "agent")
+      .eq("no_hp", meId)
+      .maybeSingle();
+
+    if (agentErr || !agentData) {
+      console.log(
+        "[WAHA Webhook] Agent manusia tidak ditemukan untuk no_hp:",
+        meId
+      );
+      return { status: "ok", results: [] };
+    }
+
+    const agentId = agentData.id;
+    console.log("[WAHA Webhook] Found agent manusia, ID:", agentId);
+
+    // Simpan pesan ke database dengan sender='agent'
+    try {
+      await $fetch("/api/message", {
+        method: "POST",
+        body: {
+          agent_id: agentId,
+          chanel_id: chanelIdToUse,
+          contact_id: contact_id,
+          message_type: "text",
+          sender: "agent",
+          media_url: null,
+          content: payloadBody,
+        },
+      });
+      console.log("[WAHA Webhook] Manual reply saved to database");
+    } catch (err) {
+      console.log("[WAHA Webhook] Gagal simpan manual reply", err);
+    }
+
+    return { status: "ok", results: [{ message: "Manual reply processed" }] };
+  }
+
+  // Jika fromMe false, lanjutkan proses balas otomatis seperti biasa
+  console.log("[WAHA Webhook] === AUTOMATIC REPLY PROCESS ===");
 
   console.log("[WAHA Webhook] === CONTACT PROCESS ===");
   // --- PROSES CEK DAN SIMPAN CONTACT ---
@@ -97,6 +148,66 @@ export default defineEventHandler(async (event) => {
     contact_id
   );
   // --- END PROSES CEK DAN SIMPAN CONTACT ---
+
+  // Cek takeover_ai dari tabel chanels
+  const { data: chanelTakeoverData } = await client
+    .from("chanels")
+    .select("takeover_ai, waktu_takeover")
+    .eq("id", chanelIdToUse)
+    .maybeSingle();
+  const takeoverAI = chanelTakeoverData?.takeover_ai;
+  const waktuTakeover = chanelTakeoverData?.waktu_takeover || 0;
+
+  console.log(
+    "[WAHA Webhook] Takeover AI:",
+    takeoverAI,
+    "Waktu Takeover:",
+    waktuTakeover,
+    "menit"
+  );
+
+  if (takeoverAI && waktuTakeover > 0) {
+    // Cek last message by agent_id, chanel_id, contact_id=payloadFrom
+    const { data: lastMessage } = await client
+      .from("messages")
+      .select("created_at")
+      .eq("agent_id", conn.agent_id)
+      .eq("chanel_id", chanelIdToUse)
+      .eq("contact_id", contact_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lastMessage) {
+      const now = new Date();
+      const lastMessageTime = new Date(lastMessage.created_at);
+      const timeDiffMinutes = (now - lastMessageTime) / (1000 * 60);
+
+      console.log("[WAHA Webhook] Last message time:", lastMessageTime);
+      console.log(
+        "[WAHA Webhook] Time difference:",
+        timeDiffMinutes,
+        "minutes"
+      );
+
+      if (timeDiffMinutes < waktuTakeover) {
+        console.log(
+          "[WAHA Webhook] Masih dalam waktu takeover, batalkan auto reply"
+        );
+        return {
+          status: "ok",
+          results: [{ message: "Masih dalam waktu takeover" }],
+        };
+      }
+    }
+    console.log(
+      "[WAHA Webhook] Sudah melewati waktu takeover, lanjutkan auto reply"
+    );
+  } else {
+    console.log(
+      "[WAHA Webhook] Takeover AI tidak aktif, langsung lanjutkan auto reply"
+    );
+  }
 
   console.log("[WAHA Webhook] === AGENT CONNECTION PROCESS ===");
   // Ambil agent_id dari conn (nanti di bawah), tapi pastikan proses limit balasan AI dilakukan setelah dapat contact_id dan agent_id
