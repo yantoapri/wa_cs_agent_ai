@@ -34,13 +34,13 @@
               <label class="block font-medium text-gray-700 mb-2">
                 Nama <span class="text-red-500">*</span>
               </label>
-              <input
+          <input
                 v-model="form.name"
                 required
                 class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Nama Lengkap"
-              />
-            </div>
+          />
+        </div>
             <div class="mb-4">
               <label class="block font-medium text-gray-700 mb-2">
                 Nomor Telepon <span class="text-red-500">*</span>
@@ -247,42 +247,42 @@
                   <option value="996">🇰🇬 +996</option>
                   <option value="998">🇺🇿 +998</option>
                 </select>
-                <input
+          <input
                   type="text"
                   v-model="phoneNumber"
                   required
                   class="flex-1 border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Nomor Telepon"
-                />
-              </div>
-            </div>
-          </div>
+          />
+        </div>
+      </div>
+        </div>
 
           <!-- Modal Footer -->
           <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <button
-              type="button"
+          <button
+            type="button"
               @click="closeModal"
               class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
             >
               Batal
-            </button>
-            <button
+              </button>
+          <button
               type="submit"
               class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
               {{ form?.id ? "Update" : "Simpan" }}
-            </button>
-            <button
+        </button>
+        <button
               v-if="form?.id"
-              type="button"
-              @click="onDelete"
+          type="button"
+          @click="onDelete"
               class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-            >
-              Hapus
-            </button>
-          </div>
-        </form>
+        >
+          Hapus
+        </button>
+      </div>
+    </form>
       </div>
     </div>
 

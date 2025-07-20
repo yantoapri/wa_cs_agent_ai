@@ -531,33 +531,69 @@ export default defineEventHandler(async (event) => {
           caption: aiText,
         };
         console.log("[WAHA Webhook] Image message body:", messageBody);
-        await $fetch(`${WAHA_BASE_URL}/api/sendImage`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Api-Key": WAHA_API_KEY,
-          },
-          body: messageBody,
-        });
-        console.log("[WAHA Webhook] Image sent successfully via WAHA");
 
-        // Simpan pesan AI (image) ke database setelah berhasil kirim ke WAHA
         try {
-          await $fetch("/api/message", {
+          await $fetch(`${WAHA_BASE_URL}/api/sendImage`, {
             method: "POST",
-            body: {
+            headers: {
+              "Content-Type": "application/json",
+              "X-Api-Key": WAHA_API_KEY,
+            },
+            body: messageBody,
+          });
+          console.log("[WAHA Webhook] Image sent successfully via WAHA");
+
+          // Simpan pesan AI (image) ke database setelah berhasil kirim ke WAHA
+          console.log(
+            "[WAHA Webhook] Starting to save AI image message to database..."
+          );
+          const saveData = {
+            agent_id: conn.agent_id,
+            chanel_id: chanelIdToUse,
+            contact_id,
+            message_type: "image",
+            sender: "ai",
+            media_url: imgUrl,
+            content: aiText, // caption dari AI
+          };
+          console.log("[WAHA Webhook] Data to save for image:", saveData);
+          try {
+            const saveResponse = await $fetch("/api/message", {
+              method: "POST",
+              body: saveData,
+            });
+            console.log(
+              "[WAHA Webhook] Save response for image:",
+              saveResponse
+            );
+            if (saveResponse.error) {
+              console.log(
+                "[WAHA Webhook] API returned error for image:",
+                saveResponse.message
+              );
+            } else {
+              console.log(
+                "[WAHA Webhook] AI image message saved to database successfully"
+              );
+            }
+          } catch (saveErr) {
+            console.log(
+              "[WAHA Webhook] Gagal simpan AI image message",
+              saveErr
+            );
+            console.log("[WAHA Webhook] Save error details:", {
               agent_id: conn.agent_id,
               chanel_id: chanelIdToUse,
               contact_id,
               message_type: "image",
               sender: "ai",
               media_url: imgUrl,
-              content: aiText, // caption dari AI
-            },
-          });
-          console.log("[WAHA Webhook] AI image message saved to database");
-        } catch (err) {
-          console.log("[WAHA Webhook] Gagal simpan AI image message", err);
+              content_length: aiText?.length,
+            });
+          }
+        } catch (sendErr) {
+          console.log("[WAHA Webhook] Gagal kirim image ke WAHA", sendErr);
+          throw sendErr; // Re-throw agar masuk ke catch block utama
         }
       }
     } else {
@@ -570,41 +606,78 @@ export default defineEventHandler(async (event) => {
         text: aiText,
       };
       console.log("[WAHA Webhook] Text message body:", messageBody);
-      await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Api-Key": WAHA_API_KEY,
-        },
-        body: messageBody,
-      });
-      console.log("[WAHA Webhook] Text sent successfully via WAHA");
 
-      // Simpan pesan AI (text) ke database setelah berhasil kirim ke WAHA
       try {
-        await $fetch("/api/message", {
+        await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
           method: "POST",
-          body: {
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": WAHA_API_KEY,
+          },
+          body: messageBody,
+        });
+        console.log("[WAHA Webhook] Text sent successfully via WAHA");
+
+        // Simpan pesan AI (text) ke database setelah berhasil kirim ke WAHA
+        console.log(
+          "[WAHA Webhook] Starting to save AI text message to database..."
+        );
+        const saveData = {
+          agent_id: conn.agent_id,
+          chanel_id: chanelIdToUse,
+          contact_id,
+          message_type: "text",
+          sender: "ai",
+          media_url: null,
+          content: aiText,
+        };
+        console.log("[WAHA Webhook] Data to save for text:", saveData);
+        try {
+          const saveResponse = await $fetch("/api/message", {
+            method: "POST",
+            body: saveData,
+          });
+          console.log("[WAHA Webhook] Save response for text:", saveResponse);
+          if (saveResponse.error) {
+            console.log(
+              "[WAHA Webhook] API returned error for text:",
+              saveResponse.message
+            );
+          } else {
+            console.log(
+              "[WAHA Webhook] AI text message saved to database successfully"
+            );
+          }
+        } catch (saveErr) {
+          console.log("[WAHA Webhook] Gagal simpan AI text message", saveErr);
+          console.log("[WAHA Webhook] Save error details:", {
             agent_id: conn.agent_id,
             chanel_id: chanelIdToUse,
             contact_id,
             message_type: "text",
             sender: "ai",
-            media_url: null,
-            content: aiText,
-          },
-        });
-        console.log("[WAHA Webhook] AI text message saved to database");
-      } catch (err) {
-        console.log("[WAHA Webhook] Gagal simpan AI text message", err);
+            content_length: aiText?.length,
+          });
+        }
+      } catch (sendErr) {
+        console.log("[WAHA Webhook] Gagal kirim text ke WAHA", sendErr);
+        throw sendErr; // Re-throw agar masuk ke catch block utama
       }
     }
   } catch (err) {
-    console.log("[WAHA Webhook] Error saat memanggil /api/openrouter", err);
+    console.log(
+      "[WAHA Webhook] Error saat memanggil /api/openrouter atau mengirim pesan",
+      err
+    );
+    console.log("[WAHA Webhook] Error details:", {
+      message: err?.message,
+      stack: err?.stack,
+      name: err?.name,
+    });
     results.push({
       meId,
       payloadFrom,
-      error: "Failed to get AI response",
+      error: "Failed to get AI response or send message",
       detail: err?.message,
     });
     return { status: "ok", results };
