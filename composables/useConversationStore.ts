@@ -223,7 +223,7 @@ export const useConversationStore = () => {
   };
 
   // Get messages for a specific agent-contact-chanel group
-  const fetchMessagesByGroup = async (
+  const fetchMessagesByGroupAi = async (
     agentId: string,
     contactId: string,
     chanelId: string
@@ -260,6 +260,7 @@ export const useConversationStore = () => {
         .eq("agent_id", agentId)
         .eq("contact_id", contactId)
         .eq("chanel_id", chanelId)
+        .eq("agents.type", "ai")
         .order("created_at", { ascending: true });
       if (fetchError) throw fetchError;
 
@@ -276,7 +277,60 @@ export const useConversationStore = () => {
       loading.value = false;
     }
   };
+  const fetchMessagesByGroupManusia = async (
+    agentId: string,
+    contactId: string,
+    chanelId: string
+  ) => {
+    loading.value = true;
+    error.value = null;
 
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("messages")
+        .select(
+          `
+          *,
+          agents!left(
+            id,
+            name,
+            type,
+            avatar_url
+          ),
+          contacts!left(
+            id,
+            name,
+            phone_number,
+            avatar_url
+          ),
+          chanels!left(
+            id,
+            name,
+            type,
+            icon_url
+          )
+        `
+        )
+        .eq("agent_id", agentId)
+        .eq("contact_id", contactId)
+        .eq("chanel_id", chanelId)
+        .eq("agents.type", "manusia")
+        .order("created_at", { ascending: true });
+      if (fetchError) throw fetchError;
+
+      messages.value = data || [];
+      return data || [];
+    } catch (err) {
+      error.value =
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch messages by group";
+      console.error("Error fetching messages by group:", err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
   // Add message to a specific agent-contact-chanel group
   const addMessage = async (
     messageData: Omit<Message, "id" | "created_at">
@@ -348,7 +402,7 @@ export const useConversationStore = () => {
     error: readonly(error),
     fetchAIAgentConversations,
     fetchHumanAgentConversations,
-    fetchMessagesByGroup,
+    fetchMessagesByGroupAi,
     addMessage,
     markMessagesAsRead,
   };

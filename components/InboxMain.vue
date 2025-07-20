@@ -106,7 +106,8 @@ const {
   messages,
   loading,
   addMessage,
-  fetchMessagesByGroup,
+  fetchMessagesByGroupAi,
+  fetchMessagesByGroupManusia,
   markMessagesAsRead,
 } = useConversationStore();
 const newMessage = ref("");
@@ -200,11 +201,20 @@ watch(
     if (!isMounted) return;
     try {
       if (newConversation) {
-        await fetchMessagesByGroup(
-          newConversation.agent.id,
-          newConversation.contact.id,
-          newConversation.chanel.id
-        );
+        if (newConversation.agent.type === "ai") {
+          await fetchMessagesByGroupAi(
+            newConversation.agent.id,
+            newConversation.contact.id,
+            newConversation.chanel.id
+          );
+        }
+        if (newConversation.agent.type === "manusia") {
+          await fetchMessagesByGroupManusia(
+            newConversation.agent.id,
+            newConversation.contact.id,
+            newConversation.chanel.id
+          );
+        }
         if (!isMounted) return;
         await markMessagesAsRead(
           newConversation.agent.id,

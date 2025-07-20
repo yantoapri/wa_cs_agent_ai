@@ -129,7 +129,11 @@
             />
           </div>
           <div class="flex-1 flex flex-col bg-gray-100">
-            <AgentManusiaMain :selected-agent="selectedAgent" />
+            <AgentManusiaMain
+              :selected-agent="selectedAgent"
+              @refresh-list="onRefreshAgentManusiaList"
+              @clear-selected="onClearSelectedAgent"
+            />
           </div>
         </div>
       </template>
@@ -263,6 +267,19 @@ function onUpdateWhatsAppNumber(chanelId, whatsappNumber) {
   if (chanelListRef.value) {
     chanelListRef.value.updatechanelWhatsAppNumber(chanelId, whatsappNumber);
   }
+}
+
+function onRefreshAgentManusiaList() {
+  console.log("Parent: Refreshing agent manusia list...");
+  if (agentManusiaListRef.value) {
+    agentManusiaListRef.value.refreshList();
+  } else {
+    console.error("Parent: agentManusiaListRef is null");
+  }
+}
+
+function onClearSelectedAgent() {
+  selectedAgent.value = null;
 }
 
 const dropdownOpen = ref(false);

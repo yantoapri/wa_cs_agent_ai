@@ -13,10 +13,9 @@
         :key="manusia.id"
         @click="selectManusia(manusia)"
       >
-        <img :src="manusia.avatar_url" class="w-10 h-10" />
         <div class="ml-4 flex-1">
           <div class="font-medium">{{ manusia.name }}</div>
-          <div class="text-gray-500">{{ manusia.status }}</div>
+          <div class="text-gray-500">{{ manusia.phone }}</div>
         </div>
       </div>
     </div>
@@ -37,7 +36,22 @@ function onAddAgent() {
   emit("add-agent");
 }
 
+// Method to refresh the list - can be called from parent
+async function refreshList() {
+  console.log("AgentManusiaList: Refreshing list...");
+  await fetchAgentsByType("manusia");
+  console.log(
+    "AgentManusiaList: List refreshed, current agents:",
+    humanAgents.value
+  );
+}
+
 onMounted(async () => {
   await fetchAgentsByType("manusia");
+});
+
+// Expose refreshList method to parent
+defineExpose({
+  refreshList,
 });
 </script>

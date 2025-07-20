@@ -690,7 +690,7 @@ const {
   getActiveAgentForchanel,
   fetchConnectionsBychanel,
   fetchConnections,
-} = usechanelAgentConnectionStore();
+} = useChanelAgentConnectionStore();
 
 // Local state for connection management
 const connecting = ref(false);
