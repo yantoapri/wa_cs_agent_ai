@@ -264,19 +264,31 @@ export default defineEventHandler(async (event) => {
   }
 
   if (fromMe) {
-    // Pesan dari chanel (manusia membalas manual)
-    console.log("[WAHA Webhook] === MANUAL REPLY FROM CHANEL ===");
+    // Cek metadata untuk membedakan AI reply vs manual reply
+    const metadata = body?.payload?.metadata || {};
+    const isAIReply =
+      metadata.sender_type === "ai" || metadata.is_auto_reply === true;
 
-    // Tambahkan filter broadcast/newsletter di sini!
-    if (checkBroadcastEvent(body)) {
+    console.log("[WAHA Webhook] Message metadata check:", {
+      metadata,
+      isAIReply,
+      sender_type: metadata.sender_type,
+      is_auto_reply: metadata.is_auto_reply,
+    });
+
+    if (isAIReply) {
       console.log(
-        "[WAHA Webhook] Manual reply is broadcast/newsletter, skipping save"
+        "[WAHA Webhook] Outgoing is AI reply (fromMe=true), skip saving as manual"
       );
       return {
         status: "ok",
-        results: [{ message: "Manual reply broadcast/newsletter ignored" }],
+        results: [{ message: "AI reply detected, not saved as manual" }],
       };
     }
+
+    console.log(
+      "[WAHA Webhook] Outgoing is manual reply from human, proceed to save"
+    );
 
     // Ambil agent_id dari tabel agents where type='manusia' dan no_hp=meId
     const { data: agentData, error: agentErr } = await client
@@ -329,7 +341,7 @@ export default defineEventHandler(async (event) => {
   let contact_id = null;
   try {
     console.log("[WAHA Webhook] Checking existing contact for:", payloadFrom);
-    
+
     // 1. Cek apakah sudah ada di contact
     const contactRes = await $fetch("/api/contact", {
       method: "GET",
@@ -751,6 +763,12 @@ export default defineEventHandler(async (event) => {
             filename,
           },
           caption: aiText,
+          // Tambahkan metadata untuk identifikasi AI
+          metadata: {
+            sender_type: "ai",
+            agent_id: conn.agent_id,
+            is_auto_reply: true,
+          },
         };
         console.log("[WAHA Webhook] Image message body:", messageBody);
 
@@ -828,6 +846,12 @@ export default defineEventHandler(async (event) => {
         session: sessionNameForPresence,
         chatId: payloadFrom + "@c.us",
         text: aiText,
+        // Tambahkan metadata untuk identifikasi AI
+        metadata: {
+          sender_type: "ai",
+          agent_id: conn.agent_id,
+          is_auto_reply: true,
+        },
       };
       console.log("[WAHA Webhook] Text message body:", messageBody);
 
