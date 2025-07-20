@@ -1,5 +1,117 @@
 import { createClient } from "@supabase/supabase-js";
 
+// Function to check if the event is a broadcast event from WAHA
+function checkBroadcastEvent(body) {
+  // Check for broadcast message patterns
+  const payloadBody = body?.payload?.body || "";
+  const payloadFrom = body?.payload?.from || "";
+  const eventType = body?.event || "";
+  const chatId = body?.payload?.chatId || "";
+  const isGroup = body?.payload?.isGroup || false;
+  const isBroadcast = body?.payload?.isBroadcast || false;
+
+  // Common broadcast patterns in message body
+  const broadcastPatterns = [
+    /^broadcast/i,
+    /^siaran/i,
+    /^announcement/i,
+    /^pengumuman/i,
+    /^notifikasi/i,
+    /^notification/i,
+    /^system message/i,
+    /^pesan sistem/i,
+    /^status broadcast/i,
+    /^broadcast status/i,
+    /^newsletter/i,
+    /^news letter/i,
+    /^bulletin/i,
+    /^update sistem/i,
+    /^system update/i,
+    /^maintenance/i,
+    /^pemeliharaan/i,
+  ];
+
+  // Check if message body contains broadcast patterns
+  const isBroadcastMessage = broadcastPatterns.some((pattern) =>
+    pattern.test(payloadBody)
+  );
+
+  // Check for broadcast-specific event types
+  const isBroadcastEventType = [
+    "broadcast",
+    "broadcast_message",
+    "system_broadcast",
+    "announcement",
+    "newsletter",
+    "bulletin",
+    "system_update",
+    "maintenance",
+  ].includes(eventType);
+
+  // Check for broadcast-specific from patterns (system numbers, broadcast numbers)
+  const isBroadcastFrom =
+    /^(status|broadcast|system|announcement|newsletter|bulletin|update|maintenance)/i.test(
+      payloadFrom
+    );
+
+  // Check for broadcast-specific chatId patterns
+  const isBroadcastChatId =
+    /^(status|broadcast|system|announcement|newsletter|bulletin|update|maintenance)/i.test(
+      chatId.replace("@c.us", "").replace("@g.us", "")
+    );
+
+  // Check for empty or system-like content
+  const isSystemContent =
+    !payloadBody ||
+    payloadBody.trim().length === 0 ||
+    /^(status|broadcast|system|announcement|newsletter|bulletin|update|maintenance)/i.test(
+      payloadBody
+    );
+
+  // Check for group messages that might be broadcasts
+  const isGroupBroadcast =
+    isGroup &&
+    (isBroadcastMessage ||
+      isBroadcastEventType ||
+      isBroadcastFrom ||
+      chatId.includes("broadcast") ||
+      chatId.includes("newsletter") ||
+      chatId.includes("announcement"));
+
+  // Check for explicit broadcast flag
+  const isExplicitBroadcast =
+    isBroadcast ||
+    chatId.includes("broadcast") ||
+    chatId.includes("newsletter") ||
+    chatId.includes("announcement");
+
+  console.log("[WAHA Webhook] Enhanced broadcast check:", {
+    payloadBody: payloadBody.substring(0, 50) + "...",
+    payloadFrom,
+    chatId,
+    eventType,
+    isGroup,
+    isBroadcast,
+    isBroadcastMessage,
+    isBroadcastEventType,
+    isBroadcastFrom,
+    isBroadcastChatId,
+    isSystemContent,
+    isGroupBroadcast,
+    isExplicitBroadcast,
+  });
+
+  return (
+    isBroadcastMessage ||
+    isBroadcastEventType ||
+    isBroadcastFrom ||
+    isBroadcastChatId ||
+    isSystemContent ||
+    isGroupBroadcast ||
+    isExplicitBroadcast
+  );
+}
+
 export default defineEventHandler(async (event) => {
   console.log("[WAHA Webhook] === START PROCESS ===");
   const body = await readBody(event);
@@ -53,9 +165,103 @@ export default defineEventHandler(async (event) => {
     return { status: "ok", results: [] };
   }
 
+  // Filter untuk mengabaikan event broadcast dari WAHA
+  const isBroadcastEvent = checkBroadcastEvent(body);
+  if (isBroadcastEvent) {
+    console.log("[WAHA Webhook] Broadcast event detected, skipping processing");
+    return { status: "ok", results: [{ message: "Broadcast event ignored" }] };
+  }
+
+  // Additional validation: Check if this is a valid user message
+  const isValidUserMessage = () => {
+    // Check if from is a valid phone number (not system/broadcast)
+    const fromNumber = payloadFrom;
+    if (!fromNumber || fromNumber.length < 8) {
+      console.log("[WAHA Webhook] Invalid from number:", fromNumber);
+      return false;
+    }
+
+    // Check if from number is not a system number
+    const systemPatterns = [
+      /^status/i,
+      /^broadcast/i,
+      /^system/i,
+      /^announcement/i,
+      /^newsletter/i,
+      /^bulletin/i,
+      /^update/i,
+      /^maintenance/i,
+      /^wa\.me/i,
+      /^whatsapp/i,
+    ];
+
+    const isSystemNumber = systemPatterns.some((pattern) =>
+      pattern.test(fromNumber)
+    );
+    if (isSystemNumber) {
+      console.log("[WAHA Webhook] System number detected:", fromNumber);
+      return false;
+    }
+
+    // Check if message has valid content
+    if (!payloadBody || payloadBody.trim().length === 0) {
+      console.log("[WAHA Webhook] Empty message body");
+      return false;
+    }
+
+    // Check if message is not too long (likely system message)
+    if (payloadBody.length > 1000) {
+      console.log(
+        "[WAHA Webhook] Message too long, likely system message:",
+        payloadBody.length
+      );
+      return false;
+    }
+
+    return true;
+  };
+
+  if (!isValidUserMessage()) {
+    console.log(
+      "[WAHA Webhook] Invalid user message detected, skipping processing"
+    );
+    return {
+      status: "ok",
+      results: [{ message: "Invalid user message ignored" }],
+    };
+  }
+
   // Cek apakah pesan dari chanel (fromMe: true) atau dari user (fromMe: false)
   const fromMe = body?.payload?.fromMe || false;
-  console.log("[WAHA Webhook] Message fromMe:", fromMe);
+  const isGroup = body?.payload?.isGroup || false;
+  const chatId = body?.payload?.chatId || "";
+  console.log("[WAHA Webhook] Message details:", {
+    fromMe,
+    isGroup,
+    chatId,
+    payloadFrom,
+  });
+
+  // Skip group messages unless they are from specific allowed groups
+  if (isGroup) {
+    console.log("[WAHA Webhook] Group message detected, skipping processing");
+    return { status: "ok", results: [{ message: "Group message ignored" }] };
+  }
+
+  // Skip messages from broadcast channels
+  if (
+    chatId.includes("broadcast") ||
+    chatId.includes("newsletter") ||
+    chatId.includes("announcement")
+  ) {
+    console.log(
+      "[WAHA Webhook] Broadcast channel message detected, skipping processing"
+    );
+    return {
+      status: "ok",
+      results: [{ message: "Broadcast channel message ignored" }],
+    };
+  }
 
   if (fromMe) {
     // Pesan dari chanel (manusia membalas manual)
