@@ -267,11 +267,22 @@ export default defineEventHandler(async (event) => {
     // Pesan dari chanel (manusia membalas manual)
     console.log("[WAHA Webhook] === MANUAL REPLY FROM CHANEL ===");
 
+    // Tambahkan filter broadcast/newsletter di sini!
+    if (checkBroadcastEvent(body)) {
+      console.log(
+        "[WAHA Webhook] Manual reply is broadcast/newsletter, skipping save"
+      );
+      return {
+        status: "ok",
+        results: [{ message: "Manual reply broadcast/newsletter ignored" }],
+      };
+    }
+
     // Ambil agent_id dari tabel agents where type='manusia' dan no_hp=meId
     const { data: agentData, error: agentErr } = await client
       .from("agents")
       .select("id")
-      .eq("type", "agent")
+      .eq("chat_replay", "manusia")
       .eq("no_hp", meId)
       .maybeSingle();
 
@@ -286,7 +297,7 @@ export default defineEventHandler(async (event) => {
     const agentId = agentData.id;
     console.log("[WAHA Webhook] Found agent manusia, ID:", agentId);
 
-    // Simpan pesan ke database dengan sender='agent'
+    // Simpan pesan ke database dengan chat_replay='agent'
     try {
       await $fetch("/api/message", {
         method: "POST",
@@ -295,7 +306,9 @@ export default defineEventHandler(async (event) => {
           chanel_id: chanelIdToUse,
           contact_id: contact_id,
           message_type: "text",
-          sender: "manusia",
+          chat_replay: "manusia",
+          from: payloadFrom,
+          to: meId,
           media_url: null,
           content: payloadBody,
         },
@@ -316,6 +329,7 @@ export default defineEventHandler(async (event) => {
   let contact_id = null;
   try {
     console.log("[WAHA Webhook] Checking existing contact for:", payloadFrom);
+    
     // 1. Cek apakah sudah ada di contact
     const contactRes = await $fetch("/api/contact", {
       method: "GET",
@@ -699,7 +713,9 @@ export default defineEventHandler(async (event) => {
           chanel_id: chanelIdToUse,
           contact_id,
           message_type: userMessageType,
-          sender: "manusia",
+          chat_replay: "manusia",
+          from: payloadFrom,
+          to: meId,
           media_url: userMediaUrl,
           content: userContent,
         },
@@ -758,7 +774,9 @@ export default defineEventHandler(async (event) => {
             chanel_id: chanelIdToUse,
             contact_id,
             message_type: "image",
-            sender: "ai",
+            chat_replay: "ai",
+            from: payloadFrom,
+            to: meId,
             media_url: imgUrl,
             content: aiText, // caption dari AI
           };
@@ -792,14 +810,14 @@ export default defineEventHandler(async (event) => {
               chanel_id: chanelIdToUse,
               contact_id,
               message_type: "image",
-              sender: "ai",
+              chat_replay: "ai",
               media_url: imgUrl,
               content_length: aiText?.length,
             });
           }
-        } catch (sendErr) {
-          console.log("[WAHA Webhook] Gagal kirim image ke WAHA", sendErr);
-          throw sendErr; // Re-throw agar masuk ke catch block utama
+        } catch (chat_replayr) {
+          console.log("[WAHA Webhook] Gagal kirim image ke WAHA", chat_replayr);
+          throw chat_replayr; // Re-throw agar masuk ke catch block utama
         }
       }
     } else {
@@ -833,7 +851,9 @@ export default defineEventHandler(async (event) => {
           chanel_id: chanelIdToUse,
           contact_id,
           message_type: "text",
-          sender: "ai",
+          chat_replay: "ai",
+          from: payloadFrom,
+          to: meId,
           media_url: null,
           content: aiText,
         };
@@ -861,13 +881,13 @@ export default defineEventHandler(async (event) => {
             chanel_id: chanelIdToUse,
             contact_id,
             message_type: "text",
-            sender: "ai",
+            chat_replay: "ai",
             content_length: aiText?.length,
           });
         }
-      } catch (sendErr) {
-        console.log("[WAHA Webhook] Gagal kirim text ke WAHA", sendErr);
-        throw sendErr; // Re-throw agar masuk ke catch block utama
+      } catch (chat_replayr) {
+        console.log("[WAHA Webhook] Gagal kirim text ke WAHA", chat_replayr);
+        throw chat_replayr; // Re-throw agar masuk ke catch block utama
       }
     }
   } catch (err) {

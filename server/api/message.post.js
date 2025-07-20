@@ -10,7 +10,9 @@ export default defineEventHandler(async (event) => {
       message_type,
       media_url,
       content,
-      sender,
+      chat_replay, // ganti dari sender
+      from,
+      to,
     } = body;
     if (
       !agent_id ||
@@ -18,12 +20,14 @@ export default defineEventHandler(async (event) => {
       !contact_id ||
       !message_type ||
       !content ||
-      !sender
+      !chat_replay ||
+      !from ||
+      !to
     ) {
       return {
         error: true,
         message:
-          "agent_id, chanel_id, contact_id, message_type, content, dan sender wajib diisi",
+          "agent_id, chanel_id, contact_id, message_type, content, chat_type, from, dan to wajib diisi",
       };
     }
     const runtimeConfig = useRuntimeConfig();
@@ -40,7 +44,9 @@ export default defineEventHandler(async (event) => {
         message_type,
         media_url: media_url || null,
         content,
-        sender,
+        chat_type,
+        from,
+        to,
       })
       .select()
       .single();
