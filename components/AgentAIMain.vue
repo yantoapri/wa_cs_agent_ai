@@ -194,7 +194,20 @@
             </div>
           </div>
         </div>
-        <div class="px-8 pt-4 flex gap-6 mb-6 border-b border-gray-200">
+        <!-- Agent Name Display -->
+        <div class="px-8 pt-6 pb-2">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-sm">
+              {{ selectedAI.name ? selectedAI.name.charAt(0).toUpperCase() : 'A' }}
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-gray-800">{{ selectedAI.name }}</h1>
+              <p class="text-gray-500 text-sm">{{ selectedAI.description || 'Tidak ada deskripsi' }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="px-8 pt-2 flex gap-6 mb-6 border-b border-gray-200">
           <button
             v-for="t in ['gaya', 'pengetahuan', 'edit']"
             :key="t"

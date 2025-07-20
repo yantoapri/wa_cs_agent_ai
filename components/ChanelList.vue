@@ -1,6 +1,5 @@
 <template>
   <div class="p-8">
-    <h2 class="mt-0 text-xl font-bold">chanel</h2>
     <button
       @click="showForm = !showForm"
       class="mb-6 px-5 py-2.5 bg-blue-500 text-white rounded-lg cursor-pointer text-base border-none"
@@ -135,7 +134,7 @@ async function addchanel() {
                 webhooks: [
                   {
                     url: webhookUrl,
-                    events: ["message"],
+                    events: ["message.any"],
                     hmac: { key: null },
                     retries: {
                       delaySeconds: 2,

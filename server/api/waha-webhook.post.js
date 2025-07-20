@@ -493,7 +493,7 @@ export default defineEventHandler(async (event) => {
           chanel_id: chanelIdToUse,
           contact_id,
           message_type: userMessageType,
-          sender: "ai",
+          sender: "manusia",
           media_url: userMediaUrl,
           content: userContent,
         },
@@ -540,6 +540,25 @@ export default defineEventHandler(async (event) => {
           body: messageBody,
         });
         console.log("[WAHA Webhook] Image sent successfully via WAHA");
+
+        // Simpan pesan AI (image) ke database setelah berhasil kirim ke WAHA
+        try {
+          await $fetch("/api/message", {
+            method: "POST",
+            body: {
+              agent_id: conn.agent_id,
+              chanel_id: chanelIdToUse,
+              contact_id,
+              message_type: "image",
+              sender: "ai",
+              media_url: imgUrl,
+              content: aiText, // caption dari AI
+            },
+          });
+          console.log("[WAHA Webhook] AI image message saved to database");
+        } catch (err) {
+          console.log("[WAHA Webhook] Gagal simpan AI image message", err);
+        }
       }
     } else {
       console.log("[WAHA Webhook] Sending text message");
@@ -560,6 +579,25 @@ export default defineEventHandler(async (event) => {
         body: messageBody,
       });
       console.log("[WAHA Webhook] Text sent successfully via WAHA");
+
+      // Simpan pesan AI (text) ke database setelah berhasil kirim ke WAHA
+      try {
+        await $fetch("/api/message", {
+          method: "POST",
+          body: {
+            agent_id: conn.agent_id,
+            chanel_id: chanelIdToUse,
+            contact_id,
+            message_type: "text",
+            sender: "ai",
+            media_url: null,
+            content: aiText,
+          },
+        });
+        console.log("[WAHA Webhook] AI text message saved to database");
+      } catch (err) {
+        console.log("[WAHA Webhook] Gagal simpan AI text message", err);
+      }
     }
   } catch (err) {
     console.log("[WAHA Webhook] Error saat memanggil /api/openrouter", err);

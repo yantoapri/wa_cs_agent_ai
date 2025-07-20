@@ -124,6 +124,7 @@
           >
             <AgentManusiaList
               ref="agentManusiaListRef"
+              :selected-agent="selectedAgent"
               @select-agent="onSelectAgent"
               @add-agent="onAddAgent"
             />
@@ -177,7 +178,6 @@ import { useRouter } from "vue-router";
 import InboxList from "~/components/InboxList.vue";
 import KontakList from "~/components/KontakList.vue";
 import ChanelList from "~/components/ChanelList.vue";
-import AgentAIList from "~/components/AgentAIList.vue";
 import AgentManusiaList from "~/components/AgentManusiaList.vue";
 import InboxMain from "~/components/InboxMain.vue";
 import KontakMain from "~/components/KontakMain.vue";
@@ -188,7 +188,7 @@ import AgentManusiaMain from "~/components/AgentManusiaMain.vue";
 const tabs = [
   { value: "inbox", label: "Inbox" },
   { value: "kontak", label: "Kontak" },
-  { value: "chanel", label: "chanel" },
+  { value: "chanel", label: "Chanel" },
   { value: "agent-ai", label: "Agent AI" },
   { value: "agent-manusia", label: "Agent Manusia" },
 ];

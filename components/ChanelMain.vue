@@ -199,6 +199,7 @@ const wahaApiKey = import.meta.env.VITE_WAHA_API;
 const props = defineProps({ chanel: Object });
 const emit = defineEmits(["update-whatsapp-number", "chanel-deleted"]);
 const { aiAgents, fetchAgentsByType } = useAgentStore();
+const { showToast } = useToast();
 
 // Pindahkan ke atas sebelum watcher
 const { updatechanel, deletechanel } = useChanelstore();

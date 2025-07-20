@@ -54,7 +54,7 @@
         :key="ai.id || idx"
         @click="emit('select', ai)"
         :class="[
-          'flex items-center mb-4 relative rounded-lg transition-colors',
+          'flex items-center mb-4 py-3 relative rounded-lg transition-colors',
           'cursor-pointer',
           props.selected && ai.id === props.selected.id
             ? 'bg-blue-100 border border-blue-400'
@@ -63,7 +63,6 @@
       >
         <div class="ml-4 flex-1">
           <div class="font-medium">{{ ai.name }}</div>
-          <div class="text-gray-500">{{ ai.status }}</div>
         </div>
       </div>
     </div>
