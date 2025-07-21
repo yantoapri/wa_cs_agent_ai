@@ -17,19 +17,18 @@ export const useConversationStore = () => {
     error.value = null;
 
     try {
-      // Query to get messages grouped by AI agents with contact and chanel info
-      const { data, error: fetchError } = await supabase
+      console.log(
+        "[useConversationStore] Starting AI agent conversations fetch..."
+      );
+
+      // Use a more efficient query with DISTINCT to get unique combinations
+      const { data: rawData, error: queryError } = await supabase
         .from("messages")
         .select(
           `
           agent_id,
-          sender,
           contact_id,
           chanel_id,
-          message_type,
-          content,
-          media_url,
-          created_at,
           agents!inner(
             id,
             name,
@@ -37,13 +36,13 @@ export const useConversationStore = () => {
             avatar_url,
             created_by
           ),
-          contacts!left(
+          contacts!inner(
             id,
             name,
             phone_number,
             avatar_url
           ),
-          chanels!left(
+          chanels!inner(
             id,
             name,
             type,
@@ -51,60 +50,105 @@ export const useConversationStore = () => {
           )
         `
         )
-        .eq("agents.type", "ai")
+        .eq("agent_type", "ai") // Ganti filter ke agent_type
         .eq("agents.created_by", user.value?.id)
         .not("agent_id", "is", null)
-        .order("created_at", { ascending: true });
+        .not("contact_id", "is", null)
+        .not("chanel_id", "is", null);
 
-      if (fetchError) throw fetchError;
+      if (queryError) throw queryError;
 
-      // Group by agent_id, contact_id, chanel_id
-      const agentConversations = new Map();
+      console.log("[useConversationStore] Raw data count:", rawData?.length);
 
-      data?.forEach((item) => {
-        const agentId = item.agent_id;
-        const contactId = item.contact_id;
-        const chanelId = item.chanel_id;
-        const agent = item.agents;
-        const contact = item.contacts;
-        const chanel = item.chanels;
+      // Group by unique combinations using Map with strict deduplication
+      const conversationMap = new Map();
+      const processedKeys = new Set();
+      const duplicateKeys = new Set();
 
-        const groupKey = `${agentId}-${contactId}-${chanelId}`;
+      console.log(
+        "[useConversationStore] Processing raw data for AI grouping..."
+      );
 
-        if (!agentConversations.has(groupKey)) {
-          agentConversations.set(groupKey, {
-            agent: agent,
-            contact: contact,
-            chanel: chanel,
-            messages: [],
-            totalMessages: 0,
-            unreadCount: 0,
+      rawData?.forEach((item, index) => {
+        const key = `${item.agent_id}-${item.contact_id}-${item.chanel_id}`;
+
+        // Log every item being processed
+        console.log(`[useConversationStore] Processing AI item ${index}:`, {
+          key,
+          agent_id: item.agent_id,
+          contact_id: item.contact_id,
+          chanel_id: item.chanel_id,
+          agent_name: item.agents?.name,
+          contact_name: item.contacts?.name || item.contacts?.phone_number,
+          chanel_name: item.chanels?.name,
+        });
+
+        if (processedKeys.has(key)) {
+          duplicateKeys.add(key);
+          console.log(`[useConversationStore] Duplicate key found: ${key}`);
+        }
+        processedKeys.add(key);
+
+        if (!conversationMap.has(key)) {
+          conversationMap.set(key, {
+            agent_id: item.agent_id,
+            contact_id: item.contact_id,
+            chanel_id: item.chanel_id,
+            agent: item.agents,
+            contact: item.contacts,
+            chanel: item.chanels,
+            messageCount: 0,
             lastActivity: 0,
           });
+          console.log(
+            `[useConversationStore] Created new AI group for key: ${key}`
+          );
         }
 
-        const groupData = agentConversations.get(groupKey);
-        groupData.messages.push(item);
-        groupData.totalMessages++;
-        groupData.lastActivity = Math.max(
-          groupData.lastActivity,
-          new Date(item.created_at).getTime()
-        );
+        // Count messages for this group
+        const group = conversationMap.get(key);
+        group.messageCount++;
+
+        // Update last activity
+        const messageTime = new Date(item.created_at || new Date()).getTime();
+        if (messageTime > group.lastActivity) {
+          group.lastActivity = messageTime;
+        }
       });
 
-      // Convert to array format for easier use in UI
-      const result = Array.from(agentConversations.values()).map((item) => ({
-        agent: item.agent,
-        contact: item.contact,
-        chanel: item.chanel,
-        messages: item.messages,
-        totalMessages: item.totalMessages,
-        unreadCount: item.unreadCount,
-        lastActivity: item.lastActivity,
+      console.log("[useConversationStore] AI Grouping summary:", {
+        totalItems: rawData?.length,
+        processedKeys: processedKeys.size,
+        duplicateKeys: duplicateKeys.size,
+        uniqueGroups: conversationMap.size,
+        duplicateKeyList: Array.from(duplicateKeys),
+      });
+
+      // Convert map to array and format result
+      const result = Array.from(conversationMap.values()).map((group) => ({
+        agent: group.agent,
+        contact: group.contact,
+        chanel: group.chanel,
+        messages: [], // We don't need all messages for the list
+        totalMessages: group.messageCount,
+        unreadCount: 0, // TODO: Implement unread count
+        lastActivity: group.lastActivity,
       }));
 
-      // Sort by last activity
+      // Sort by last activity (newest first)
       result.sort((a, b) => b.lastActivity - a.lastActivity);
+
+      console.log("[useConversationStore] AI conversations grouped:", {
+        rawDataCount: rawData?.length,
+        uniqueGroups: result.length,
+        groups: result.map((r) => ({
+          agent_name: r.agent?.name,
+          contact_name: r.contact?.name || r.contact?.phone_number,
+          chanel_name: r.chanel?.name,
+          totalMessages: r.totalMessages,
+          lastActivity: new Date(r.lastActivity).toISOString(),
+        })),
+      });
 
       return result;
     } catch (err) {
@@ -125,8 +169,12 @@ export const useConversationStore = () => {
     error.value = null;
 
     try {
-      // Query to get messages grouped by Human agents with contact and chanel info
-      const { data, error: fetchError } = await supabase
+      console.log(
+        "[useConversationStore] Starting Human agent conversations fetch..."
+      );
+
+      // Use a more efficient query with DISTINCT to get unique combinations
+      const { data: rawData, error: queryError } = await supabase
         .from("messages")
         .select(
           `
@@ -140,13 +188,13 @@ export const useConversationStore = () => {
             avatar_url,
             created_by
           ),
-          contacts!left(
+          contacts!inner(
             id,
             name,
             phone_number,
             avatar_url
           ),
-          chanels!left(
+          chanels!inner(
             id,
             name,
             type,
@@ -154,60 +202,107 @@ export const useConversationStore = () => {
           )
         `
         )
-        .eq("agents.type", "manusia")
-        .eq("agents.created_by", user.value?.id)
+        .eq("agent_type", "manusia") // Ganti filter ke agent_type
         .not("agent_id", "is", null)
-        .order("created_at", { ascending: true });
+        .not("contact_id", "is", null)
+        .not("chanel_id", "is", null);
 
-      if (fetchError) throw fetchError;
+      if (queryError) throw queryError;
 
-      // Group by agent_id, contact_id, chanel_id
-      const agentConversations = new Map();
+      console.log(
+        "[useConversationStore] Raw Human data count:",
+        rawData?.length
+      );
 
-      data?.forEach((item) => {
-        const agentId = item.agent_id;
-        const contactId = item.contact_id;
-        const chanelId = item.chanel_id;
-        const agent = item.agents;
-        const contact = item.contacts;
-        const chanel = item.chanels;
+      // Group by unique combinations using Map with strict deduplication
+      const conversationMap = new Map();
+      const processedKeys = new Set();
+      const duplicateKeys = new Set();
 
-        const groupKey = `${agentId}-${contactId}-${chanelId}`;
+      console.log(
+        "[useConversationStore] Processing raw data for Human grouping..."
+      );
 
-        if (!agentConversations.has(groupKey)) {
-          agentConversations.set(groupKey, {
-            agent: agent,
-            contact: contact,
-            chanel: chanel,
-            messages: [],
-            totalMessages: 0,
-            unreadCount: 0,
+      rawData?.forEach((item, index) => {
+        const key = `${item.agent_id}-${item.contact_id}-${item.chanel_id}`;
+
+        // Log every item being processed
+        console.log(`[useConversationStore] Processing Human item ${index}:`, {
+          key,
+          agent_id: item.agent_id,
+          contact_id: item.contact_id,
+          chanel_id: item.chanel_id,
+          agent_name: item.agents?.name,
+          contact_name: item.contacts?.name || item.contacts?.phone_number,
+          chanel_name: item.chanels?.name,
+        });
+
+        if (processedKeys.has(key)) {
+          duplicateKeys.add(key);
+          console.log(`[useConversationStore] Duplicate key found: ${key}`);
+        }
+        processedKeys.add(key);
+
+        if (!conversationMap.has(key)) {
+          conversationMap.set(key, {
+            agent_id: item.agent_id,
+            contact_id: item.contact_id,
+            chanel_id: item.chanel_id,
+            agent: item.agents,
+            contact: item.contacts,
+            chanel: item.chanels,
+            messageCount: 0,
             lastActivity: 0,
           });
+          console.log(
+            `[useConversationStore] Created new Human group for key: ${key}`
+          );
         }
 
-        const groupData = agentConversations.get(groupKey);
-        groupData.messages.push(item);
-        groupData.totalMessages++;
-        groupData.lastActivity = Math.max(
-          groupData.lastActivity,
-          new Date(item.created_at).getTime()
-        );
+        // Count messages for this group
+        const group = conversationMap.get(key);
+        group.messageCount++;
+
+        // Update last activity
+        const messageTime = new Date(item.created_at || new Date()).getTime();
+        if (messageTime > group.lastActivity) {
+          group.lastActivity = messageTime;
+        }
       });
 
-      // Convert to array format for easier use in UI
-      const result = Array.from(agentConversations.values()).map((item) => ({
-        agent: item.agent,
-        contact: item.contact,
-        chanel: item.chanel,
-        messages: item.messages,
-        totalMessages: item.totalMessages,
-        unreadCount: item.unreadCount,
-        lastActivity: item.lastActivity,
+      console.log("[useConversationStore] Human Grouping summary:", {
+        totalItems: rawData?.length,
+        processedKeys: processedKeys.size,
+        duplicateKeys: duplicateKeys.size,
+        uniqueGroups: conversationMap.size,
+        duplicateKeyList: Array.from(duplicateKeys),
+      });
+
+      // Convert map to array and format result
+      const result = Array.from(conversationMap.values()).map((group) => ({
+        agent: group.agent,
+        contact: group.contact,
+        chanel: group.chanel,
+        messages: [], // We don't need all messages for the list
+        totalMessages: group.messageCount,
+        unreadCount: 0, // TODO: Implement unread count
+        lastActivity: group.lastActivity,
       }));
 
-      // Sort by last activity
+      // Sort by last activity (newest first)
       result.sort((a, b) => b.lastActivity - a.lastActivity);
+
+      console.log("[useConversationStore] Human conversations grouped:", {
+        rawDataCount: rawData?.length,
+        uniqueGroups: result.length,
+        groups: result.map((r) => ({
+          agent_name: r.agent?.name,
+          contact_name: r.contact?.name || r.contact?.phone_number,
+          chanel_name: r.chanel?.name,
+          totalMessages: r.totalMessages,
+          lastActivity: new Date(r.lastActivity).toISOString(),
+        })),
+      });
 
       return result;
     } catch (err) {
@@ -314,7 +409,7 @@ export const useConversationStore = () => {
         .eq("agent_id", agentId)
         .eq("contact_id", contactId)
         .eq("chanel_id", chanelId)
-        .eq("agents.type", "manusia")
+        .eq("agent_type", "manusia") // filter by agent_type di tabel messages
         .order("created_at", { ascending: true });
       if (fetchError) throw fetchError;
 
@@ -403,6 +498,7 @@ export const useConversationStore = () => {
     fetchAIAgentConversations,
     fetchHumanAgentConversations,
     fetchMessagesByGroupAi,
+    fetchMessagesByGroupManusia, // tambahkan ini
     addMessage,
     markMessagesAsRead,
   };

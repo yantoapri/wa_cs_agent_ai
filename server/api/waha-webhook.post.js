@@ -116,7 +116,35 @@ function checkBroadcastEvent(body) {
   );
 }
 
+// === AI Outgoing Message Cache ===
+const aiOutgoingCache = globalThis.__aiOutgoingCache || new Map();
+globalThis.__aiOutgoingCache = aiOutgoingCache;
+const AI_CACHE_TTL = 2 * 60 * 1000; // 2 menit
+
+function cacheAIMsg(to, content) {
+  if (!to || !content) return;
+  aiOutgoingCache.set(`${to}|${content}`, Date.now());
+}
+function isRecentAIMsg(to, content) {
+  if (!to || !content) return false;
+  const key = `${to}|${content}`;
+  const ts = aiOutgoingCache.get(key);
+  if (ts && Date.now() - ts < AI_CACHE_TTL) return true;
+  return false;
+}
+function cleanupAICache() {
+  const now = Date.now();
+  for (const [key, ts] of aiOutgoingCache.entries()) {
+    if (now - ts > AI_CACHE_TTL) aiOutgoingCache.delete(key);
+  }
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export default defineEventHandler(async (event) => {
+  cleanupAICache();
   console.log("[WAHA Webhook] === START PROCESS ===");
   const body = await readBody(event);
   console.log("[WAHA Webhook] Received body:", JSON.stringify(body, null, 2));
@@ -160,6 +188,32 @@ export default defineEventHandler(async (event) => {
   });
 
   if (isOutgoing) {
+    // Cek apakah pesan outgoing ini baru saja dikirim oleh AI
+    const outgoingContent = body?.payload?.body || body?.payload?.text || null;
+    const outgoingTo = normalizePhone(
+      (body?.payload?.to || body?.payload?.chatId || rawPayloadFrom).replace(
+        "@c.us",
+        ""
+      )
+    );
+    // Cek metadata sender_type: ai
+    const metaSenderType =
+      body?.payload?.metadata?.sender_type || body?.metadata?.sender_type;
+    if (metaSenderType === "ai" || isRecentAIMsg(outgoingTo, outgoingContent)) {
+      console.log(
+        "[WAHA Webhook] Outgoing message detected as AI (skip manual save)",
+        { outgoingTo, outgoingContent }
+      );
+      return {
+        status: "ok",
+        message: "AI outgoing message detected (not saved as manual)",
+      };
+    }
+    // Jika ini outgoing AI (dari proses auto-reply), cache pesan
+    if (metaSenderType === "ai") {
+      cacheAIMsg(outgoingTo, outgoingContent);
+    }
+    // Lanjutkan ke handler manual jika bukan AI
     console.log("[WAHA Webhook] Detected outgoing message (fromMe true)");
     const sentResult = await handleSentMessage({
       body,
@@ -316,7 +370,7 @@ export default defineEventHandler(async (event) => {
         chanel_id: chanelIdToUse,
         contact_id,
         message_type: "text",
-        chat_replay: "ai",
+        agent_type: "ai",
         chat_type: "ai",
         from: payloadFrom,
         to: meId,
@@ -358,6 +412,18 @@ export default defineEventHandler(async (event) => {
           }
         );
         console.log("[WAHA Webhook] Typing presence sent successfully");
+        // Hitung durasi efek typing
+        let typingMs = 0;
+        if (aiText) {
+          typingMs += Math.min(aiText.length * 50, 10000); // 50ms per karakter, max 10 detik
+        }
+        if (images && images.length > 0) {
+          typingMs += 2000; // Tambah 2 detik jika ada media
+        }
+        if (typingMs > 0) {
+          console.log(`[WAHA Webhook] Typing effect sleep for ${typingMs} ms`);
+          await sleep(typingMs);
+        }
       }
     } catch (err) {
       console.log("[WAHA Webhook] Error sending typing presence:", err);
@@ -411,7 +477,7 @@ export default defineEventHandler(async (event) => {
             chanel_id: chanelIdToUse,
             contact_id,
             message_type: "image",
-            chat_replay: "ai",
+            agent_type: "ai",
             chat_type: "ai", // tambahkan ini
             from: meId,
             to: payloadFrom,
@@ -468,7 +534,7 @@ export default defineEventHandler(async (event) => {
           chanel_id: chanelIdToUse,
           contact_id,
           message_type: "text",
-          chat_replay: "ai",
+          agent_type: "ai",
           chat_type: "ai", // tambahkan ini
           from: meId,
           to: payloadFrom,

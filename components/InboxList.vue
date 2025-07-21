@@ -17,13 +17,15 @@
     </div>
     <div v-else>
       <div
-        v-for="agentData in currentAgentConversations"
+        v-for="(agentData, index) in currentAgentConversations"
         :key="
-          agentData.agent.id +
+          agentData.agent?.id +
           '-' +
           agentData.contact?.id +
           '-' +
-          agentData.chanel?.id
+          agentData.chanel?.id +
+          '-' +
+          index
         "
         class="mb-6 cursor-pointer"
       >
@@ -83,9 +85,82 @@ const {
 const aiAgentConversations = ref([]);
 const humanAgentConversations = ref([]);
 const currentAgentConversations = computed(() => {
-  return props.activeTab === "ai"
-    ? aiAgentConversations.value
-    : humanAgentConversations.value;
+  const rawResult =
+    props.activeTab === "ai"
+      ? aiAgentConversations.value
+      : humanAgentConversations.value;
+
+  console.log("[InboxList] Computing current agent conversations:", {
+    activeTab: props.activeTab,
+    aiCount: aiAgentConversations.value?.length,
+    humanCount: humanAgentConversations.value?.length,
+    rawResultCount: rawResult?.length,
+  });
+
+  // Additional deduplication at UI level to ensure no duplicates
+  if (rawResult && rawResult.length > 0) {
+    const seen = new Set();
+    const duplicates = [];
+    const uniqueKeys = new Set();
+    const deduplicatedResult = [];
+
+    rawResult.forEach((item, index) => {
+      const key = `${item.agent?.id}-${item.contact?.id}-${item.chanel?.id}`;
+      uniqueKeys.add(key);
+
+      if (seen.has(key)) {
+        duplicates.push({
+          index,
+          key,
+          item: {
+            agent_name: item.agent?.name,
+            contact_name: item.contact?.name || item.contact?.phone_number,
+            chanel_name: item.chanel?.name,
+            totalMessages: item.totalMessages,
+          },
+        });
+        console.warn(
+          `[InboxList] Duplicate found at index ${index}, skipping:`,
+          key
+        );
+      } else {
+        seen.add(key);
+        deduplicatedResult.push(item);
+        console.log(`[InboxList] Added unique item at index ${index}:`, key);
+      }
+    });
+
+    if (duplicates.length > 0) {
+      console.warn("[InboxList] Found and removed duplicates:", {
+        duplicateCount: duplicates.length,
+        duplicates: duplicates,
+        originalItems: rawResult.length,
+        deduplicatedItems: deduplicatedResult.length,
+        uniqueKeys: uniqueKeys.size,
+      });
+    } else {
+      console.log("[InboxList] No duplicates found:", {
+        totalItems: rawResult.length,
+        uniqueKeys: uniqueKeys.size,
+      });
+    }
+
+    console.log("[InboxList] Final deduplicated result:", {
+      activeTab: props.activeTab,
+      originalLength: rawResult.length,
+      deduplicatedLength: deduplicatedResult.length,
+      result: deduplicatedResult.map((r) => ({
+        agent_name: r.agent?.name,
+        contact_name: r.contact?.name || r.contact?.phone_number,
+        chanel_name: r.chanel?.name,
+        totalMessages: r.totalMessages,
+      })),
+    });
+
+    return deduplicatedResult;
+  }
+
+  return rawResult || [];
 });
 
 const getConversationName = (conversation) => {
@@ -162,19 +237,50 @@ watch(
 
 // Function to load appropriate agent conversations
 const loadAgentConversations = async () => {
+  console.log("[InboxList] Loading conversations for tab:", props.activeTab);
+
   if (props.activeTab === "ai") {
     try {
+      console.log("[InboxList] Fetching AI agent conversations...");
       const result = await fetchAIAgentConversations();
+      console.log("[InboxList] AI Agent conversations result:", result);
+      console.log("[InboxList] AI result length:", result?.length);
+      if (result && result.length > 0) {
+        console.log("[InboxList] First AI conversation:", {
+          agent_name: result[0].agent?.name,
+          contact_name: result[0].contact?.name,
+          chanel_name: result[0].chanel?.name,
+          totalMessages: result[0].totalMessages,
+        });
+      }
       aiAgentConversations.value = result;
     } catch (err) {
       console.error("Error loading AI agent conversations:", err);
     }
-  } else if (props.activeTab === "human") {
+  } else if (props.activeTab === "manusia") {
+    // Perbaiki: ganti "human" menjadi "manusia"
     try {
+      console.log("[InboxList] [DEBUG] Fetching Human agent conversations...");
       const result = await fetchHumanAgentConversations();
+      console.log(
+        "[InboxList] [DEBUG] Human Agent conversations result:",
+        result
+      );
+      console.log("[InboxList] [DEBUG] Human result length:", result?.length);
+      if (result && result.length > 0) {
+        console.log("[InboxList] [DEBUG] First Human conversation:", {
+          agent_name: result[0].agent?.name,
+          contact_name: result[0].contact?.name,
+          chanel_name: result[0].chanel?.name,
+          totalMessages: result[0].totalMessages,
+        });
+      }
       humanAgentConversations.value = result;
     } catch (err) {
-      console.error("Error loading Human agent conversations:", err);
+      console.error(
+        "[InboxList] [DEBUG] Error loading Human agent conversations:",
+        err
+      );
     }
   }
 };

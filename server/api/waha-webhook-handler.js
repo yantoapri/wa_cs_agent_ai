@@ -38,12 +38,12 @@ export async function handleReceivedMessage({
     return { status: "ok", takeover: false, proceed: true };
   }
 
-  // Cek message terakhir dari chanel ini by chat_replay='manusia'
+  // Cek message terakhir dari chanel ini by agent_type='manusia'
   const { data: lastHumanMsg } = await client
     .from("messages")
     .select("created_at")
     .eq("chanel_id", chanelId)
-    .eq("chat_replay", "manusia")
+    .eq("agent_type", "manusia")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -98,6 +98,7 @@ export async function handleSentMessage({
   const content = body?.payload?.body || null;
   const from = body?.payload?.from?.replace("@c.us", "") || null;
   const to = body?.payload?.to?.replace("@c.us", "") || null;
+
   // Cari agent_id manusia berdasarkan phone = meId
   const { data: agentData, error: agentErr } = await client
     .from("agents")
@@ -112,6 +113,27 @@ export async function handleSentMessage({
     };
   }
   const agentId = agentData.id;
+
+  // Cari contact_id berdasarkan phone_number = payloadFrom
+  let contactId = null;
+  try {
+    const { data: contactData, error: contactErr } = await client
+      .from("contacts")
+      .select("id")
+      .eq("phone_number", payloadFrom)
+      .maybeSingle();
+    if (contactData && contactData.id) {
+      contactId = contactData.id;
+    } else {
+      console.log(
+        "[WAHA Webhook] Contact tidak ditemukan untuk phone_number:",
+        payloadFrom
+      );
+    }
+  } catch (e) {
+    console.log("[WAHA Webhook] Error mencari contact:", e.message);
+  }
+
   // Simpan ke tabel messages
   try {
     const { data, error } = await client
@@ -119,11 +141,11 @@ export async function handleSentMessage({
       .insert({
         agent_id: agentId,
         chanel_id: chanelId,
-        contact_id: null, // Isi jika ada
+        contact_id: contactId,
         message_type: "text",
-        chat_replay: "manusia",
-        from,
-        to,
+        agent_type: "manusia",
+        from: meId,
+        to: payloadFrom,
         media_url: null,
         content,
       })

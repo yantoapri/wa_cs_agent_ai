@@ -10,7 +10,6 @@ export default defineEventHandler(async (event) => {
       message_type,
       media_url,
       content,
-      chat_replay, // gunakan chat_replay
       from,
       to,
     } = body;
@@ -20,14 +19,13 @@ export default defineEventHandler(async (event) => {
       !contact_id ||
       !message_type ||
       !content ||
-      !chat_replay ||
       !from ||
       !to
     ) {
       return {
         error: true,
         message:
-          "agent_id, chanel_id, contact_id, message_type, content, chat_replay, from, dan to wajib diisi",
+          "agent_id, chanel_id, contact_id, message_type, content, from, dan to wajib diisi",
       };
     }
     const runtimeConfig = useRuntimeConfig();
@@ -35,6 +33,26 @@ export default defineEventHandler(async (event) => {
       runtimeConfig.public.supabaseUrl,
       runtimeConfig.supabaseServiceRoleKey
     );
+    // Ambil tipe agent dari tabel agents
+    let agent_type = null;
+    try {
+      const { data: agentData, error: agentErr } = await client
+        .from("agents")
+        .select("type")
+        .eq("id", agent_id)
+        .maybeSingle();
+      if (agentData && agentData.type) {
+        agent_type = agentData.type; // 'ai' atau 'manusia'
+      }
+    } catch (e) {
+      // Biarkan agent_type null jika gagal
+    }
+    if (!agent_type) {
+      return {
+        error: true,
+        message: "agent_type tidak ditemukan untuk agent_id: " + agent_id,
+      };
+    }
     const { data, error } = await client
       .from("messages")
       .insert({
@@ -44,9 +62,9 @@ export default defineEventHandler(async (event) => {
         message_type,
         media_url: media_url || null,
         content,
-        chat_replay, // gunakan chat_replay
         from,
         to,
+        agent_type, // gunakan agent_type untuk filter/grouping
       })
       .select()
       .single();

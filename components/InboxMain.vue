@@ -41,22 +41,41 @@
                 >
               </div>
             </template>
-            <div class="w-full flex">
+            <!-- Bubble chat: kanan jika from == contact, kiri jika from == chanel -->
+            <div
+              class="w-full flex"
+              :class="
+                normalizePhone(message.from) ===
+                normalizePhone(selectedConversation.contact?.phone_number)
+                  ? 'justify-end'
+                  : 'justify-start'
+              "
+            >
               <div
                 :class="[
-                  ' max-w-[70%] px-4 py-2 rounded-lg mb-2 align-top',
-                  message.sender === 'agent_ai'
-                    ? 'bg-blue-50 ml-auto text-right'
-                    : 'bg-gray-100 text-left',
+                  'max-w-[70%] px-4 py-2 rounded-lg mb-2 align-top',
+                  normalizePhone(message.from) ===
+                  normalizePhone(selectedConversation.contact?.phone_number)
+                    ? 'bg-blue-500 text-white ml-auto' // bubble kanan (user)
+                    : 'bg-gray-100 text-gray-900 mr-auto', // bubble kiri (agent)
                 ]"
               >
-                <div class="text-xs text-gray-500 mb-1">
+                <div
+                  class="text-xs mb-1"
+                  :class="
+                    normalizePhone(message.from) ===
+                    normalizePhone(selectedConversation.contact?.phone_number)
+                      ? 'text-blue-100'
+                      : 'text-gray-500'
+                  "
+                >
                   {{
-                    message.sender === "agent_ai"
-                      ? selectedConversation.agent?.name || "Agent"
-                      : selectedConversation.contact?.name ||
+                    normalizePhone(message.from) ===
+                    normalizePhone(selectedConversation.contact?.phone_number)
+                      ? selectedConversation.contact?.name ||
                         selectedConversation.contact?.phone_number ||
                         "User"
+                      : selectedConversation.agent?.name || "Agent"
                   }}
                 </div>
                 <div v-if="message.media_url" class="mb-2">
@@ -65,14 +84,26 @@
                     alt="media"
                     class="max-w-full max-h-60 rounded-lg border"
                     :class="
-                      message.sender === 'agent_ai' ? 'ml-auto' : 'mr-auto'
+                      normalizePhone(message.from) ===
+                      normalizePhone(selectedConversation.contact?.phone_number)
+                        ? 'ml-auto'
+                        : 'mr-auto'
                     "
                   />
                 </div>
                 <div class="text-sm whitespace-pre-line">
                   {{ message.content }}
                 </div>
-                <div class="text-xs text-gray-400 mt-1">
+                <div
+                  class="text-xs text-gray-200 mt-1"
+                  v-if="
+                    normalizePhone(message.from) ===
+                    normalizePhone(selectedConversation.contact?.phone_number)
+                  "
+                >
+                  {{ formatTime(message.created_at) }}
+                </div>
+                <div class="text-xs text-gray-400 mt-1" v-else>
                   {{ formatTime(message.created_at) }}
                 </div>
               </div>
@@ -164,6 +195,13 @@ function shouldShowDate(messages, idx) {
   const prev = messages[idx - 1];
   const curr = messages[idx];
   return formatDate(prev.created_at) !== formatDate(curr.created_at);
+}
+
+function normalizePhone(num) {
+  if (!num) return "";
+  return String(num)
+    .replace(/^\+?0?/, "")
+    .replace(/[^0-9]/g, "");
 }
 
 const sendMessage = async () => {
