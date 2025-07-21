@@ -299,6 +299,35 @@ export default defineEventHandler(async (event) => {
     } catch (err) {
       console.log("[WAHA Webhook] Error cek/tambah contact", err);
     }
+    // Simpan prompt user ke database sebelum proses AI
+    try {
+      const userPromptData = {
+        agent_id: conn.agent_id,
+        chanel_id: chanelIdToUse,
+        contact_id,
+        message_type: "text",
+        chat_replay: "ai",
+        chat_type: "ai",
+        from: payloadFrom,
+        to: meId,
+        media_url: null,
+        content: payloadBody,
+      };
+      console.log(
+        "[WAHA Webhook] Saving user prompt to database:",
+        userPromptData
+      );
+      const userPromptResult = await $fetch("/api/message", {
+        method: "POST",
+        body: userPromptData,
+      });
+      console.log(
+        "[WAHA Webhook] User prompt saved to database",
+        userPromptResult
+      );
+    } catch (err) {
+      console.log("[WAHA Webhook] Error saving user prompt to database:", err);
+    }
     // --- Efek typing sebelum kirim pesan ---
     try {
       if (sessionNameForPresence) {
@@ -373,8 +402,9 @@ export default defineEventHandler(async (event) => {
             contact_id,
             message_type: "image",
             chat_replay: "ai",
-            from: payloadFrom,
-            to: meId,
+            chat_type: "ai", // tambahkan ini
+            from: meId,
+            to: payloadFrom,
             media_url: imgUrl,
             content: aiText, // caption dari AI
           };
@@ -429,8 +459,9 @@ export default defineEventHandler(async (event) => {
           contact_id,
           message_type: "text",
           chat_replay: "ai",
-          from: payloadFrom,
-          to: meId,
+          chat_type: "ai", // tambahkan ini
+          from: meId,
+          to: payloadFrom,
           media_url: null,
           content: aiText,
         };
