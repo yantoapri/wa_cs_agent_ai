@@ -141,8 +141,8 @@ export default defineEventHandler(async (event) => {
   const isOutgoingFromChanel = fromMe && payloadFrom === meId;
 
   if (isOutgoingFromChanel) {
-    // Handler pesan keluar (sent)
-    return await handleSentMessage({
+    console.log("[WAHA Webhook] Detected outgoing message from chanel");
+    const sentResult = await handleSentMessage({
       body,
       client,
       context: event.context,
@@ -150,8 +150,10 @@ export default defineEventHandler(async (event) => {
       meId,
       payloadFrom,
     });
+    console.log("[WAHA Webhook] Sent message handler result:", sentResult);
+    return sentResult;
   } else {
-    // Handler pesan masuk (received)
+    console.log("[WAHA Webhook] Detected incoming message (user to chanel)");
     const takeoverResult = await handleReceivedMessage({
       body,
       client,
@@ -160,6 +162,7 @@ export default defineEventHandler(async (event) => {
       meId,
       payloadFrom,
     });
+    console.log("[WAHA Webhook] Takeover handler result:", takeoverResult);
     if (takeoverResult && takeoverResult.proceed === false) {
       // Masih dalam waktu takeover, abaikan auto-reply
       console.log(
@@ -169,43 +172,64 @@ export default defineEventHandler(async (event) => {
       return takeoverResult;
     }
     // Lanjutkan proses auto-reply seperti biasa (logic AI, dsb)
-    // --- PROSES AUTO-REPLY AI ---
+    console.log("[WAHA Webhook] === AUTO-REPLY AI PROCESS START ===");
     // 1. Cari agentai yang aktif di chanel_agent_connections
     const chanelIdToUse = body?.metadata?.chanel_id || null;
+    console.log(
+      "[WAHA Webhook] Looking for active agent in chanel:",
+      chanelIdToUse
+    );
     const { data: conn, error: connErr } = await client
       .from("chanel_agent_connections")
       .select("agent_id")
       .eq("chanel_id", chanelIdToUse)
       .eq("is_active", true)
       .maybeSingle();
+    console.log("[WAHA Webhook] Agent connection query result:", {
+      conn,
+      connErr,
+    });
     if (connErr || !conn || !conn.agent_id) {
+      console.log("[WAHA Webhook] No active agent found in chanel");
       return {
         status: "ok",
         results: [{ message: "Tidak ada agent aktif di chanel" }],
       };
     }
     // 2. Ambil config agent_ai_configs
+    console.log("[WAHA Webhook] Fetching AI config for agent:", conn.agent_id);
     const { data: config, error: configErr } = await client
       .from("agent_ai_configs")
       .select("*")
       .eq("agent_id", conn.agent_id)
       .maybeSingle();
+    console.log("[WAHA Webhook] AI config result:", { config, configErr });
     if (configErr || !config) {
+      console.log("[WAHA Webhook] Config agent tidak ditemukan");
       return {
         status: "ok",
         results: [{ message: "Config agent tidak ditemukan" }],
       };
     }
     // 3. Fetch session name
+    console.log("[WAHA Webhook] Fetching session name for presence");
     const { data: chanelDataPresence } = await client
       .from("chanels")
       .select("session_name")
       .eq("id", chanelIdToUse)
       .maybeSingle();
     const sessionNameForPresence = chanelDataPresence?.session_name;
+    console.log(
+      "[WAHA Webhook] Session name for presence:",
+      sessionNameForPresence
+    );
     // 4. Call AI (openrouter)
     let aiText, images;
     try {
+      console.log(
+        "[WAHA Webhook] Calling AI service with prompt:",
+        payloadBody
+      );
       const aiRes = await $fetch("/api/openrouter", {
         method: "POST",
         body: {
@@ -215,7 +239,9 @@ export default defineEventHandler(async (event) => {
       });
       aiText = aiRes?.result;
       images = aiRes?.images;
+      console.log("[WAHA Webhook] AI response received:", { aiText, images });
     } catch (err) {
+      console.log("[WAHA Webhook] Error calling AI:", err);
       return {
         status: "error",
         message: "Gagal memanggil AI",
@@ -223,6 +249,7 @@ export default defineEventHandler(async (event) => {
       };
     }
     if (!aiText) {
+      console.log("[WAHA Webhook] No AI result");
       return {
         status: "ok",
         results: [{ message: "Tidak ada hasil dari AI" }],
@@ -240,6 +267,7 @@ export default defineEventHandler(async (event) => {
           is_auto_reply: true,
         },
       };
+      console.log("[WAHA Webhook] Sending text to WAHA:", messageBody);
       await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
         method: "POST",
         headers: {
@@ -248,7 +276,9 @@ export default defineEventHandler(async (event) => {
         },
         body: messageBody,
       });
+      console.log("[WAHA Webhook] Text sent successfully via WAHA");
     } catch (err) {
+      console.log("[WAHA Webhook] Error sending text to WAHA:", err);
       return {
         status: "error",
         message: "Gagal kirim pesan ke WAHA",
@@ -257,32 +287,39 @@ export default defineEventHandler(async (event) => {
     }
     // 6. Simpan pesan AI ke database
     try {
+      const saveData = {
+        agent_id: conn.agent_id,
+        chanel_id: chanelIdToUse,
+        contact_id: null, // Isi sesuai kebutuhan jika ada
+        message_type: "text",
+        chat_replay: "ai",
+        from: payloadFrom,
+        to: meId,
+        media_url: null,
+        content: aiText,
+      };
+      console.log("[WAHA Webhook] Saving AI message to database:", saveData);
       await $fetch("/api/message", {
         method: "POST",
-        body: {
-          agent_id: conn.agent_id,
-          chanel_id: chanelIdToUse,
-          contact_id: null, // Isi sesuai kebutuhan jika ada
-          message_type: "text",
-          chat_replay: "ai",
-          from: payloadFrom,
-          to: meId,
-          media_url: null,
-          content: aiText,
-        },
+        body: saveData,
       });
+      console.log("[WAHA Webhook] AI message saved to database");
     } catch (err) {
+      console.log("[WAHA Webhook] Error saving AI message to database:", err);
       return {
         status: "error",
         message: "Gagal simpan pesan AI ke database",
         detail: err?.message,
       };
     }
-    return {
+    console.log("[WAHA Webhook] === AUTO-REPLY AI PROCESS END ===");
+    const result = {
       status: "ok",
       takeover: takeoverResult.takeover,
       proceed: true,
       message: "Auto-reply AI sent and saved",
     };
+    console.log("[WAHA Webhook] Final return:", result);
+    return result;
   }
 });
