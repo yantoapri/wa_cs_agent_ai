@@ -231,39 +231,15 @@ export default defineEventHandler(async (event) => {
     };
   }
 
-  // Cek apakah pesan dari chanel (fromMe: true) atau dari user (fromMe: false)
   const fromMe = body?.payload?.fromMe || false;
-  const isGroup = body?.payload?.isGroup || false;
-  const chatId = body?.payload?.chatId || "";
-  console.log("[WAHA Webhook] Message details:", {
-    fromMe,
-    isGroup,
-    chatId,
-    payloadFrom,
-  });
+  // payloadFrom dan meId sudah didefinisikan di atas
+  // const payloadFrom = body?.payload?.from?.replace("@c.us", "") || null;
+  // const meId = body?.me?.id?.replace("@c.us", "") || null;
 
-  // Skip group messages unless they are from specific allowed groups
-  if (isGroup) {
-    console.log("[WAHA Webhook] Group message detected, skipping processing");
-    return { status: "ok", results: [{ message: "Group message ignored" }] };
-  }
+  // Perbaiki deteksi manual/AI reply:
+  const isOutgoingFromChanel = fromMe && payloadFrom === meId;
 
-  // Skip messages from broadcast channels
-  if (
-    chatId.includes("broadcast") ||
-    chatId.includes("newsletter") ||
-    chatId.includes("announcement")
-  ) {
-    console.log(
-      "[WAHA Webhook] Broadcast channel message detected, skipping processing"
-    );
-    return {
-      status: "ok",
-      results: [{ message: "Broadcast channel message ignored" }],
-    };
-  }
-
-  if (fromMe) {
+  if (isOutgoingFromChanel) {
     // Cek metadata untuk membedakan AI reply vs manual reply
     const metadata = body?.payload?.metadata || {};
     const isAIReply =
@@ -290,7 +266,7 @@ export default defineEventHandler(async (event) => {
       "[WAHA Webhook] Outgoing is manual reply from human, proceed to save"
     );
 
-    // Ambil agent_id dari tabel agents where type='manusia' dan no_hp=meId
+    // Ambil agent_id dari tabel agents where chat_replay='manusia' dan no_hp=meId
     const { data: agentData, error: agentErr } = await client
       .from("agents")
       .select("id")
@@ -309,7 +285,7 @@ export default defineEventHandler(async (event) => {
     const agentId = agentData.id;
     console.log("[WAHA Webhook] Found agent manusia, ID:", agentId);
 
-    // Simpan pesan ke database dengan chat_replay='agent'
+    // Simpan pesan ke database dengan chat_replay='manusia'
     try {
       await $fetch("/api/message", {
         method: "POST",

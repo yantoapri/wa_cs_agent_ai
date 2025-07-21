@@ -342,6 +342,8 @@ const addContactData = async () => {
       chanel_id: contactForm.chanel_id || null,
       notes: contactForm.notes || null,
     });
+    await fetchContacts(); // Refresh kontak setelah tambah
+    console.log("[KontakList] Contacts after add:", contacts.value);
     closeModal();
   } catch (error) {
     console.error("Error adding contact:", error);
@@ -361,6 +363,8 @@ const updateContactData = async () => {
       chanel_id: contactForm.chanel_id || null,
       notes: contactForm.notes || null,
     });
+    await fetchContacts(); // Refresh kontak setelah update
+    console.log("[KontakList] Contacts after update:", contacts.value);
     closeModal();
   } catch (error) {
     console.error("Error updating contact:", error);
@@ -373,6 +377,8 @@ const confirmDelete = async () => {
   deleting.value = true;
   try {
     await deleteContact(contactToDelete.value.id);
+    await fetchContacts(); // Refresh kontak setelah hapus
+    console.log("[KontakList] Contacts after delete:", contacts.value);
     showDeleteModal.value = false;
     contactToDelete.value = null;
   } catch (error) {
@@ -384,5 +390,6 @@ const confirmDelete = async () => {
 
 onMounted(async () => {
   await Promise.all([fetchContacts(), fetchchanels()]);
+  console.log("[KontakList] Contacts after initial fetch:", contacts.value);
 });
 </script>
