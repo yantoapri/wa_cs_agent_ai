@@ -265,6 +265,65 @@ export default defineEventHandler(async (event) => {
       };
     }
     // 5. Kirim ke WhatsApp (WAHA) dan simpan pesan AI ke database
+    // --- Pindahkan blok pencarian/insert contact ke sini ---
+    let contact_id = null;
+    try {
+      console.log("[WAHA Webhook] Checking/creating contact for:", payloadFrom);
+      const contactRes = await $fetch("/api/contact", {
+        method: "GET",
+        query: { phone_number: payloadFrom },
+      });
+      if (
+        contactRes &&
+        contactRes.found &&
+        contactRes.data &&
+        contactRes.data.id
+      ) {
+        contact_id = contactRes.data.id;
+        console.log("[WAHA Webhook] Existing contact found, ID:", contact_id);
+      } else {
+        const createRes = await $fetch("/api/contact", {
+          method: "POST",
+          body: {
+            name: payloadFrom,
+            phone_number: payloadFrom,
+          },
+        });
+        if (createRes && createRes.data && createRes.data.id) {
+          contact_id = createRes.data.id;
+          console.log("[WAHA Webhook] New contact created, ID:", contact_id);
+        } else {
+          console.log("[WAHA Webhook] Failed to create contact");
+        }
+      }
+    } catch (err) {
+      console.log("[WAHA Webhook] Error cek/tambah contact", err);
+    }
+    // --- Efek typing sebelum kirim pesan ---
+    try {
+      if (sessionNameForPresence) {
+        const typingBody = {
+          chatId: payloadFrom + "@c.us",
+          presence: "typing",
+        };
+        console.log("[WAHA Webhook] Sending typing presence:", typingBody);
+        await $fetch(
+          `${WAHA_BASE_URL}/api/${sessionNameForPresence}/presence`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Api-Key": WAHA_API_KEY,
+            },
+            body: typingBody,
+          }
+        );
+        console.log("[WAHA Webhook] Typing presence sent successfully");
+      }
+    } catch (err) {
+      console.log("[WAHA Webhook] Error sending typing presence:", err);
+    }
+    // --- Baru setelah ini lakukan if (images && images.length > 0) { ... } else { ... } ---
     if (images && images.length > 0) {
       console.log("[WAHA Webhook] Sending image message(s)");
       for (const imgUrl of images) {
