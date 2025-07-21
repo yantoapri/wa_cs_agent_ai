@@ -145,7 +145,7 @@ export default defineEventHandler(async (event) => {
   const payloadBody = body?.payload?.body || null;
   const fromMe = body?.payload?.fromMe || false;
 
-  const isOutgoingFromChanel = fromMe && payloadFrom === meId;
+  const isOutgoing = fromMe; // ubah: outgoing cukup cek fromMe
   const isIncomingUserMessage = !fromMe && payloadFrom !== meId;
 
   console.log("[WAHA Webhook] Branch check", {
@@ -154,13 +154,13 @@ export default defineEventHandler(async (event) => {
     rawPayloadFrom,
     meId,
     payloadFrom,
-    isOutgoingFromChanel,
+    isOutgoing,
     isIncomingUserMessage,
     metadata: body?.payload?.metadata,
   });
 
-  if (isOutgoingFromChanel) {
-    console.log("[WAHA Webhook] Detected outgoing message from chanel");
+  if (isOutgoing) {
+    console.log("[WAHA Webhook] Detected outgoing message (fromMe true)");
     const sentResult = await handleSentMessage({
       body,
       client,
@@ -501,7 +501,7 @@ export default defineEventHandler(async (event) => {
     return result;
   } else {
     console.log(
-      "[WAHA Webhook] Message ignored (not incoming user message, not outgoing from chanel)",
+      "[WAHA Webhook] Message ignored (not incoming user message, not outgoing)",
       {
         fromMe,
         payloadFrom,
@@ -510,8 +510,7 @@ export default defineEventHandler(async (event) => {
     );
     return {
       status: "ok",
-      message:
-        "Message ignored (not incoming user message, not outgoing from chanel)",
+      message: "Message ignored (not incoming user message, not outgoing)",
     };
   }
 });
