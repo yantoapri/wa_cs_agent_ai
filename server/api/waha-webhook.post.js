@@ -133,20 +133,30 @@ export default defineEventHandler(async (event) => {
   );
   console.log("[WAHA Webhook] Supabase client created");
 
-  const meId = body?.me?.id?.replace("@c.us", "") || null;
+  // Normalisasi nomor WA (hilangkan +, 0 di depan, dsb)
+  function normalizePhone(num) {
+    if (!num) return "";
+    return num.replace(/^\+?0?/, "").replace(/[^0-9]/g, "");
+  }
+  const rawMeId = body?.me?.id || "";
+  const rawPayloadFrom = body?.payload?.from || "";
+  const meId = normalizePhone(rawMeId.replace("@c.us", ""));
+  const payloadFrom = normalizePhone(rawPayloadFrom.replace("@c.us", ""));
   const payloadBody = body?.payload?.body || null;
-  const payloadFrom = body?.payload?.from?.replace("@c.us", "") || null;
   const fromMe = body?.payload?.fromMe || false;
 
   const isOutgoingFromChanel = fromMe && payloadFrom === meId;
   const isIncomingUserMessage = !fromMe && payloadFrom !== meId;
 
-  console.log("[WAHA Webhook] Message branch check:", {
+  console.log("[WAHA Webhook] Branch check", {
     fromMe,
-    payloadFrom,
+    rawMeId,
+    rawPayloadFrom,
     meId,
+    payloadFrom,
     isOutgoingFromChanel,
     isIncomingUserMessage,
+    metadata: body?.payload?.metadata,
   });
 
   if (isOutgoingFromChanel) {
