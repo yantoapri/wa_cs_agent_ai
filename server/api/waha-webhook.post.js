@@ -833,9 +833,9 @@ export default defineEventHandler(async (event) => {
               content_length: aiText?.length,
             });
           }
-        } catch (chat_replayr) {
-          console.log("[WAHA Webhook] Gagal kirim image ke WAHA", chat_replayr);
-          throw chat_replayr; // Re-throw agar masuk ke catch block utama
+        } catch (chat_replay) {
+          console.log("[WAHA Webhook] Gagal kirim image ke WAHA", chat_replay);
+          throw chat_replay; // Re-throw agar masuk ke catch block utama
         }
       }
     } else {
@@ -909,9 +909,9 @@ export default defineEventHandler(async (event) => {
             content_length: aiText?.length,
           });
         }
-      } catch (chat_replayr) {
-        console.log("[WAHA Webhook] Gagal kirim text ke WAHA", chat_replayr);
-        throw chat_replayr; // Re-throw agar masuk ke catch block utama
+      } catch (chat_replay) {
+        console.log("[WAHA Webhook] Gagal kirim text ke WAHA", chat_replay);
+        throw chat_replay; // Re-throw agar masuk ke catch block utama
       }
     }
   } catch (err) {
