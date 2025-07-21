@@ -102,7 +102,7 @@ export async function handleSentMessage({
   const { data: agentData, error: agentErr } = await client
     .from("agents")
     .select("id")
-    .eq("chat_replay", "manusia")
+    .eq("type", "manusia")
     .eq("phone", meId)
     .maybeSingle();
   if (agentErr || !agentData) {
