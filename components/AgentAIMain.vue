@@ -1,8 +1,20 @@
 <template>
-  <div class="flex h-[calc(100vh-40px)]">
+  <div class="flex flex-col md:flex-row h-[calc(100vh-40px)]">
+    <!-- Horizontal agent list -->
+    <div class="w-full bg-white px-2 py-2 border-b flex overflow-x-auto gap-2 mb-2">
+      <div
+        v-for="agent in aiAgents"
+        :key="agent.id"
+        @click="onSelectAI(agent)"
+        :class="['px-4 py-2 rounded cursor-pointer whitespace-nowrap', selectedAI.id === agent.id ? 'bg-blue-600 text-white font-bold' : 'bg-gray-200 text-gray-700']"
+        style="min-width: 120px; text-align: center;"
+      >
+        {{ agent.name }}
+      </div>
+    </div>
     <!-- Sidebar -->
-    <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
-      <div class="p-5 text-lg font-bold border-b border-gray-200 text-gray-800">
+    <div class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col md:block hidden">
+      <div class="p-4 md:p-5 text-lg font-bold border-b border-gray-200 text-gray-800">
         Agen AI
       </div>
       <div class="flex-1 overflow-y-auto">
@@ -16,15 +28,15 @@
       </div>
     </div>
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col bg-gray-100">
+    <div class="flex-1 flex flex-col bg-gray-100 px-2 md:px-8">
       <template v-if="selectedAI && selectedAI.id">
-        <div class="px-8 pt-6 flex items-center justify-between">
-          <h2 class="text-xl font-semibold">
+        <div class="pt-4 md:pt-6 flex flex-col md:flex-row items-start md:items-center justify-between">
+          <h2 class="text-xl font-semibold mb-2 md:mb-0">
             {{ selectedAI.name }}
           </h2>
           <div class="flex gap-3 items-center">
             <button
-              class="bg-green-600 hover:bg-green-700 text-white rounded-lg px-6 py-2 text-base cursor-pointer flex items-center gap-2"
+              class="bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 md:px-6 py-2 text-base cursor-pointer flex items-center gap-2"
               @click="onSaveAll"
             >
               <svg
@@ -48,7 +60,7 @@
               Simpan Semua
             </button>
             <button
-              class="bg-blue-700 text-white rounded-lg px-6 py-2 text-base cursor-pointer flex items-center gap-2 ml-4"
+              class="bg-blue-700 text-white rounded-lg px-4 md:px-6 py-2 text-base cursor-pointer flex items-center gap-2 ml-2 md:ml-4"
               @click="showChatModal = true"
             >
               <svg
@@ -74,12 +86,13 @@
             </button>
           </div>
         </div>
+        <!-- Modal responsif -->
         <div
           v-if="showChatModal"
-          class="fixed inset-0 bg-black/20 z-50 flex items-center justify-center"
+          class="fixed inset-0 bg-black/20 z-50 flex items-center justify-center px-2 md:px-0"
         >
           <div
-            class="bg-white rounded-xl shadow-lg w-[900px] max-w-[99vw] flex flex-col overflow-hidden"
+            class="bg-white rounded-xl shadow-lg w-full max-w-full md:max-w-2xl flex flex-col overflow-hidden"
           >
             <div
               class="px-5 py-4 bg-blue-50 font-semibold flex justify-between items-center border-b border-gray-200"

@@ -227,6 +227,41 @@ export default defineEventHandler(async (event) => {
     return sentResult;
   } else if (isIncomingUserMessage) {
     console.log("[WAHA Webhook] Detected incoming message (user to chanel)");
+    // --- Pindahkan blok pencarian/insert contact ke sini ---
+    let contact_id = null;
+    try {
+      console.log("[WAHA Webhook] Checking/creating contact for:", payloadFrom);
+      const contactRes = await $fetch("/api/contact", {
+        method: "GET",
+        query: { phone_number: payloadFrom },
+      });
+      if (
+        contactRes &&
+        contactRes.found &&
+        contactRes.data &&
+        contactRes.data.id
+      ) {
+        contact_id = contactRes.data.id;
+        console.log("[WAHA Webhook] Existing contact found, ID:", contact_id);
+      } else {
+        const createRes = await $fetch("/api/contact", {
+          method: "POST",
+          body: {
+            name: payloadFrom,
+            phone_number: payloadFrom,
+          },
+        });
+        if (createRes && createRes.data && createRes.data.id) {
+          contact_id = createRes.data.id;
+          console.log("[WAHA Webhook] New contact created, ID:", contact_id);
+        } else {
+          console.log("[WAHA Webhook] Failed to create contact");
+        }
+      }
+    } catch (err) {
+      console.log("[WAHA Webhook] Error cek/tambah contact", err);
+    }
+    // --- Setelah dapat contact_id, baru cek takeover ---
     const takeoverResult = await handleReceivedMessage({
       body,
       client,
@@ -234,6 +269,7 @@ export default defineEventHandler(async (event) => {
       runtimeConfig,
       meId,
       payloadFrom,
+      contactId: contact_id,
     });
     console.log("[WAHA Webhook] Takeover handler result:", takeoverResult);
     if (takeoverResult && takeoverResult.proceed === false) {
@@ -245,7 +281,6 @@ export default defineEventHandler(async (event) => {
       return takeoverResult;
     }
     // Lanjutkan proses auto-reply seperti biasa (logic AI, dsb)
-    console.log("[WAHA Webhook] === AUTO-REPLY AI PROCESS START ===");
     // 1. Cari agentai yang aktif di chanel_agent_connections
     const chanelIdToUse = body?.metadata?.chanel_id || null;
     console.log(
@@ -327,41 +362,6 @@ export default defineEventHandler(async (event) => {
         status: "ok",
         results: [{ message: "Tidak ada hasil dari AI" }],
       };
-    }
-    // 5. Kirim ke WhatsApp (WAHA) dan simpan pesan AI ke database
-    // --- Pindahkan blok pencarian/insert contact ke sini ---
-    let contact_id = null;
-    try {
-      console.log("[WAHA Webhook] Checking/creating contact for:", payloadFrom);
-      const contactRes = await $fetch("/api/contact", {
-        method: "GET",
-        query: { phone_number: payloadFrom },
-      });
-      if (
-        contactRes &&
-        contactRes.found &&
-        contactRes.data &&
-        contactRes.data.id
-      ) {
-        contact_id = contactRes.data.id;
-        console.log("[WAHA Webhook] Existing contact found, ID:", contact_id);
-      } else {
-        const createRes = await $fetch("/api/contact", {
-          method: "POST",
-          body: {
-            name: payloadFrom,
-            phone_number: payloadFrom,
-          },
-        });
-        if (createRes && createRes.data && createRes.data.id) {
-          contact_id = createRes.data.id;
-          console.log("[WAHA Webhook] New contact created, ID:", contact_id);
-        } else {
-          console.log("[WAHA Webhook] Failed to create contact");
-        }
-      }
-    } catch (err) {
-      console.log("[WAHA Webhook] Error cek/tambah contact", err);
     }
     // Simpan prompt user ke database sebelum proses AI
     try {

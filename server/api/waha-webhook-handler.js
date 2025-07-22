@@ -13,6 +13,7 @@ export async function handleReceivedMessage({
   runtimeConfig,
   meId,
   payloadFrom,
+  contactId, // Tambah contactId
   ...rest
 }) {
   // Ambil chanel_id dari metadata/body
@@ -38,15 +39,31 @@ export async function handleReceivedMessage({
     return { status: "ok", takeover: false, proceed: true };
   }
 
-  // Cek message terakhir dari chanel ini by agent_type='manusia'
-  const { data: lastHumanMsg } = await client
-    .from("messages")
-    .select("created_at")
-    .eq("chanel_id", chanelId)
-    .eq("agent_type", "manusia")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Cek message terakhir dari chanel & contact ini by agent_type='manusia'
+  let lastHumanMsg = null;
+  if (contactId) {
+    const res = await client
+      .from("messages")
+      .select("created_at")
+      .eq("chanel_id", chanelId)
+      .eq("contact_id", contactId)
+      .eq("agent_type", "manusia")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    lastHumanMsg = res.data;
+  } else {
+    // fallback lama: hanya berdasarkan chanel
+    const res = await client
+      .from("messages")
+      .select("created_at")
+      .eq("chanel_id", chanelId)
+      .eq("agent_type", "manusia")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    lastHumanMsg = res.data;
+  }
 
   if (!lastHumanMsg) {
     // Tidak ada pesan manusia, lanjutkan auto-reply

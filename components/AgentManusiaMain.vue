@@ -1,14 +1,33 @@
 <template>
-  <div class="w-full">
+  <div class="w-full p-2 md:p-8">
+    <!-- Horizontal agent manusia list -->
+    <div
+      class="w-full bg-white px-2 py-2 border-b flex overflow-x-auto gap-2 mb-2"
+    >
+      <div
+        v-for="agent in agentList"
+        :key="agent.id"
+        @click="selectAgent(agent)"
+        :class="[
+          'px-4 py-2 rounded cursor-pointer whitespace-nowrap',
+          form && form.id === agent.id
+            ? 'bg-blue-600 text-white font-bold'
+            : 'bg-gray-200 text-gray-700',
+        ]"
+        style="min-width: 120px; text-align: center"
+      >
+        {{ agent.name }}
+      </div>
+    </div>
     <!-- Modal Backdrop -->
     <div
       v-if="showForm"
-      class="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4"
+      class="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-2 md:p-4"
       @click="closeModal"
     >
       <!-- Modal Content -->
       <div
-        class="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+        class="bg-white rounded-lg shadow-xl w-full max-w-full md:max-w-md max-h-[90vh] overflow-y-auto"
         @click.stop
       >
         <!-- Modal Header -->
@@ -34,13 +53,13 @@
               <label class="block font-medium text-gray-700 mb-2">
                 Nama <span class="text-red-500">*</span>
               </label>
-          <input
+              <input
                 v-model="form.name"
                 required
                 class="w-full border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Nama Lengkap"
-          />
-        </div>
+              />
+            </div>
             <div class="mb-4">
               <label class="block font-medium text-gray-700 mb-2">
                 Nomor Telepon <span class="text-red-500">*</span>
@@ -247,47 +266,47 @@
                   <option value="996">🇰🇬 +996</option>
                   <option value="998">🇺🇿 +998</option>
                 </select>
-          <input
+                <input
                   type="text"
                   v-model="phoneNumber"
                   required
                   class="flex-1 border border-gray-300 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Nomor Telepon"
-          />
-        </div>
-      </div>
-        </div>
+                />
+              </div>
+            </div>
+          </div>
 
           <!-- Modal Footer -->
           <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-          <button
-            type="button"
+            <button
+              type="button"
               @click="closeModal"
               class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
             >
               Batal
-              </button>
-          <button
+            </button>
+            <button
               type="submit"
               class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
               {{ form?.id ? "Update" : "Simpan" }}
-        </button>
-        <button
+            </button>
+            <button
               v-if="form?.id"
-          type="button"
-          @click="onDelete"
+              type="button"
+              @click="onDelete"
               class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-        >
-          Hapus
-        </button>
-      </div>
-    </form>
+            >
+              Hapus
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
     <!-- Default State -->
-    <div v-else class="p-8 text-gray-400 text-center">
+    <div v-else class="p-4 md:p-8 text-gray-400 text-center">
       Pilih agent manusia untuk melihat detail atau klik "Buat Agent Manusia"
       untuk tambah baru.
     </div>
@@ -295,19 +314,30 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useAgentStore } from "~/composables/useAgents";
 import { useToast } from "~/composables/useToast";
 const { showToast } = useToast();
 
 const props = defineProps({ selectedAgent: Object });
-const { updateAgent, deleteAgent, addAgent } = useAgentStore();
+const { updateAgent, deleteAgent, addAgent, fetchAgentsByType } =
+  useAgentStore();
 const emit = defineEmits(["refresh-list", "clear-selected"]);
 
 const form = ref(null);
 const showForm = ref(false);
 const notif = ref("");
 const error = ref("");
+
+// Horizontal agent manusia list
+const agentList = ref([]);
+onMounted(async () => {
+  agentList.value = await fetchAgentsByType("manusia");
+});
+function selectAgent(agent) {
+  form.value = JSON.parse(JSON.stringify(agent));
+  showForm.value = true;
+}
 
 // Default selected country code
 const selectedCountryCode = ref("62"); // Default to Indonesia

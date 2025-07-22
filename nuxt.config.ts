@@ -44,11 +44,12 @@ export default defineNuxtConfig({
   app: {
     head: {
       link: [
-        {
-          rel: "stylesheet",
-          href: "https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap",
-        },
+        { rel: "icon", type: "image/png", href: "/assets/img/nutra.png" },
       ],
+      title: "Nutra",
+      htmlAttrs: {
+        lang: "id",
+      },
     },
   },
 });

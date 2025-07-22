@@ -49,7 +49,7 @@ Berikut knowledge agent:
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
           "HTTP-Referer": "http://localhost:3000", // Ganti dengan domain Anda jika sudah live
-          "X-Title": "OsmoChat", // Optional, branding
+          "X-Title": "NUTRA CS", // Optional, branding
         },
         body: JSON.stringify({
           model: "openai/gpt-4o", // atau model lain yang tersedia di akun OpenRouter Anda
