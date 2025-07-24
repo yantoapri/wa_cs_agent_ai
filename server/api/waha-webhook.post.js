@@ -262,6 +262,27 @@ export default defineEventHandler(async (event) => {
       console.log("[WAHA Webhook] Error cek/tambah contact", err);
     }
     // --- Setelah dapat contact_id, baru cek takeover ---
+    // Cari agent manusia yang sesuai dengan channel (meId)
+    let agentManusiaId = null;
+    try {
+      const { data: agentData, error: agentErr } = await client
+        .from("agents")
+        .select("id")
+        .eq("type", "manusia")
+        .eq("phone", meId)
+        .maybeSingle();
+      if (agentData && agentData.id) {
+        agentManusiaId = agentData.id;
+      } else {
+        console.log(
+          "[WAHA Webhook] Agent manusia tidak ditemukan untuk phone:",
+          meId
+        );
+      }
+    } catch (e) {
+      console.log("[WAHA Webhook] Error mencari agent manusia:", e.message);
+    }
+
     const takeoverResult = await handleReceivedMessage({
       body,
       client,
@@ -290,7 +311,7 @@ export default defineEventHandler(async (event) => {
     // Simpan pesan masuk ke database
     try {
       const saveData = {
-        agent_id: null, // agent_id bisa diisi jika ingin, atau null
+        agent_id: agentManusiaId, // agent_id manusia channel
         chanel_id: body?.metadata?.chanel_id || null,
         contact_id: contact_id,
         message_type: "text",
