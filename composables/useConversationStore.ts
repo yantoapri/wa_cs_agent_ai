@@ -226,7 +226,7 @@ export const useConversationStore = () => {
         `
         )
         .eq("agent_type", "manusia") // Ganti filter ke agent_type
-        // .eq("agents.created_by", user.value?.id)
+        .eq("agents.created_by", user.value?.id)
         .not("agent_id", "is", null)
         .not("contact_id", "is", null)
         .not("chanel_id", "is", null);

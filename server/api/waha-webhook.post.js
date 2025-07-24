@@ -321,8 +321,12 @@ export default defineEventHandler(async (event) => {
     }
 
     // === Jika agent_type=ai dan proceed=true, lanjutkan auto-reply AI ===
-    if (!(takeoverResult && takeoverResult.proceed === true)) {
-      // Tidak perlu auto-reply AI
+    if (
+      !takeoverResult ||
+      takeoverResult.takeover === false ||
+      takeoverResult.proceed !== true
+    ) {
+      // Tidak perlu auto-reply AI jika takeover_ai = false atau masih dalam waktu takeover
       return takeoverResult;
     }
     // 1. Cari agentai yang aktif di chanel_agent_connections
