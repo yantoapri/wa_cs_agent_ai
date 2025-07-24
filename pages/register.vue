@@ -6,9 +6,9 @@
       class="bg-white shadow-xl rounded-xl px-10 py-8 w-full max-w-md flex flex-col items-center"
     >
       <img
-        src="https://raw.githubusercontent.com/supabase/supabase/master/apps/www/public/brand-assets/supabase-logo-icon.png"
-        alt="Logo"
-        class="w-14 h-14 mb-4"
+        src="/assets/img/nutra.png"
+        alt="Nutra Logo"
+        class="w-25 h-14 mb-4"
       />
       <h1 class="text-2xl font-bold mb-2 text-blue-700">Register</h1>
       <p class="mb-6 text-gray-500">

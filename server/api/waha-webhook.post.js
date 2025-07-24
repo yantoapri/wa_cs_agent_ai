@@ -272,15 +272,59 @@ export default defineEventHandler(async (event) => {
       contactId: contact_id,
     });
     console.log("[WAHA Webhook] Takeover handler result:", takeoverResult);
-    if (takeoverResult && takeoverResult.proceed === false) {
-      // Masih dalam waktu takeover, abaikan auto-reply
+
+    // === Selalu simpan pesan masuk ke database ===
+    let saveAgentType = "manusia";
+    if (takeoverResult && takeoverResult.takeover === false) {
+      // takeover_ai = false, selalu manusia
+      saveAgentType = "manusia";
+    } else if (takeoverResult && takeoverResult.takeover === true) {
+      if (takeoverResult.proceed === false) {
+        // Masih dalam waktu takeover, manusia
+        saveAgentType = "manusia";
+      } else {
+        // Sudah lewat waktu takeover, AI
+        saveAgentType = "ai";
+      }
+    }
+    // Simpan pesan masuk ke database
+    try {
+      const saveData = {
+        agent_id: null, // agent_id bisa diisi jika ingin, atau null
+        chanel_id: body?.metadata?.chanel_id || null,
+        contact_id: contact_id,
+        message_type: "text",
+        agent_type: saveAgentType,
+        chat_type: saveAgentType, // biar konsisten
+        from: payloadFrom,
+        to: meId,
+        media_url: null,
+        content: payloadBody,
+      };
       console.log(
-        "[WAHA Webhook] Takeover active, skip auto-reply:",
-        takeoverResult
+        "[WAHA Webhook] Saving incoming message to database:",
+        saveData
       );
+      const saveResult = await $fetch("/api/message", {
+        method: "POST",
+        body: saveData,
+      });
+      console.log(
+        "[WAHA Webhook] Incoming message saved to database",
+        saveResult
+      );
+    } catch (err) {
+      console.log(
+        "[WAHA Webhook] Error saving incoming message to database:",
+        err
+      );
+    }
+
+    // === Jika agent_type=ai dan proceed=true, lanjutkan auto-reply AI ===
+    if (!(takeoverResult && takeoverResult.proceed === true)) {
+      // Tidak perlu auto-reply AI
       return takeoverResult;
     }
-    // Lanjutkan proses auto-reply seperti biasa (logic AI, dsb)
     // 1. Cari agentai yang aktif di chanel_agent_connections
     const chanelIdToUse = body?.metadata?.chanel_id || null;
     console.log(

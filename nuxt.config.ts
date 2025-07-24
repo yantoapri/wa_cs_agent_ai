@@ -42,7 +42,7 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      link: [{ rel: "icon", type: "image/png", href: "/assets/img/nutra.png" }],
+      link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
       title: "Nutra AI Chat",
       htmlAttrs: {
         lang: "id",
