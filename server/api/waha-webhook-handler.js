@@ -79,6 +79,50 @@ export async function handleReceivedMessage({
     return { status: "ok", takeover: true, proceed: true };
   } else {
     // Masih dalam waktu takeover, abaikan auto-reply
+    // Tambahan: cek jika sudah lewat waktu takeover sejak pesan user terakhir dan belum dibalas agent manusia
+    // Ambil pesan user terakhir (from=payloadFrom) untuk contact & chanel
+    let lastUserMsg = null;
+    if (contactId) {
+      const res = await client
+        .from("messages")
+        .select("id, created_at")
+        .eq("chanel_id", chanelId)
+        .eq("contact_id", contactId)
+        .eq("from", payloadFrom)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      lastUserMsg = res.data;
+    }
+    let shouldForceAI = false;
+    if (lastUserMsg) {
+      // Cek apakah ada balasan manusia (from=meId) setelah pesan user terakhir
+      const res = await client
+        .from("messages")
+        .select("id, created_at")
+        .eq("chanel_id", chanelId)
+        .eq("contact_id", contactId)
+        .eq("from", meId)
+        .gt("created_at", lastUserMsg.created_at)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      const lastHumanReply = res.data;
+      const nowMinutesSinceUserMsg =
+        (now - new Date(lastUserMsg.created_at)) / (1000 * 60);
+      if (!lastHumanReply && nowMinutesSinceUserMsg > waktuTakeover) {
+        // Tidak ada balasan manusia setelah pesan user terakhir dan sudah lewat waktu takeover
+        shouldForceAI = true;
+      }
+    }
+    if (shouldForceAI) {
+      return {
+        status: "ok",
+        takeover: true,
+        proceed: true,
+        reason: "AI takeover forced after no human reply",
+      };
+    }
     return {
       status: "ok",
       takeover: true,
