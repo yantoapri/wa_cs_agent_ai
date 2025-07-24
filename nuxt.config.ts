@@ -34,7 +34,6 @@ export default defineNuxtConfig({
       saveRedirectToCookie: false,
     },
   },
-  css: ["~/assets/css/main.css"],
   postcss: {
     plugins: {
       tailwindcss: {},
@@ -43,13 +42,12 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      link: [
-        { rel: "icon", type: "image/png", href: "/assets/img/nutra.png" },
-      ],
-      title: "Nutra",
+      link: [{ rel: "icon", type: "image/png", href: "/assets/img/nutra.png" }],
+      title: "Nutra AI Chat",
       htmlAttrs: {
         lang: "id",
       },
     },
   },
+  css: ["~/assets/css/main.css"],
 });

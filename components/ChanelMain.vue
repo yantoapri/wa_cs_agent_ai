@@ -1,6 +1,38 @@
 <template>
   <div class="p-2">
     <div v-if="chanel">
+      <div class="flex items-center mb-4">
+        <!-- Tombol back hanya di mobile, di kiri avatar -->
+        <button
+          class="md:hidden mr-2 p-1 text-gray-700 hover:bg-gray-200 rounded-full"
+          @click="$emit('back')"
+          aria-label="Kembali ke daftar chanel"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            class="w-7 h-7"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
+        <img
+          class="w-12 h-12 rounded-full mr-4"
+          :src="getChanelAvatar(chanel)"
+          :alt="chanel?.name"
+        />
+        <div>
+          <span class="block font-semibold text-lg">{{ chanel?.name }}</span>
+          <!-- ...status/info lain... -->
+        </div>
+      </div>
       <div class="flex gap-2 mb-4">
         <button
           class="px-5 py-2 font-medium border-b-2"
@@ -232,6 +264,14 @@ const editData = ref({
 });
 
 const activeAgentId = ref(null);
+
+function getChanelAvatar(chanel) {
+  if (!chanel) return "";
+  if (chanel.icon_url) return chanel.icon_url;
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    chanel.name || "C"
+  )}&background=random`;
+}
 
 watch(
   () => props.chanel,

@@ -1,30 +1,45 @@
 <template>
   <div>
-    <div v-if="selectedContact" class="bg-white rounded-lg shadow p-6">
-      <!-- Contact Header -->
-      <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center">
-          <img
-            class="w-12 h-12 rounded-full mr-4"
-            :src="
-              selectedContact.avatar ||
-              `https://ui-avatars.com/api/?name=${selectedContact.name}&background=random`
-            "
-            :alt="selectedContact.name"
-          />
-          <div>
-            <span class="block font-semibold text-lg">{{
-              selectedContact.name
-            }}</span>
-            <span class="text-gray-500 text-sm">{{
-              selectedContact.phone_number
-            }}</span>
-            <span
-              v-if="selectedContact.email"
-              class="block text-gray-400 text-sm"
-              >{{ selectedContact.email }}</span
-            >
-          </div>
+    <div v-if="selectedContact">
+      <div class="flex items-center mb-4">
+        <!-- Tombol back hanya di mobile, di kiri avatar -->
+        <button
+          class="md:hidden mr-2 p-1 text-gray-700 hover:bg-gray-200 rounded-full"
+          @click="$emit('back')"
+          aria-label="Kembali ke daftar kontak"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            class="w-7 h-7"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
+        <img
+          class="w-12 h-12 rounded-full mr-4"
+          :src="getContactAvatar(selectedContact)"
+          :alt="getContactName(selectedContact)"
+        />
+        <div>
+          <span class="block font-semibold text-lg">{{
+            getContactName(selectedContact)
+          }}</span>
+          <span class="text-gray-500 text-sm">{{
+            getContactPhone(selectedContact)
+          }}</span>
+          <span
+            v-if="getContactEmail(selectedContact)"
+            class="block text-gray-400 text-sm"
+            >{{ getContactEmail(selectedContact) }}</span
+          >
         </div>
         <div class="flex gap-2">
           <button
@@ -43,7 +58,7 @@
                 stroke-linejoin="round"
                 stroke-width="2"
                 d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              ></path>
+              />
             </svg>
           </button>
           <button
@@ -62,7 +77,7 @@
                 stroke-linejoin="round"
                 stroke-width="2"
                 d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              ></path>
+              />
             </svg>
           </button>
         </div>
@@ -74,32 +89,38 @@
         <div class="grid grid-cols-2 gap-4 text-sm">
           <div>
             <span class="text-gray-500">Nama:</span>
-            <span class="ml-2 font-medium">{{ selectedContact.name }}</span>
+            <span class="ml-2 font-medium">{{
+              getContactName(selectedContact)
+            }}</span>
           </div>
           <div>
             <span class="text-gray-500">Telepon:</span>
             <span class="ml-2 font-medium">{{
-              selectedContact.phone_number
+              getContactPhone(selectedContact)
             }}</span>
           </div>
-          <div v-if="selectedContact.email">
-            <span class="text-gray-500">Email:</span>
-            <span class="ml-2 font-medium">{{ selectedContact.email }}</span>
-          </div>
-          <div v-if="selectedContact.chanel_id">
-            <span class="text-gray-500">chanel:</span>
-            <span class="ml-2 font-medium">{{
-              getchanelName(selectedContact.chanel_id)
+          <div v-if="getContactEmail(selectedContact)">
+            <span class="text-gray-500">Email:</span
+            ><span class="ml-2 font-medium">{{
+              getContactEmail(selectedContact)
             }}</span>
           </div>
-          <div v-if="selectedContact.notes" class="col-span-2">
+          <div v-if="getContactChanel(selectedContact)">
+            <span class="text-gray-500">chanel:</span
+            ><span class="ml-2 font-medium">{{
+              getContactChanel(selectedContact)
+            }}</span>
+          </div>
+          <div v-if="getContactNotes(selectedContact)" class="col-span-2">
             <span class="text-gray-500">Catatan:</span>
-            <p class="mt-1 text-gray-700">{{ selectedContact.notes }}</p>
+            <p class="mt-1 text-gray-700">
+              {{ getContactNotes(selectedContact) }}
+            </p>
           </div>
           <div class="col-span-2">
-            <span class="text-gray-500">Bergabung sejak:</span>
-            <span class="ml-2 font-medium">{{
-              formatDate(selectedContact.created_at)
+            <span class="text-gray-500">Bergabung sejak:</span
+            ><span class="ml-2 font-medium">{{
+              formatDate(getContactCreatedAt(selectedContact))
             }}</span>
           </div>
         </div>
@@ -109,7 +130,6 @@
       <div v-if="loading" class="text-center py-8">
         <div class="text-gray-500">Loading pesan...</div>
       </div>
-
       <div v-else class="space-y-2 mb-4 max-h-96 overflow-y-auto">
         <div
           v-if="messages.length === 0"
@@ -138,13 +158,12 @@
           <div class="text-sm">{{ message.content }}</div>
           <div class="text-xs text-gray-400 mt-1">
             {{ formatTime(message.created_at) }}
-            <span v-if="message.direction === 'outbound'" class="ml-2">
-              {{ message.is_read ? "✓✓" : "✓" }}
-            </span>
+            <span v-if="message.direction === 'outbound'" class="ml-2">{{
+              message.is_read ? "✓✓" : "✓"
+            }}</span>
           </div>
         </div>
       </div>
-
       <!-- Message Input -->
       <div class="flex gap-2">
         <input
@@ -163,120 +182,112 @@
           {{ sending ? "Mengirim..." : "Kirim" }}
         </button>
       </div>
+      <!-- Edit Contact Modal -->
+      <ChanelModal :show="showEditModal" @close="showEditModal = false">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-4">Edit Kontak</h3>
+          <form @submit.prevent="updateContactData">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Nama *</label
+                >
+                <input
+                  v-model="editForm.name"
+                  type="text"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Masukkan nama kontak"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Nomor Telepon *</label
+                >
+                <input
+                  v-model="editForm.phone_number"
+                  type="tel"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="+62 812-3456-7890"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Email</label
+                >
+                <input
+                  v-model="editForm.email"
+                  type="email"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="kontak@email.com"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Avatar URL</label
+                >
+                <input
+                  v-model="editForm.avatar"
+                  type="url"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="https://example.com/avatar.jpg"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >chanel</label
+                >
+                <select
+                  v-model="editForm.chanel_id"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Pilih chanel</option>
+                  <option
+                    v-for="chanel in chanels"
+                    :key="chanel.id"
+                    :value="chanel.id"
+                  >
+                    {{ chanel.name }}
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1"
+                  >Catatan</label
+                >
+                <textarea
+                  v-model="editForm.notes"
+                  rows="3"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Catatan tambahan tentang kontak ini..."
+                ></textarea>
+              </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+              <button
+                type="submit"
+                :disabled="saving"
+                class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                {{ saving ? "Menyimpan..." : "Update" }}
+              </button>
+              <button
+                type="button"
+                @click="showEditModal = false"
+                :disabled="saving"
+                class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
+              >
+                Batal
+              </button>
+            </div>
+          </form>
+        </div>
+      </ChanelModal>
     </div>
     <div v-else class="p-8 text-gray-400 text-center">
       Pilih kontak untuk melihat detail chat.
     </div>
-
-    <!-- Edit Contact Modal -->
-    <ChanelModal :show="showEditModal" @close="showEditModal = false">
-      <div class="p-6">
-        <h3 class="text-lg font-semibold mb-4">Edit Kontak</h3>
-
-        <form @submit.prevent="updateContactData">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Nama *
-              </label>
-              <input
-                v-model="editForm.name"
-                type="text"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Masukkan nama kontak"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Nomor Telepon *
-              </label>
-              <input
-                v-model="editForm.phone_number"
-                type="tel"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="+62 812-3456-7890"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                v-model="editForm.email"
-                type="email"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="kontak@email.com"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Avatar URL
-              </label>
-              <input
-                v-model="editForm.avatar"
-                type="url"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/avatar.jpg"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                chanel
-              </label>
-              <select
-                v-model="editForm.chanel_id"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Pilih chanel</option>
-                <option
-                  v-for="chanel in chanels"
-                  :key="chanel.id"
-                  :value="chanel.id"
-                >
-                  {{ chanel.name }}
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Catatan
-              </label>
-              <textarea
-                v-model="editForm.notes"
-                rows="3"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Catatan tambahan tentang kontak ini..."
-              ></textarea>
-            </div>
-          </div>
-
-          <div class="flex gap-3 mt-6">
-            <button
-              type="submit"
-              :disabled="saving"
-              class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-            >
-              {{ saving ? "Menyimpan..." : "Update" }}
-            </button>
-            <button
-              type="button"
-              @click="showEditModal = false"
-              :disabled="saving"
-              class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
-            >
-              Batal
-            </button>
-          </div>
-        </form>
-      </div>
-    </ChanelModal>
   </div>
 </template>
 <script setup>
@@ -331,9 +342,36 @@ const formatDate = (dateString) => {
   });
 };
 
-const getchanelName = (chanelId) => {
-  const chanel = chanels.value.find((c) => c.id === chanelId);
+const getContactAvatar = (contact) => {
+  return (
+    contact.avatar ||
+    `https://ui-avatars.com/api/?name=${contact.name}&background=random`
+  );
+};
+
+const getContactName = (contact) => {
+  return contact.name || "Nama Kontak";
+};
+
+const getContactPhone = (contact) => {
+  return contact.phone_number || "Nomor Telepon";
+};
+
+const getContactEmail = (contact) => {
+  return contact.email || null;
+};
+
+const getContactChanel = (contact) => {
+  const chanel = chanels.value.find((c) => c.id === contact.chanel_id);
   return chanel ? chanel.name : "Unknown chanel";
+};
+
+const getContactNotes = (contact) => {
+  return contact.notes || null;
+};
+
+const getContactCreatedAt = (contact) => {
+  return contact.created_at || null;
 };
 
 const sendMessage = async () => {

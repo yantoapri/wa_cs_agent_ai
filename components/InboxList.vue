@@ -1,5 +1,42 @@
 <template>
   <div>
+    <!-- Tab Switcher Agent AI / Agent Manusia -->
+    <div
+      class="grid grid-cols-2 gap-0 mb-4 overflow-hidden border border-gray-200"
+    >
+      <button
+        :class="[
+          'py-2 font-semibold transition-colors',
+          activeTab === 'ai'
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+        ]"
+        @click="
+          () => {
+            console.log('emit update:activeTab ai');
+            $emit('update:activeTab', 'ai');
+          }
+        "
+      >
+        Agent AI
+      </button>
+      <button
+        :class="[
+          'py-2 font-semibold transition-colors',
+          activeTab === 'manusia'
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+        ]"
+        @click="
+          () => {
+            console.log('emit update:activeTab manusia');
+            $emit('update:activeTab', 'manusia');
+          }
+        "
+      >
+        Agent Manusia
+      </button>
+    </div>
     <div v-if="loading" class="text-center py-8">
       <div class="text-gray-500">Loading inbox...</div>
     </div>
@@ -27,37 +64,53 @@
           '-' +
           index
         "
-        class="mb-6 cursor-pointer"
+        class="cursor-pointer"
       >
-        <!-- Agent Header (klik untuk pilih percakapan) -->
         <div
-          class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-3 cursor-pointer"
+          class="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg border-b border-gray-100"
           @click="handleAgentHeaderClick(agentData)"
         >
           <img
-            class="w-10 h-10 rounded-full"
+            class="w-12 h-12 rounded-full object-cover"
             :src="
               agentData.agent.avatar_url ||
               `https://ui-avatars.com/api/?name=${agentData.agent.name}&background=random`
             "
             :alt="agentData.agent.name"
           />
-          <div class="flex-1">
-            <div class="font-medium text-gray-900">
-              {{ agentData.agent.name }}
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-base text-gray-900 truncate">{{
+                agentData.agent.name || "-"
+              }}</span>
+              <div class="flex flex-col items-end ml-2">
+                <span
+                  class="text-xs text-green-600 font-medium whitespace-nowrap"
+                  >{{ formatTimeOrDate(agentData.lastActivity) }}</span
+                >
+                <span class="text-xs text-gray-500 mt-1"
+                  >{{ agentData.totalMessages }} pesan</span
+                >
+              </div>
             </div>
-            <div class="text-xs text-gray-400">
-              Chanel: {{ agentData.chanel?.name || "-" }}<br />
-              Kontak:
+            <div class="text-xs text-gray-400 truncate">
               {{
                 agentData.contact?.name ||
                 agentData.contact?.phone_number ||
                 "-"
-              }}
+              }}<span v-if="agentData.chanel?.name">
+                • {{ agentData.chanel.name }}</span
+              >
             </div>
-            <div class="text-sm text-gray-500">
-              {{ agentData.totalMessages }} pesan
+            <div class="text-sm text-gray-500 truncate">
+              {{ agentData.lastMessage || "—" }}
             </div>
+          </div>
+          <div v-if="agentData.unreadCount > 0" class="ml-2 flex-shrink-0">
+            <span
+              class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500 text-white text-sm font-bold"
+              >{{ agentData.unreadCount }}</span
+            >
           </div>
         </div>
       </div>
@@ -69,7 +122,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useConversationStore } from "~/composables/useConversationStore";
 import { onClickOutside } from "@vueuse/core";
 
-const emit = defineEmits(["select-conversation"]);
+const emit = defineEmits(["select-conversation", "update:activeTab"]);
 const props = defineProps({
   selectedConversation: Object,
   activeTab: String,
@@ -80,6 +133,7 @@ const {
   error,
   fetchAIAgentConversations,
   fetchHumanAgentConversations,
+  messages,
 } = useConversationStore();
 
 const aiAgentConversations = ref([]);
@@ -89,13 +143,6 @@ const currentAgentConversations = computed(() => {
     props.activeTab === "ai"
       ? aiAgentConversations.value
       : humanAgentConversations.value;
-
-  console.log("[InboxList] Computing current agent conversations:", {
-    activeTab: props.activeTab,
-    aiCount: aiAgentConversations.value?.length,
-    humanCount: humanAgentConversations.value?.length,
-    rawResultCount: rawResult?.length,
-  });
 
   // Additional deduplication at UI level to ensure no duplicates
   if (rawResult && rawResult.length > 0) {
@@ -130,33 +177,7 @@ const currentAgentConversations = computed(() => {
       }
     });
 
-    if (duplicates.length > 0) {
-      console.warn("[InboxList] Found and removed duplicates:", {
-        duplicateCount: duplicates.length,
-        duplicates: duplicates,
-        originalItems: rawResult.length,
-        deduplicatedItems: deduplicatedResult.length,
-        uniqueKeys: uniqueKeys.size,
-      });
-    } else {
-      console.log("[InboxList] No duplicates found:", {
-        totalItems: rawResult.length,
-        uniqueKeys: uniqueKeys.size,
-      });
-    }
-
-    console.log("[InboxList] Final deduplicated result:", {
-      activeTab: props.activeTab,
-      originalLength: rawResult.length,
-      deduplicatedLength: deduplicatedResult.length,
-      result: deduplicatedResult.map((r) => ({
-        agent_name: r.agent?.name,
-        contact_name: r.contact?.name || r.contact?.phone_number,
-        chanel_name: r.chanel?.name,
-        totalMessages: r.totalMessages,
-      })),
-    });
-
+    // CATATAN: Agar lastMessage selalu muncul, pastikan fetchAIAgentConversations/fetchHumanAgentConversations mengisi field lastMessage pada setiap item.
     return deduplicatedResult;
   }
 
@@ -284,4 +305,23 @@ const loadAgentConversations = async () => {
     }
   }
 };
+
+// Tambahkan fungsi formatTimeOrDate
+function formatTimeOrDate(ts) {
+  if (!ts) return "";
+  const date = new Date(ts);
+  const now = new Date();
+  const diff = now - date;
+  if (diff < 1000 * 60 * 60 * 24) {
+    // < 1 hari
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } else if (diff < 1000 * 60 * 60 * 48) {
+    return "Yesterday";
+  } else {
+    return date.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+  }
+}
 </script>

@@ -1,12 +1,29 @@
 <template>
   <div :class="sidebar ? 'p-8' : 'p-8'">
-    <button
-      @click="showForm = !showForm"
-      class="mb-6 px-5 py-2.5 bg-blue-500 text-white rounded-lg cursor-pointer text-base border-none"
-      :disabled="loading"
-    >
-      Buat Agent AI
-    </button>
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="mt-0 text-xl font-bold">Agent AI</h2>
+      <button
+        @click="showForm = !showForm"
+        class="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors flex items-center justify-center"
+        :disabled="loading"
+        title="Buat Agent AI"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          />
+        </svg>
+      </button>
+    </div>
     <ChanelModal :show="showForm" @close="showForm = false">
       <form @submit.prevent="addAI">
         <input
@@ -61,7 +78,17 @@
             : 'hover:bg-gray-100',
         ]"
       >
-        <div class="ml-4 flex-1">
+        <img
+          :src="
+            ai.avatar_url ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              ai.name
+            )}&background=random`
+          "
+          class="w-12 h-12 rounded-full object-cover mr-4"
+          :alt="ai.name"
+        />
+        <div class="ml-0 flex-1">
           <div class="font-medium">{{ ai.name }}</div>
         </div>
       </div>

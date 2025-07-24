@@ -29,6 +29,8 @@ export const useConversationStore = () => {
           agent_id,
           contact_id,
           chanel_id,
+          content,
+          created_at,
           agents!inner(
             id,
             name,
@@ -99,6 +101,7 @@ export const useConversationStore = () => {
             chanel: item.chanels,
             messageCount: 0,
             lastActivity: 0,
+            messages: [],
           });
           console.log(
             `[useConversationStore] Created new AI group for key: ${key}`
@@ -114,6 +117,13 @@ export const useConversationStore = () => {
         if (messageTime > group.lastActivity) {
           group.lastActivity = messageTime;
         }
+        // Kumpulkan pesan untuk lastMessage
+        if (item.content && item.created_at) {
+          group.messages.push({
+            content: item.content,
+            created_at: item.created_at,
+          });
+        }
       });
 
       console.log("[useConversationStore] AI Grouping summary:", {
@@ -125,15 +135,26 @@ export const useConversationStore = () => {
       });
 
       // Convert map to array and format result
-      const result = Array.from(conversationMap.values()).map((group) => ({
-        agent: group.agent,
-        contact: group.contact,
-        chanel: group.chanel,
-        messages: [], // We don't need all messages for the list
-        totalMessages: group.messageCount,
-        unreadCount: 0, // TODO: Implement unread count
-        lastActivity: group.lastActivity,
-      }));
+      const result = Array.from(conversationMap.values()).map((group) => {
+        // Ambil pesan terakhir (created_at terbaru)
+        let lastMessage = "";
+        if (group.messages && group.messages.length > 0) {
+          group.messages.sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+          );
+          lastMessage = group.messages[0].content;
+        }
+        return {
+          agent: group.agent,
+          contact: group.contact,
+          chanel: group.chanel,
+          messages: [],
+          totalMessages: group.messageCount,
+          unreadCount: 0, // TODO: Implement unread count
+          lastActivity: group.lastActivity,
+          lastMessage,
+        };
+      });
 
       // Sort by last activity (newest first)
       result.sort((a, b) => b.lastActivity - a.lastActivity);
@@ -181,6 +202,8 @@ export const useConversationStore = () => {
           agent_id,
           contact_id,
           chanel_id,
+          content,
+          created_at,
           agents!inner(
             id,
             name,
@@ -203,6 +226,7 @@ export const useConversationStore = () => {
         `
         )
         .eq("agent_type", "manusia") // Ganti filter ke agent_type
+        // .eq("agents.created_by", user.value?.id)
         .not("agent_id", "is", null)
         .not("contact_id", "is", null)
         .not("chanel_id", "is", null);
@@ -253,6 +277,7 @@ export const useConversationStore = () => {
             chanel: item.chanels,
             messageCount: 0,
             lastActivity: 0,
+            messages: [],
           });
           console.log(
             `[useConversationStore] Created new Human group for key: ${key}`
@@ -268,6 +293,13 @@ export const useConversationStore = () => {
         if (messageTime > group.lastActivity) {
           group.lastActivity = messageTime;
         }
+        // Kumpulkan pesan untuk lastMessage
+        if (item.content && item.created_at) {
+          group.messages.push({
+            content: item.content,
+            created_at: item.created_at,
+          });
+        }
       });
 
       console.log("[useConversationStore] Human Grouping summary:", {
@@ -279,15 +311,26 @@ export const useConversationStore = () => {
       });
 
       // Convert map to array and format result
-      const result = Array.from(conversationMap.values()).map((group) => ({
-        agent: group.agent,
-        contact: group.contact,
-        chanel: group.chanel,
-        messages: [], // We don't need all messages for the list
-        totalMessages: group.messageCount,
-        unreadCount: 0, // TODO: Implement unread count
-        lastActivity: group.lastActivity,
-      }));
+      const result = Array.from(conversationMap.values()).map((group) => {
+        // Ambil pesan terakhir (created_at terbaru)
+        let lastMessage = "";
+        if (group.messages && group.messages.length > 0) {
+          group.messages.sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+          );
+          lastMessage = group.messages[0].content;
+        }
+        return {
+          agent: group.agent,
+          contact: group.contact,
+          chanel: group.chanel,
+          messages: [],
+          totalMessages: group.messageCount,
+          unreadCount: 0, // TODO: Implement unread count
+          lastActivity: group.lastActivity,
+          lastMessage,
+        };
+      });
 
       // Sort by last activity (newest first)
       result.sort((a, b) => b.lastActivity - a.lastActivity);

@@ -1,13 +1,18 @@
 <template>
-  <NuxtLayout>
-    <NuxtPage />
-    <BaseToast ref="baseToast" />
-  </NuxtLayout>
+  <NuxtPage />
+  <BaseToast ref="baseToast" />
 </template>
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import BaseToast from '~/components/BaseToast.vue';
-import { useToast } from '~/composables/useToast';
+import { ref, onMounted, onUnmounted } from "vue";
+import BaseToast from "~/components/BaseToast.vue";
+import { useToast } from "~/composables/useToast";
+import { useHead } from "#imports";
+useHead({
+  title: "Nutra AI Chat",
+  link: [
+    { rel: "icon", type: "image/x-icon", href: "/assets/img/favicon.ico" },
+  ],
+});
 
 const baseToast = ref(null);
 const { onToast } = useToast();

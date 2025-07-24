@@ -5,6 +5,27 @@
       class="bg-white rounded-lg shadow p-6 h-[90vh] flex flex-col"
     >
       <div class="flex items-center mb-4">
+        <!-- Tombol back hanya di mobile -->
+        <button
+          class="md:hidden mr-2 p-1 text-gray-700 hover:bg-gray-200 rounded-full"
+          @click="$emit('back')"
+          aria-label="Kembali ke daftar percakapan"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            class="w-7 h-7"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
         <img
           class="w-12 h-12 rounded-full mr-4"
           :src="getConversationAvatar(selectedConversation)"

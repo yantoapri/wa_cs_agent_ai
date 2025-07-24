@@ -1,22 +1,9 @@
 <template>
   <div class="flex flex-col md:flex-row h-[calc(100vh-40px)]">
-    <!-- Horizontal agent list -->
-    <div class="w-full bg-white px-2 py-2 border-b flex overflow-x-auto gap-2 mb-2">
-      <div
-        v-for="agent in aiAgents"
-        :key="agent.id"
-        @click="onSelectAI(agent)"
-        :class="['px-4 py-2 rounded cursor-pointer whitespace-nowrap', selectedAI.id === agent.id ? 'bg-blue-600 text-white font-bold' : 'bg-gray-200 text-gray-700']"
-        style="min-width: 120px; text-align: center;"
-      >
-        {{ agent.name }}
-      </div>
-    </div>
+ 
     <!-- Sidebar -->
     <div class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col md:block hidden">
-      <div class="p-4 md:p-5 text-lg font-bold border-b border-gray-200 text-gray-800">
-        Agen AI
-      </div>
+ 
       <div class="flex-1 overflow-y-auto">
         <AgentAIList
           :ai-list="aiAgents"
