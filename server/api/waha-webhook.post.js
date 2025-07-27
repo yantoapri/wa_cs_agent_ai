@@ -294,24 +294,56 @@ export default defineEventHandler(async (event) => {
     });
     console.log("[WAHA Webhook] Takeover handler result:", takeoverResult);
 
-    // === Selalu simpan pesan masuk ke database ===
+    // === Tentukan agent_type dan agent_id yang sesuai ===
     let saveAgentType = "manusia";
+    let saveAgentId = agentManusiaId; // default ke agent manusia
+
     if (takeoverResult && takeoverResult.takeover === false) {
       // takeover_ai = false, selalu manusia
       saveAgentType = "manusia";
+      saveAgentId = agentManusiaId;
     } else if (takeoverResult && takeoverResult.takeover === true) {
       if (takeoverResult.proceed === false) {
         // Masih dalam waktu takeover, manusia
         saveAgentType = "manusia";
+        saveAgentId = agentManusiaId;
       } else {
         // Sudah lewat waktu takeover, AI
         saveAgentType = "ai";
+        // Cari agent AI yang aktif di chanel
+        const chanelIdToUse = body?.metadata?.chanel_id || null;
+        if (chanelIdToUse) {
+          const { data: conn, error: connErr } = await client
+            .from("chanel_agent_connections")
+            .select("agent_id")
+            .eq("chanel_id", chanelIdToUse)
+            .eq("is_active", true)
+            .maybeSingle();
+          if (!connErr && conn && conn.agent_id) {
+            saveAgentId = conn.agent_id;
+            console.log("[WAHA Webhook] Using AI agent ID:", saveAgentId);
+          } else {
+            console.log(
+              "[WAHA Webhook] No active AI agent found, using human agent"
+            );
+            saveAgentType = "manusia";
+            saveAgentId = agentManusiaId;
+          }
+        }
       }
     }
+
+    console.log("[WAHA Webhook] Agent decision:", {
+      saveAgentType,
+      saveAgentId,
+      takeover: takeoverResult?.takeover,
+      proceed: takeoverResult?.proceed,
+    });
+
     // Simpan pesan masuk ke database
     try {
       const saveData = {
-        agent_id: agentManusiaId, // agent_id manusia channel
+        agent_id: saveAgentId,
         chanel_id: body?.metadata?.chanel_id || null,
         contact_id: contact_id,
         message_type: "text",
@@ -350,35 +382,22 @@ export default defineEventHandler(async (event) => {
       // Tidak perlu auto-reply AI jika takeover_ai = false atau masih dalam waktu takeover
       return takeoverResult;
     }
-    // 1. Cari agentai yang aktif di chanel_agent_connections
-    const chanelIdToUse = body?.metadata?.chanel_id || null;
-    console.log(
-      "[WAHA Webhook] Looking for active agent in chanel:",
-      chanelIdToUse
-    );
-    const { data: conn, error: connErr } = await client
-      .from("chanel_agent_connections")
-      .select("agent_id")
-      .eq("chanel_id", chanelIdToUse)
-      .eq("is_active", true)
-      .maybeSingle();
-    console.log("[WAHA Webhook] Agent connection query result:", {
-      conn,
-      connErr,
-    });
-    if (connErr || !conn || !conn.agent_id) {
-      console.log("[WAHA Webhook] No active agent found in chanel");
-      return {
-        status: "ok",
-        results: [{ message: "Tidak ada agent aktif di chanel" }],
-      };
+
+    // Gunakan saveAgentId yang sudah ditentukan sebelumnya
+    if (saveAgentType !== "ai" || !saveAgentId) {
+      console.log(
+        "[WAHA Webhook] Not proceeding with AI reply - agent type:",
+        saveAgentType
+      );
+      return takeoverResult;
     }
+
     // 2. Ambil config agent_ai_configs
-    console.log("[WAHA Webhook] Fetching AI config for agent:", conn.agent_id);
+    console.log("[WAHA Webhook] Fetching AI config for agent:", saveAgentId);
     const { data: config, error: configErr } = await client
       .from("agent_ai_configs")
       .select("*")
-      .eq("agent_id", conn.agent_id)
+      .eq("agent_id", saveAgentId)
       .maybeSingle();
     console.log("[WAHA Webhook] AI config result:", { config, configErr });
     if (configErr || !config) {
@@ -435,8 +454,8 @@ export default defineEventHandler(async (event) => {
     // Simpan prompt user ke database sebelum proses AI
     try {
       const userPromptData = {
-        agent_id: conn.agent_id,
-        chanel_id: chanelIdToUse,
+        agent_id: saveAgentId,
+        chanel_id: body?.metadata?.chanel_id || null,
         contact_id,
         message_type: "text",
         agent_type: "ai",
@@ -525,7 +544,7 @@ export default defineEventHandler(async (event) => {
           caption: aiText,
           metadata: {
             sender_type: "ai",
-            agent_id: conn.agent_id,
+            agent_id: saveAgentId,
             is_auto_reply: true,
           },
         };
@@ -542,8 +561,8 @@ export default defineEventHandler(async (event) => {
           console.log("[WAHA Webhook] Image sent successfully via WAHA");
           // Simpan pesan AI (image) ke database
           const saveData = {
-            agent_id: conn.agent_id,
-            chanel_id: chanelIdToUse,
+            agent_id: saveAgentId,
+            chanel_id: body?.metadata?.chanel_id || null,
             contact_id,
             message_type: "image",
             agent_type: "ai",
@@ -583,7 +602,7 @@ export default defineEventHandler(async (event) => {
           text: aiText,
           metadata: {
             sender_type: "ai",
-            agent_id: conn.agent_id,
+            agent_id: saveAgentId,
             is_auto_reply: true,
           },
         };
@@ -599,8 +618,8 @@ export default defineEventHandler(async (event) => {
         console.log("[WAHA Webhook] Text sent successfully via WAHA");
         // Simpan pesan AI ke database
         const saveData = {
-          agent_id: conn.agent_id,
-          chanel_id: chanelIdToUse,
+          agent_id: saveAgentId,
+          chanel_id: body?.metadata?.chanel_id || null,
           contact_id,
           message_type: "text",
           agent_type: "ai",

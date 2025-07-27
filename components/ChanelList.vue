@@ -218,6 +218,20 @@ async function removechanel(chanel) {
 }
 
 function selectchanel(chanel) {
+  console.log("[ChanelList] Selecting chanel:", chanel);
+  console.log(
+    "[ChanelList] takeover_ai:",
+    chanel.takeover_ai,
+    "type:",
+    typeof chanel.takeover_ai
+  );
+  console.log(
+    "[ChanelList] limit_balasan_ai:",
+    chanel.limit_balasan_ai,
+    "type:",
+    typeof chanel.limit_balasan_ai
+  );
+
   // Start session di WAHA jika chanel bertipe WhatsApp
   if (chanel.type === "whatsapp") {
     fetch(`${baseUrl}/api/sessions/${chanel.session_name}/start`, {

@@ -25,6 +25,13 @@ export const useChanelstore = () => {
 
       if (fetchError) throw fetchError;
 
+      console.log("[useChanels] Fetched chanels from database:", data);
+      if (data && data.length > 0) {
+        console.log("[useChanels] First chanel data:", data[0]);
+        console.log("[useChanels] First chanel takeover_ai:", data[0].takeover_ai, "type:", typeof data[0].takeover_ai);
+        console.log("[useChanels] First chanel limit_balasan_ai:", data[0].limit_balasan_ai, "type:", typeof data[0].limit_balasan_ai);
+      }
+
       chanels.value = data || [];
     } catch (err) {
       error.value =

@@ -4,6 +4,7 @@ export interface chanel {
   type: "whatsapp" | "messenger" | "telegram";
   whatsapp_number?: string;
   icon_url?: string;
+  session_name?: string;
   takeover_ai: boolean;
   waktu_takeover: number;
   limit_balasan_ai: boolean;

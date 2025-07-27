@@ -18,7 +18,6 @@ interface Env {
 
 export default {
 	async scheduled(event, env: Env, ctx) {
-		// Ambil URL dari environment variable
 		const url = env.AI_TAKEOVER_CRON_URL;
 		if (!url) {
 			console.error('AI_TAKEOVER_CRON_URL env variable is not set');

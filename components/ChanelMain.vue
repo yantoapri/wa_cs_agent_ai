@@ -273,18 +273,39 @@ function getChanelAvatar(chanel) {
   )}&background=random`;
 }
 
+// Watch untuk mengisi form dan cek agent aktif saat chanel berubah
 watch(
   () => props.chanel,
   async (val) => {
-    // Reset form saat chanel berubah
     if (val) {
+      console.log("[ChanelMain] Chanel data received:", val);
+      console.log(
+        "[ChanelMain] takeover_ai:",
+        val.takeover_ai,
+        "type:",
+        typeof val.takeover_ai
+      );
+      console.log(
+        "[ChanelMain] limit_balasan_ai:",
+        val.limit_balasan_ai,
+        "type:",
+        typeof val.limit_balasan_ai
+      );
+
+      // Konversi boolean ke string dengan benar
+      const takeoverAIValue = val.takeover_ai === true ? "1" : "0";
+      const limitBalasanAIValue = val.limit_balasan_ai === true ? "1" : "0";
+
       editData.value = {
-        nama: val.nama || "",
-        takeoverAI: val.takeoverAI?.toString() || "0",
-        waktuTakeover: val.waktuTakeover?.toString() || "",
-        limitBalasanAI: val.limitBalasanAI?.toString() || "0",
-        maksimumBalasanAI: val.maksimumBalasanAI?.toString() || "",
+        nama: val.name || "",
+        takeoverAI: takeoverAIValue,
+        waktuTakeover: val.waktu_takeover?.toString() || "",
+        limitBalasanAI: limitBalasanAIValue,
+        maksimumBalasanAI: val.maksimum_balasan_ai?.toString() || "",
       };
+
+      console.log("[ChanelMain] editData set to:", editData.value);
+
       // Cek agent aktif
       if (val.id) {
         const active = await getActiveAgentForchanel(val.id);
@@ -435,21 +456,6 @@ onUnmounted(() => {
 
 onMounted(async () => {
   await fetchAgentsByType("ai");
-  // Inisialisasi editData.nama dengan nama chanel saat komponen dimount
-  if (props.chanel) {
-    editData.value = {
-      nama: props.chanel.nama || "",
-      takeoverAI: props.chanel.takeoverAI?.toString() || "0",
-      waktuTakeover: props.chanel.waktuTakeover?.toString() || "",
-      limitBalasanAI: props.chanel.limitBalasanAI?.toString() || "0",
-      maksimumBalasanAI: props.chanel.maksimumBalasanAI?.toString() || "",
-    };
-    // Cek agent aktif
-    if (props.chanel.id) {
-      const active = await getActiveAgentForchanel(props.chanel.id);
-      activeAgentId.value = active ? active.agent_id : null;
-    }
-  }
 });
 
 async function onEditchanel() {
@@ -458,7 +464,6 @@ async function onEditchanel() {
       name: editData.value.nama,
       takeover_ai: editData.value.takeoverAI === "1",
       waktu_takeover: parseInt(editData.value.waktuTakeover) || 0,
-
       limit_balasan_ai: editData.value.limitBalasanAI === "1",
       maksimum_balasan_ai: parseInt(editData.value.maksimumBalasanAI) || 0,
     });
