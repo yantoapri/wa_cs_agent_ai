@@ -297,6 +297,7 @@ export default defineEventHandler(async (event) => {
     // === Tentukan agent_type dan agent_id yang sesuai ===
     let saveAgentType = "manusia";
     let saveAgentId = agentManusiaId; // default ke agent manusia
+    const chanelIdToUse = body?.metadata?.chanel_id || null; // Definisikan di awal
 
     if (takeoverResult && takeoverResult.takeover === false) {
       // takeover_ai = false, selalu manusia
@@ -311,7 +312,6 @@ export default defineEventHandler(async (event) => {
         // Sudah lewat waktu takeover, AI
         saveAgentType = "ai";
         // Cari agent AI yang aktif di chanel
-        const chanelIdToUse = body?.metadata?.chanel_id || null;
         if (chanelIdToUse) {
           const { data: conn, error: connErr } = await client
             .from("chanel_agent_connections")
