@@ -294,7 +294,7 @@ export default defineEventHandler(async (event) => {
     });
     console.log("[WAHA Webhook] Takeover handler result:", takeoverResult);
 
-    // === Tentukan agent_type dan agent_id yang sesuai ===
+    // === Tentukan agent_type dan agent_id yang sesuai berdasarkan sessionType ===
     let saveAgentType = "manusia";
     let saveAgentId = agentManusiaId; // default ke agent manusia
     const chanelIdToUse = body?.metadata?.chanel_id || null; // Definisikan di awal
@@ -304,14 +304,12 @@ export default defineEventHandler(async (event) => {
       saveAgentType = "manusia";
       saveAgentId = agentManusiaId;
     } else if (takeoverResult && takeoverResult.takeover === true) {
-      if (takeoverResult.proceed === false) {
-        // Masih dalam waktu takeover, manusia
-        saveAgentType = "manusia";
-        saveAgentId = agentManusiaId;
-      } else {
-        // Sudah lewat waktu takeover, AI
+      // Gunakan sessionType dari handler untuk konsistensi
+      const sessionType = takeoverResult.sessionType || "manusia";
+
+      if (sessionType === "ai") {
+        // Session AI - cari agent AI yang aktif
         saveAgentType = "ai";
-        // Cari agent AI yang aktif di chanel
         if (chanelIdToUse) {
           const { data: conn, error: connErr } = await client
             .from("chanel_agent_connections")
@@ -330,6 +328,10 @@ export default defineEventHandler(async (event) => {
             saveAgentId = agentManusiaId;
           }
         }
+      } else {
+        // Session manusia
+        saveAgentType = "manusia";
+        saveAgentId = agentManusiaId;
       }
     }
 
@@ -373,13 +375,22 @@ export default defineEventHandler(async (event) => {
       );
     }
 
-    // === Jika agent_type=ai dan proceed=true, lanjutkan auto-reply AI ===
+    // === Jika sessionType=ai dan proceed=true, lanjutkan auto-reply AI ===
     if (
       !takeoverResult ||
       takeoverResult.takeover === false ||
-      takeoverResult.proceed !== true
+      takeoverResult.proceed !== true ||
+      takeoverResult.sessionType !== "ai"
     ) {
-      // Tidak perlu auto-reply AI jika takeover_ai = false atau masih dalam waktu takeover
+      // Tidak perlu auto-reply AI jika:
+      // - takeover_ai = false
+      // - masih dalam waktu takeover (proceed = false)
+      // - sessionType bukan "ai"
+      console.log("[WAHA Webhook] Not proceeding with AI reply:", {
+        takeover: takeoverResult?.takeover,
+        proceed: takeoverResult?.proceed,
+        sessionType: takeoverResult?.sessionType,
+      });
       return takeoverResult;
     }
 

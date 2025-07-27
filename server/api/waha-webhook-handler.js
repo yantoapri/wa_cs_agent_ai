@@ -39,99 +39,86 @@ export async function handleReceivedMessage({
     return { status: "ok", takeover: false, proceed: true };
   }
 
-  // Cek message terakhir dari chanel & contact ini by agent_type='manusia'
-  let lastHumanMsg = null;
+  // === LOGIKA SESSION KONSISTEN ===
+  // Cek pesan terakhir dari chanel & contact ini (baik AI atau manusia)
+  let lastMessage = null;
   if (contactId) {
     const res = await client
       .from("messages")
-      .select("created_at")
+      .select("created_at, agent_type, from")
       .eq("chanel_id", chanelId)
       .eq("contact_id", contactId)
-      .eq("agent_type", "manusia")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    lastHumanMsg = res.data;
+    lastMessage = res.data;
   } else {
     // fallback lama: hanya berdasarkan chanel
     const res = await client
       .from("messages")
-      .select("created_at")
+      .select("created_at, agent_type, from")
       .eq("chanel_id", chanelId)
-      .eq("agent_type", "manusia")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    lastHumanMsg = res.data;
+    lastMessage = res.data;
   }
 
-  if (!lastHumanMsg) {
-    // Tidak ada pesan manusia, lanjutkan auto-reply
-    return { status: "ok", takeover: true, proceed: true };
+  console.log("[WAHA Handler] Last message analysis:", {
+    lastMessage,
+    contactId,
+    chanelId,
+    takeoverAI,
+    waktuTakeover,
+  });
+
+  if (!lastMessage) {
+    // Tidak ada pesan sama sekali, mulai dengan AI
+    console.log("[WAHA Handler] No previous messages, starting with AI");
+    return { status: "ok", takeover: true, proceed: true, sessionType: "ai" };
   }
 
   const now = new Date();
-  const lastMsgTime = new Date(lastHumanMsg.created_at);
+  const lastMsgTime = new Date(lastMessage.created_at);
   const diffMinutes = (now - lastMsgTime) / (1000 * 60);
 
-  if (diffMinutes > waktuTakeover) {
-    // Sudah lewat waktu takeover, lanjutkan auto-reply
-    return { status: "ok", takeover: true, proceed: true };
-  } else {
-    // Masih dalam waktu takeover, abaikan auto-reply
-    // Tambahan: cek jika sudah lewat waktu takeover sejak pesan user terakhir dan belum dibalas agent manusia
-    // Ambil pesan user terakhir (from=payloadFrom) untuk contact & chanel
-    let lastUserMsg = null;
-    if (contactId) {
-      const res = await client
-        .from("messages")
-        .select("id, created_at")
-        .eq("chanel_id", chanelId)
-        .eq("contact_id", contactId)
-        .eq("from", payloadFrom)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      lastUserMsg = res.data;
-    }
-    let shouldForceAI = false;
-    if (lastUserMsg) {
-      // Cek apakah ada balasan manusia (from=meId) setelah pesan user terakhir
-      const res = await client
-        .from("messages")
-        .select("id, created_at")
-        .eq("chanel_id", chanelId)
-        .eq("contact_id", contactId)
-        .eq("from", meId)
-        .gt("created_at", lastUserMsg.created_at)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      const lastHumanReply = res.data;
-      const nowMinutesSinceUserMsg =
-        (now - new Date(lastUserMsg.created_at)) / (1000 * 60);
-      if (!lastHumanReply && nowMinutesSinceUserMsg > waktuTakeover) {
-        // Tidak ada balasan manusia setelah pesan user terakhir dan sudah lewat waktu takeover
-        shouldForceAI = true;
-      }
-    }
-    if (shouldForceAI) {
+  // Jika pesan terakhir adalah dari AI
+  if (lastMessage.agent_type === "ai") {
+    console.log("[WAHA Handler] Last message was from AI");
+    // Lanjutkan session AI
+    return { status: "ok", takeover: true, proceed: true, sessionType: "ai" };
+  }
+
+  // Jika pesan terakhir adalah dari manusia
+  if (lastMessage.agent_type === "manusia") {
+    console.log(
+      "[WAHA Handler] Last message was from human, checking takeover time"
+    );
+
+    if (diffMinutes > waktuTakeover) {
+      // Sudah lewat waktu takeover, switch ke AI
+      console.log("[WAHA Handler] Takeover time passed, switching to AI");
+      return { status: "ok", takeover: true, proceed: true, sessionType: "ai" };
+    } else {
+      // Masih dalam waktu takeover, lanjutkan session manusia
+      console.log(
+        "[WAHA Handler] Still within takeover time, continuing human session"
+      );
       return {
         status: "ok",
         takeover: true,
-        proceed: true,
-        reason: "AI takeover forced after no human reply",
+        proceed: false,
+        sessionType: "manusia",
+        reason: "Masih dalam waktu takeover",
+        diffMinutes,
+        waktuTakeover,
       };
     }
-    return {
-      status: "ok",
-      takeover: true,
-      proceed: false,
-      reason: "Masih dalam waktu takeover",
-      diffMinutes,
-      waktuTakeover,
-    };
   }
+
+  // Fallback: jika agent_type tidak jelas, default ke AI
+  console.log("[WAHA Handler] Unclear agent_type, defaulting to AI");
+  return { status: "ok", takeover: true, proceed: true, sessionType: "ai" };
 }
 
 /**
