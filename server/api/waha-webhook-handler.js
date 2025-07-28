@@ -157,7 +157,7 @@ export async function handleSentMessage({
   try {
     const { data: existingMessage } = await client
       .from("messages")
-      .select("id, agent_type, content")
+      .select("id, agent_type, content, created_at")
       .eq("from", meId)
       .eq("to", to)
       .eq("content", content)
@@ -168,12 +168,44 @@ export async function handleSentMessage({
     if (existingMessage) {
       console.log(
         "[WAHA Handler] Message already saved as AI (skip manual save)",
-        { messageId: existingMessage.id, content: existingMessage.content }
+        { 
+          messageId: existingMessage.id, 
+          content: existingMessage.content,
+          created_at: existingMessage.created_at
+        }
       );
       return {
         status: "ok",
         message: "Message already saved as AI (skip manual save)",
       };
+    }
+    
+    // Cek juga apakah ada pesan dengan content yang sama dalam 1 menit terakhir
+    const { data: recentMessages } = await client
+      .from("messages")
+      .select("id, agent_type, content, created_at")
+      .eq("content", content)
+      .gte("created_at", new Date(Date.now() - 1 * 60 * 1000).toISOString()) // 1 menit terakhir
+      .order("created_at", { ascending: false })
+      .limit(5);
+    
+    if (recentMessages && recentMessages.length > 0) {
+      console.log(
+        "[WAHA Handler] Found recent messages with same content:",
+        recentMessages.map(m => ({ id: m.id, agent_type: m.agent_type, content: m.content, created_at: m.created_at }))
+      );
+      
+      // Jika ada pesan AI dengan content yang sama, skip penyimpanan manual
+      const hasAIMessage = recentMessages.some(m => m.agent_type === "ai");
+      if (hasAIMessage) {
+        console.log(
+          "[WAHA Handler] Recent AI message with same content found (skip manual save)"
+        );
+        return {
+          status: "ok",
+          message: "Recent AI message with same content found (skip manual save)",
+        };
+      }
     }
   } catch (err) {
     console.log("[WAHA Handler] Error checking existing AI message:", err);

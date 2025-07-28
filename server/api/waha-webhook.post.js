@@ -343,7 +343,7 @@ export default defineEventHandler(async (event) => {
     try {
       const { data: existingMessage } = await client
         .from("messages")
-        .select("id, agent_type, content")
+        .select("id, agent_type, content, created_at")
         .eq("from", meId)
         .eq("to", outgoingTo)
         .eq("content", outgoingContent)
@@ -354,12 +354,50 @@ export default defineEventHandler(async (event) => {
       if (existingMessage) {
         console.log(
           "[WAHA Webhook] Outgoing message already saved as AI (skip manual save)",
-          { messageId: existingMessage.id, content: existingMessage.content }
+          {
+            messageId: existingMessage.id,
+            content: existingMessage.content,
+            created_at: existingMessage.created_at,
+          }
         );
         return {
           status: "ok",
           message: "Message already saved as AI (skip manual save)",
         };
+      }
+
+      // Cek juga apakah ada pesan dengan content yang sama dalam 1 menit terakhir
+      const { data: recentMessages } = await client
+        .from("messages")
+        .select("id, agent_type, content, created_at")
+        .eq("content", outgoingContent)
+        .gte("created_at", new Date(Date.now() - 1 * 60 * 1000).toISOString()) // 1 menit terakhir
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (recentMessages && recentMessages.length > 0) {
+        console.log(
+          "[WAHA Webhook] Found recent messages with same content:",
+          recentMessages.map((m) => ({
+            id: m.id,
+            agent_type: m.agent_type,
+            content: m.content,
+            created_at: m.created_at,
+          }))
+        );
+
+        // Jika ada pesan AI dengan content yang sama, skip penyimpanan manual
+        const hasAIMessage = recentMessages.some((m) => m.agent_type === "ai");
+        if (hasAIMessage) {
+          console.log(
+            "[WAHA Webhook] Recent AI message with same content found (skip manual save)"
+          );
+          return {
+            status: "ok",
+            message:
+              "Recent AI message with same content found (skip manual save)",
+          };
+        }
       }
     } catch (err) {
       console.log("[WAHA Webhook] Error checking existing AI message:", err);
@@ -417,6 +455,41 @@ export default defineEventHandler(async (event) => {
         status: "ok",
         message: "AI response message detected (skip processing)",
       };
+    }
+
+    // Cek apakah ada pesan AI dengan content yang sama dalam 1 menit terakhir
+    try {
+      const { data: recentAIMessages } = await client
+        .from("messages")
+        .select("id, agent_type, content, created_at")
+        .eq("content", incomingContent)
+        .eq("agent_type", "ai")
+        .gte("created_at", new Date(Date.now() - 1 * 60 * 1000).toISOString()) // 1 menit terakhir
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      if (recentAIMessages && recentAIMessages.length > 0) {
+        console.log(
+          "[WAHA Webhook] Found recent AI messages with same content:",
+          recentAIMessages.map((m) => ({
+            id: m.id,
+            content: m.content,
+            created_at: m.created_at,
+          }))
+        );
+
+        // Jika ada pesan AI dengan content yang sama dalam 1 menit terakhir, skip processing
+        console.log(
+          "[WAHA Webhook] Recent AI message with same content found (skip processing)"
+        );
+        return {
+          status: "ok",
+          message:
+            "Recent AI message with same content found (skip processing)",
+        };
+      }
+    } catch (err) {
+      console.log("[WAHA Webhook] Error checking recent AI messages:", err);
     }
 
     // --- Pindahkan blok pencarian/insert contact ke sini ---
