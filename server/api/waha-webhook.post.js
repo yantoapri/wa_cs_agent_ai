@@ -225,6 +225,13 @@ function cleanupAICache() {
   }
 }
 
+function logAICache() {
+  console.log("[WAHA Webhook] AI Cache contents:");
+  for (const [key, ts] of aiOutgoingCache.entries()) {
+    console.log(`  ${key}: ${new Date(ts).toISOString()}`);
+  }
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -284,6 +291,14 @@ export default defineEventHandler(async (event) => {
     isOutgoing,
     isIncomingUserMessage,
     metadata: body?.payload?.metadata,
+    event: body?.event,
+    payload: {
+      body: body?.payload?.body,
+      text: body?.payload?.text,
+      from: body?.payload?.from,
+      to: body?.payload?.to,
+      chatId: body?.payload?.chatId,
+    },
   });
 
   if (isOutgoing) {
@@ -298,11 +313,24 @@ export default defineEventHandler(async (event) => {
     // Cek metadata sender_type: ai
     const metaSenderType =
       body?.payload?.metadata?.sender_type || body?.metadata?.sender_type;
+
+    console.log("[WAHA Webhook] Outgoing AI detection:", {
+      outgoingTo,
+      outgoingContent,
+      metaSenderType,
+      isRecentAI: isRecentAIMsg(outgoingTo, outgoingContent),
+    });
+    logAICache();
+
     if (metaSenderType === "ai" || isRecentAIMsg(outgoingTo, outgoingContent)) {
       console.log(
         "[WAHA Webhook] Outgoing message detected as AI (skip manual save)",
         { outgoingTo, outgoingContent }
       );
+      // Cache pesan AI untuk mencegah deteksi sebagai pesan manual
+      if (metaSenderType === "ai") {
+        cacheAIMsg(outgoingTo, outgoingContent);
+      }
       return {
         status: "ok",
         message: "AI outgoing message detected (not saved as manual)",
@@ -326,6 +354,42 @@ export default defineEventHandler(async (event) => {
     return sentResult;
   } else if (isIncomingUserMessage) {
     console.log("[WAHA Webhook] Detected incoming message (user to chanel)");
+
+    // Cek apakah ini adalah pesan yang baru saja dikirim oleh AI
+    const incomingContent = body?.payload?.body || body?.payload?.text || null;
+    const incomingFrom = payloadFrom;
+    const incomingTo = meId;
+
+    // Cek metadata untuk sender_type: ai
+    const metaSenderType =
+      body?.payload?.metadata?.sender_type || body?.metadata?.sender_type;
+
+    console.log("[WAHA Webhook] AI detection check:", {
+      incomingFrom,
+      incomingContent,
+      metaSenderType,
+      isRecentAI: isRecentAIMsg(incomingFrom, incomingContent),
+      metadata: body?.payload?.metadata,
+      cacheKey: `${incomingFrom}|${incomingContent}`,
+      cacheSize: aiOutgoingCache.size,
+    });
+    logAICache();
+
+    // Cek apakah pesan ini adalah hasil dari AI yang baru saja mengirim
+    if (
+      metaSenderType === "ai" ||
+      isRecentAIMsg(incomingFrom, incomingContent)
+    ) {
+      console.log(
+        "[WAHA Webhook] Incoming message detected as AI response (skip processing)",
+        { incomingFrom, incomingContent, metaSenderType }
+      );
+      return {
+        status: "ok",
+        message: "AI response message detected (skip processing)",
+      };
+    }
+
     // --- Pindahkan blok pencarian/insert contact ke sini ---
     let contact_id = null;
     try {
@@ -669,6 +733,16 @@ export default defineEventHandler(async (event) => {
             body: messageBody,
           });
           console.log("[WAHA Webhook] Image sent successfully via WAHA");
+
+          // Cache pesan AI untuk mencegah deteksi sebagai pesan manual
+          // Cache dengan format: dari AI ke user
+          cacheAIMsg(payloadFrom, aiText);
+          console.log("[WAHA Webhook] AI image message cached:", {
+            to: payloadFrom,
+            content: aiText,
+            cacheKey: `${payloadFrom}|${aiText}`,
+          });
+
           // Simpan pesan AI (image) ke database
           const saveData = {
             agent_id: saveAgentId,
@@ -726,6 +800,16 @@ export default defineEventHandler(async (event) => {
           body: messageBody,
         });
         console.log("[WAHA Webhook] Text sent successfully via WAHA");
+
+        // Cache pesan AI untuk mencegah deteksi sebagai pesan manual
+        // Cache dengan format: dari AI ke user
+        cacheAIMsg(payloadFrom, aiText);
+        console.log("[WAHA Webhook] AI message cached:", {
+          to: payloadFrom,
+          content: aiText,
+          cacheKey: `${payloadFrom}|${aiText}`,
+        });
+
         // Simpan pesan AI ke database
         const saveData = {
           agent_id: saveAgentId,
