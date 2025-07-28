@@ -116,6 +116,92 @@ function checkBroadcastEvent(body) {
   );
 }
 
+// Function to check if the event is message-related (send/receive)
+function isMessageEvent(body) {
+  const eventType = body?.event || "";
+  const payload = body?.payload || {};
+
+  // Message-related event types
+  const messageEventTypes = [
+    "message",
+    "message_create",
+    "message_received",
+    "message_sent",
+    "text",
+    "image",
+    "video",
+    "audio",
+    "document",
+    "location",
+    "contact",
+    "sticker",
+  ];
+
+  // Check if event type is message-related
+  if (messageEventTypes.includes(eventType)) {
+    return true;
+  }
+
+  // Check if payload has message-related fields
+  const hasMessageFields = payload.body || payload.text || payload.content;
+  const hasFromField = payload.from;
+  const hasToField = payload.to || payload.chatId;
+
+  // Check if this is a message event by presence of message fields
+  if (hasMessageFields && (hasFromField || hasToField)) {
+    return true;
+  }
+
+  // Check for specific non-message events to ignore
+  const nonMessageEvents = [
+    "chat_clear",
+    "chat_clear_messages",
+    "chat_delete",
+    "chat_archive",
+    "chat_unarchive",
+    "chat_pin",
+    "chat_unpin",
+    "chat_mute",
+    "chat_unmute",
+    "chat_read",
+    "chat_unread",
+    "presence",
+    "typing",
+    "recording",
+    "paused",
+    "resumed",
+    "stopped",
+    "connection",
+    "disconnection",
+    "session",
+    "session_create",
+    "session_delete",
+    "session_update",
+    "qr",
+    "qr_received",
+    "qr_refresh",
+    "ready",
+    "loading",
+    "authenticated",
+    "auth_failure",
+    "logout",
+    "logout_success",
+    "logout_failure",
+    "media_upload",
+    "media_download",
+    "webhook",
+    "webhook_received",
+    "webhook_sent",
+  ];
+
+  if (nonMessageEvents.includes(eventType)) {
+    return false;
+  }
+
+  // Default: if we can't determine, assume it's not message-related
+  return false;
+}
+
 // === AI Outgoing Message Cache ===
 const aiOutgoingCache = globalThis.__aiOutgoingCache || new Map();
 globalThis.__aiOutgoingCache = aiOutgoingCache;
@@ -148,6 +234,19 @@ export default defineEventHandler(async (event) => {
   console.log("[WAHA Webhook] === START PROCESS ===");
   const body = await readBody(event);
   console.log("[WAHA Webhook] Received body:", JSON.stringify(body, null, 2));
+
+  // Check if this is a message-related event
+  if (!isMessageEvent(body)) {
+    console.log(
+      "[WAHA Webhook] Ignoring non-message event:",
+      body?.event || "unknown"
+    );
+    return {
+      status: "ok",
+      message: "Event ignored - not a message event",
+      event_type: body?.event || "unknown",
+    };
+  }
 
   const runtimeConfig = useRuntimeConfig();
   const WAHA_BASE_URL = runtimeConfig.wahaBaseUrl;
