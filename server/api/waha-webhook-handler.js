@@ -137,8 +137,46 @@ export async function handleSentMessage({
 }) {
   // Ambil metadata dari WAHA payload
   const metadata = body?.payload?.metadata || {};
+  const content = body?.payload?.body || body?.payload?.text || null;
+  const to = body?.payload?.to?.replace("@c.us", "") || body?.payload?.chatId?.replace("@c.us", "") || payloadFrom;
+  
+  console.log("[WAHA Handler] Sent message check:", {
+    metadata,
+    content,
+    to,
+    meId,
+    payloadFrom,
+  });
+  
   if (metadata.sender_type === "ai") {
+    console.log("[WAHA Handler] AI reply detected, not saved as manual");
     return { status: "ok", message: "AI reply detected, not saved as manual" };
+  }
+  
+  // Cek apakah pesan ini sudah disimpan sebagai AI di database
+  try {
+    const { data: existingMessage } = await client
+      .from("messages")
+      .select("id, agent_type, content")
+      .eq("from", meId)
+      .eq("to", to)
+      .eq("content", content)
+      .eq("agent_type", "ai")
+      .gte("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString()) // 5 menit terakhir
+      .maybeSingle();
+    
+    if (existingMessage) {
+      console.log(
+        "[WAHA Handler] Message already saved as AI (skip manual save)",
+        { messageId: existingMessage.id, content: existingMessage.content }
+      );
+      return {
+        status: "ok",
+        message: "Message already saved as AI (skip manual save)",
+      };
+    }
+  } catch (err) {
+    console.log("[WAHA Handler] Error checking existing AI message:", err);
   }
   // Simpan pesan outgoing ke database sebagai manual reply
   // Ambil data yang diperlukan

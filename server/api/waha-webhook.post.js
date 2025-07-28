@@ -322,6 +322,7 @@ export default defineEventHandler(async (event) => {
     });
     logAICache();
 
+    // Cek apakah ini adalah pesan AI yang baru saja dikirim
     if (metaSenderType === "ai" || isRecentAIMsg(outgoingTo, outgoingContent)) {
       console.log(
         "[WAHA Webhook] Outgoing message detected as AI (skip manual save)",
@@ -336,6 +337,34 @@ export default defineEventHandler(async (event) => {
         message: "AI outgoing message detected (not saved as manual)",
       };
     }
+
+    // Cek apakah pesan ini sudah disimpan sebagai AI di database
+    // Jika ya, skip penyimpanan manual
+    try {
+      const { data: existingMessage } = await client
+        .from("messages")
+        .select("id, agent_type, content")
+        .eq("from", meId)
+        .eq("to", outgoingTo)
+        .eq("content", outgoingContent)
+        .eq("agent_type", "ai")
+        .gte("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString()) // 5 menit terakhir
+        .maybeSingle();
+
+      if (existingMessage) {
+        console.log(
+          "[WAHA Webhook] Outgoing message already saved as AI (skip manual save)",
+          { messageId: existingMessage.id, content: existingMessage.content }
+        );
+        return {
+          status: "ok",
+          message: "Message already saved as AI (skip manual save)",
+        };
+      }
+    } catch (err) {
+      console.log("[WAHA Webhook] Error checking existing AI message:", err);
+    }
+
     // Jika ini outgoing AI (dari proses auto-reply), cache pesan
     if (metaSenderType === "ai") {
       cacheAIMsg(outgoingTo, outgoingContent);
