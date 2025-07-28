@@ -137,41 +137,44 @@ export async function handleSentMessage({
 }) {
   // Ambil metadata dari WAHA payload
   const metadata = body?.payload?.metadata || {};
-  const content = body?.payload?.body || body?.payload?.text || null;
-  const to = body?.payload?.to?.replace("@c.us", "") || body?.payload?.chatId?.replace("@c.us", "") || payloadFrom;
-  
+  const messageContent = body?.payload?.body || body?.payload?.text || null;
+  const messageTo =
+    body?.payload?.to?.replace("@c.us", "") ||
+    body?.payload?.chatId?.replace("@c.us", "") ||
+    payloadFrom;
+
   console.log("[WAHA Handler] Sent message check:", {
     metadata,
-    content,
-    to,
+    messageContent,
+    messageTo,
     meId,
     payloadFrom,
   });
-  
+
   if (metadata.sender_type === "ai") {
     console.log("[WAHA Handler] AI reply detected, not saved as manual");
     return { status: "ok", message: "AI reply detected, not saved as manual" };
   }
-  
+
   // Cek apakah pesan ini sudah disimpan sebagai AI di database
   try {
     const { data: existingMessage } = await client
       .from("messages")
       .select("id, agent_type, content, created_at")
       .eq("from", meId)
-      .eq("to", to)
-      .eq("content", content)
+      .eq("to", messageTo)
+      .eq("content", messageContent)
       .eq("agent_type", "ai")
       .gte("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString()) // 5 menit terakhir
       .maybeSingle();
-    
+
     if (existingMessage) {
       console.log(
         "[WAHA Handler] Message already saved as AI (skip manual save)",
-        { 
-          messageId: existingMessage.id, 
+        {
+          messageId: existingMessage.id,
           content: existingMessage.content,
-          created_at: existingMessage.created_at
+          created_at: existingMessage.created_at,
         }
       );
       return {
@@ -179,31 +182,37 @@ export async function handleSentMessage({
         message: "Message already saved as AI (skip manual save)",
       };
     }
-    
+
     // Cek juga apakah ada pesan dengan content yang sama dalam 1 menit terakhir
     const { data: recentMessages } = await client
       .from("messages")
       .select("id, agent_type, content, created_at")
-      .eq("content", content)
+      .eq("content", messageContent)
       .gte("created_at", new Date(Date.now() - 1 * 60 * 1000).toISOString()) // 1 menit terakhir
       .order("created_at", { ascending: false })
       .limit(5);
-    
+
     if (recentMessages && recentMessages.length > 0) {
       console.log(
         "[WAHA Handler] Found recent messages with same content:",
-        recentMessages.map(m => ({ id: m.id, agent_type: m.agent_type, content: m.content, created_at: m.created_at }))
+        recentMessages.map((m) => ({
+          id: m.id,
+          agent_type: m.agent_type,
+          content: m.content,
+          created_at: m.created_at,
+        }))
       );
-      
+
       // Jika ada pesan AI dengan content yang sama, skip penyimpanan manual
-      const hasAIMessage = recentMessages.some(m => m.agent_type === "ai");
+      const hasAIMessage = recentMessages.some((m) => m.agent_type === "ai");
       if (hasAIMessage) {
         console.log(
           "[WAHA Handler] Recent AI message with same content found (skip manual save)"
         );
         return {
           status: "ok",
-          message: "Recent AI message with same content found (skip manual save)",
+          message:
+            "Recent AI message with same content found (skip manual save)",
         };
       }
     }
@@ -213,9 +222,7 @@ export async function handleSentMessage({
   // Simpan pesan outgoing ke database sebagai manual reply
   // Ambil data yang diperlukan
   const chanelId = body?.metadata?.chanel_id || body?.chanel_id || null;
-  const content = body?.payload?.body || null;
   const from = body?.payload?.from?.replace("@c.us", "") || null;
-  const to = body?.payload?.to?.replace("@c.us", "") || null;
 
   // Cari agent_id manusia berdasarkan phone = meId
   const { data: agentData, error: agentErr } = await client
@@ -265,7 +272,7 @@ export async function handleSentMessage({
         from: meId,
         to: payloadFrom,
         media_url: null,
-        content,
+        content: messageContent,
       })
       .select()
       .single();
