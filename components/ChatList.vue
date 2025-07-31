@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col h-full">
+  <div class="flex flex-col h-[100vh]">
     <!-- Sub Tab Navigation -->
     <div class="p-4 border-b border-gray-200">
       <div class="flex space-x-1">
@@ -20,7 +20,7 @@
     </div>
 
     <!-- Content Area -->
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 min-h-0 overflow-y-auto">
       <!-- Broadcast List -->
       <div v-if="activeSubTab === 'broadcast'" class="p-4">
         <div class="flex items-center justify-between mb-4">
@@ -72,10 +72,10 @@
             v-for="broadcast in broadcastList"
             :key="broadcast.id"
             @click="$emit('select-broadcast', broadcast)"
-            class="p-3 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+            class="p-3 border border-gray-200 rounded-lg cursor-pointer transition-all duration-200 hover:bg-blue-50 hover:border-blue-300 hover:shadow-md hover:scale-[1.02] mb-3"
             :class="
               selectedBroadcast?.id === broadcast.id
-                ? 'border-blue-300 bg-blue-50'
+                ? 'bg-blue-50 border-blue-200 shadow-md scale-[1.02]'
                 : ''
             "
           >
@@ -159,13 +159,13 @@
 
         <div v-else class="space-y-2">
           <div
-            v-for="autoMessage in autoMessageList"
+            v-for="autoMessage in autoMessages"
             :key="autoMessage.id"
             @click="$emit('select-auto-message', autoMessage)"
-            class="p-3 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+            class="p-3 border border-gray-200 rounded-lg cursor-pointer transition-all duration-200 hover:bg-blue-50 hover:border-blue-300 hover:shadow-md hover:scale-[1.02] mb-3"
             :class="
               selectedAutoMessage?.id === autoMessage.id
-                ? 'border-green-300 bg-green-50'
+                ? 'bg-blue-50 border-blue-200 shadow-md scale-[1.02]'
                 : ''
             "
           >

@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full p-2 md:p-8">
+  <div class="w-full p-2 md:p-8 h-full flex flex-col">
     <div
       class="flex items-center mb-4 bg-white p-3 rounded-lg"
       v-if="selectedAgent"
@@ -40,7 +40,7 @@
 
     <div
       v-if="showForm"
-      class="bg-white rounded-lg shadow-xl w-full max-w-full overflow-y-auto p-4 mb-4"
+      class="bg-white rounded-lg shadow-xl w-full max-w-full overflow-y-auto p-4 mb-4 flex-1"
     >
       <form @submit.prevent="onSave">
         <!-- Data Profil Agen Section -->
@@ -302,7 +302,7 @@
 
     <div
       v-if="!showForm && !selectedAgent"
-      class="p-4 md:p-8 text-gray-400 text-center"
+      class="p-4 md:p-8 text-gray-400 text-center flex-1 flex items-center justify-center"
     >
       Pilih agent manusia untuk melihat detail atau klik "Buat Agent Manusia"
       untuk tambah baru.

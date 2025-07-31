@@ -1,27 +1,29 @@
 <template>
-  <div class="p-8">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="mt-0 text-xl font-bold">Chanel</h2>
-      <button
-        @click="showForm = !showForm"
-        class="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors flex items-center justify-center"
-        title="Buat Chanel"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+  <div class="flex flex-col h-[100vh]">
+    <!-- Header -->
+    <div class="p-4 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-medium text-gray-800">Chanel</h3>
+        <button
+          @click="showForm = !showForm"
+          class="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700"
+          title="Tambah Chanel"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-      </button>
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+        </button>
+      </div>
     </div>
     <ChanelModal :show="showForm" @close="showForm = false">
       <form @submit.prevent="addchanel">
@@ -41,29 +43,31 @@
         </button>
       </form>
     </ChanelModal>
-    <div class="mt-6">
-      <div
-        class="flex items-center mb-4 relative cursor-pointer"
-        v-for="(chanel, idx) in chanels"
-        :key="idx"
-        @click="selectchanel(chanel)"
-      >
-        <img
-          :src="chanel.icon_url || '/default-chanel-icon.png'"
-          class="w-10 h-10"
-        />
-        <div class="ml-4 flex-1">
-          <div class="font-medium">{{ chanel.name || "Unnamed chanel" }}</div>
-          <div class="text-gray-500">
-            {{ chanel.whatsapp_number || "Belum terhubung" }}
+    <div class="flex-1 min-h-0 overflow-y-auto">
+      <div class="p-4 space-y-3">
+        <div
+          class="flex items-center p-3 relative cursor-pointer rounded-lg transition-all duration-200 border border-transparent hover:bg-blue-50 hover:border-blue-300 hover:shadow-md hover:scale-[1.02]"
+          v-for="(chanel, idx) in chanels"
+          :key="idx"
+          @click="selectchanel(chanel)"
+        >
+          <img
+            :src="chanel.icon_url || '/default-chanel-icon.png'"
+            class="w-10 h-10"
+          />
+          <div class="ml-4 flex-1">
+            <div class="font-medium">{{ chanel.name || "Unnamed chanel" }}</div>
+            <div class="text-gray-500">
+              {{ chanel.whatsapp_number || "Belum terhubung" }}
+            </div>
           </div>
         </div>
-      </div>
-      <div
-        v-if="!chanels || chanels.length === 0"
-        class="text-gray-500 text-center py-8"
-      >
-        No chanels found. Create your first chanel above.
+        <div
+          v-if="!chanels || chanels.length === 0"
+          class="text-gray-500 text-center py-8"
+        >
+          No chanels found. Create your first chanel above.
+        </div>
       </div>
     </div>
   </div>

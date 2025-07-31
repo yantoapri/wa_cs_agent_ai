@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="flex flex-col h-[100vh]">
     <!-- Tab Switcher Agent AI / Agent Manusia -->
     <div
       class="grid grid-cols-2 gap-0 mb-4 overflow-hidden border border-gray-200"
@@ -37,12 +37,15 @@
         Agent Manusia
       </button>
     </div>
-    <div v-if="loading" class="text-center py-8">
+    <div
+      v-if="loading"
+      class="text-center py-8 flex-1 flex items-center justify-center"
+    >
       <div class="text-gray-500">Loading inbox...</div>
     </div>
     <div
       v-else-if="currentAgentConversations.length === 0"
-      class="text-center py-8"
+      class="text-center py-8 flex-1 flex items-center justify-center"
     >
       <div class="text-gray-500">
         {{
@@ -52,7 +55,7 @@
         }}
       </div>
     </div>
-    <div v-else>
+    <div v-else class="flex-1 min-h-0 overflow-y-auto">
       <div
         v-for="(agentData, index) in currentAgentConversations"
         :key="
@@ -67,7 +70,7 @@
         class="cursor-pointer"
       >
         <div
-          class="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg border-b border-gray-100"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg border-b border-gray-100 transition-all duration-200 border border-transparent hover:bg-blue-50 hover:border-blue-300 hover:shadow-md hover:scale-[1.02]"
           @click="handleAgentHeaderClick(agentData)"
         >
           <img

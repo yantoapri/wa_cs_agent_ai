@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col md:flex-row h-[calc(100vh-40px)]">
+  <div class="flex flex-col md:flex-row h-full">
     <!-- Mobile: Show list full screen when no agent selected -->
     <div
       v-if="!selectedAI || !selectedAI.id"
@@ -35,7 +35,7 @@
     <!-- Main Content - Hidden on mobile when no agent selected -->
     <div
       v-if="selectedAI && selectedAI.id"
-      class="flex-1 flex flex-col bg-gray-100 px-2 md:px-8"
+      class="flex-1 flex flex-col bg-gray-100 px-2 md:px-8 h-full"
     >
       <template v-if="selectedAI && selectedAI.id">
         <div
@@ -276,7 +276,7 @@
             {{ t.charAt(0).toUpperCase() + t.slice(1) }}
           </button>
         </div>
-        <div class="flex-1 overflow-y-auto px-4 md:px-8 py-4">
+        <div class="flex-1 overflow-y-auto px-4 md:px-8 py-4 h-full">
           <div v-if="tab === 'gaya'">
             <div class="agentai-subtabs overflow-x-auto">
               <div class="flex gap-2 md:gap-6 min-w-max">
@@ -310,12 +310,12 @@
                 </button>
               </div>
             </div>
-            <div v-if="subtab === 'gaya'">
+            <div v-if="subtab === 'gaya'" class="h-full flex flex-col">
               <h3 class="font-semibold text-lg mb-2">Gaya bicara Agent</h3>
               <div class="mb-2 text-gray-500">Maximum 28/15000 karakter</div>
               <textarea
                 v-model="selectedAI.gayaBicara"
-                class="w-full h-32 md:h-30 p-3 text-base border border-gray-300 rounded-lg resize-y"
+                class="w-full flex-1 min-h-0 p-3 text-base border border-gray-300 rounded-lg resize-none"
                 placeholder="Masukkan gaya bicara agent..."
               ></textarea>
               <div class="mt-2">
@@ -324,7 +324,7 @@
                 >
               </div>
             </div>
-            <div v-else-if="subtab === 'handover'">
+            <div v-else-if="subtab === 'handover'" class="h-full flex flex-col">
               <h3 class="font-semibold text-lg mb-2">Buat Kondisi Handover</h3>
               <div class="mb-2">
                 Agen AI akan berhenti saat pelanggan mengirim pesan dengan kata
@@ -399,7 +399,7 @@
                 </div>
               </div>
             </div>
-            <div v-else-if="subtab === 'followup'">
+            <div v-else-if="subtab === 'followup'" class="h-full flex flex-col">
               <h3 class="font-semibold text-lg mb-2">Buat Kondisi Followup</h3>
               <div class="mb-2">
                 Saat pelanggan mengirim pesan dengan kata kunci
@@ -531,7 +531,7 @@
                 </div>
               </div>
             </div>
-            <div v-else-if="subtab === 'kirim'">
+            <div v-else-if="subtab === 'kirim'" class="h-full flex flex-col">
               <h3 class="font-semibold text-lg mb-2">
                 Buat Kondisi Kirim Gambar
               </h3>
@@ -735,7 +735,7 @@
               </div>
             </div>
           </div>
-          <div v-else-if="tab === 'pengetahuan'">
+          <div v-else-if="tab === 'pengetahuan'" class="h-full flex flex-col">
             <div class="agentai-subtabs overflow-x-auto">
               <div class="flex gap-2 md:gap-6 min-w-max">
                 <button
@@ -763,7 +763,10 @@
             </div>
 
             <!-- Pengetahuan Umum Subtab -->
-            <div v-if="pengetahuanSubtab === 'umum'">
+            <div
+              v-if="pengetahuanSubtab === 'umum'"
+              class="flex-1 flex flex-col"
+            >
               <div class="font-semibold mb-0.5">Pengetahuan Agent</div>
               <div class="text-gray-500 mb-3">
                 Tambahkan informasi Produk, Tutorial Penggunaan, SOP, FAQ, dan
@@ -771,7 +774,7 @@
               </div>
               <textarea
                 v-model="selectedAI.pengetahuan"
-                class="w-full min-h-[200px] md:min-h-[180px] p-3 text-base border border-gray-300 rounded-lg resize-y"
+                class="w-full flex-1 min-h-0 p-3 text-base border border-gray-300 rounded-lg resize-none"
                 placeholder="Add Agent's knowledge here"
               ></textarea>
             </div>
@@ -1035,7 +1038,7 @@
             </div>
           </div>
 
-          <div v-else-if="tab === 'edit'">
+          <div v-else-if="tab === 'edit'" class="h-full flex flex-col">
             <h3 class="font-semibold text-lg mb-4">Edit Agen</h3>
             <form @submit.prevent style="max-width: 900px">
               <div style="margin-bottom: 18px">

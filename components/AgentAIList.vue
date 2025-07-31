@@ -1,28 +1,31 @@
 <template>
-  <div :class="sidebar ? 'p-8' : 'p-8'" class="h-full">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="mt-0 text-xl font-bold">Agent AI</h2>
-      <button
-        @click="showForm = !showForm"
-        class="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors flex items-center justify-center"
-        :disabled="loading"
-        title="Buat Agent AI"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+  <div class="flex flex-col h-[100vh]">
+    <!-- Header -->
+    <div class="p-4 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-medium text-gray-800">Agent AI</h3>
+        <button
+          @click="showForm = !showForm"
+          class="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700"
+          :disabled="loading"
+          title="Buat Agent AI"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-      </button>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+        </button>
+      </div>
     </div>
     <ChanelModal :show="showForm" @close="showForm = false">
       <form @submit.prevent="addAI">
@@ -43,7 +46,7 @@
         </button>
       </form>
     </ChanelModal>
-    <div v-if="loading" class="flex justify-center my-4">
+    <div v-if="loading" class="flex justify-center my-4 px-6">
       <svg
         class="animate-spin h-8 w-8 text-blue-600"
         xmlns="http://www.w3.org/2000/svg"
@@ -65,31 +68,32 @@
         ></path>
       </svg>
     </div>
-    <div class="mt-6 flex-1 overflow-y-auto">
-      <div
-        v-for="(ai, idx) in props.aiList"
-        :key="ai.id || idx"
-        @click="emit('select', ai)"
-        :class="[
-          'flex items-center mb-4 py-3 relative rounded-lg transition-colors',
-          'cursor-pointer',
-          props.selected && ai.id === props.selected.id
-            ? 'bg-blue-100 border border-blue-400'
-            : 'hover:bg-gray-100',
-        ]"
-      >
-        <img
-          :src="
-            ai.avatar_url ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(
-              ai.name
-            )}&background=random`
-          "
-          class="w-12 h-12 rounded-full object-cover mr-4"
-          :alt="ai.name"
-        />
-        <div class="ml-0 flex-1">
-          <div class="font-medium">{{ ai.name }}</div>
+    <div class="flex-1 min-h-0 overflow-y-auto">
+      <div class="p-4 space-y-3">
+        <div
+          v-for="(ai, idx) in props.aiList"
+          :key="ai.id || idx"
+          @click="emit('select', ai)"
+          :class="[
+            'flex items-center p-3 relative rounded-lg transition-all duration-200 cursor-pointer border border-transparent',
+            props.selected && ai.id === props.selected.id
+              ? 'bg-blue-50 border-blue-200 shadow-md scale-[1.02]'
+              : 'hover:bg-blue-50 hover:border-blue-300 hover:shadow-md hover:scale-[1.02]',
+          ]"
+        >
+          <img
+            :src="
+              ai.avatar_url ||
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                ai.name
+              )}&background=random`
+            "
+            class="w-12 h-12 rounded-full object-cover mr-4"
+            :alt="ai.name"
+          />
+          <div class="ml-0 flex-1">
+            <div class="font-medium">{{ ai.name }}</div>
+          </div>
         </div>
       </div>
     </div>

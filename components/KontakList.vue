@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="flex flex-col h-[100vh]">
     <div class="p-8">
       <div class="flex justify-between items-center mb-6">
         <h2 class="mt-0 text-xl font-bold">Kontak</h2>
@@ -72,13 +72,22 @@
         </div>
       </div>
 
-      <div v-if="loading" class="mt-6 text-center">
+      <div
+        v-if="loading"
+        class="mt-6 text-center flex-1 flex items-center justify-center"
+      >
         <div class="text-gray-500">Loading kontak...</div>
       </div>
-      <div v-else-if="error" class="mt-6 text-center">
+      <div
+        v-else-if="error"
+        class="mt-6 text-center flex-1 flex items-center justify-center"
+      >
         <div class="text-red-500">{{ error }}</div>
       </div>
-      <div v-else-if="contacts.length === 0" class="mt-6 text-center">
+      <div
+        v-else-if="contacts.length === 0"
+        class="mt-6 text-center flex-1 flex items-center justify-center"
+      >
         <div class="text-gray-500">Belum ada kontak</div>
         <button
           @click="showAddModal = true"
@@ -87,9 +96,9 @@
           Tambah kontak pertama
         </button>
       </div>
-      <div v-else class="mt-6">
+      <div v-else class="mt-6 flex-1 min-h-0 overflow-y-auto">
         <div
-          class="flex items-center mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+          class="flex items-center mb-4 cursor-pointer p-3 rounded-lg transition-all duration-200 border border-transparent hover:bg-blue-50 hover:border-blue-300 hover:shadow-md hover:scale-[1.02]"
           v-for="kontak in contacts"
           :key="kontak.id"
           @click="selectContact(kontak)"
@@ -104,303 +113,294 @@
           />
           <div class="ml-4 flex-1">
             <div class="font-medium">{{ kontak.name }}</div>
-            <div class="text-gray-500">{{ kontak.phone_number }}</div>
-            <div v-if="kontak.email" class="text-gray-400 text-sm">
+            <div class="text-gray-500 text-xs">{{ kontak.phone_number }}</div>
+            <div v-if="kontak.email" class="text-gray-400 text-xs">
               {{ kontak.email }}
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            <div class="text-xs text-gray-400">
-              {{ formatDate(kontak.created_at) }}
-            </div>
-            <div class="flex gap-1">
-              <button
-                @click.stop="editContact(kontak)"
-                class="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                title="Edit kontak"
+          <div class="flex gap-1">
+            <button
+              @click.stop="editContact(kontak)"
+              class="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+              title="Edit kontak"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg
-                  class="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  ></path>
-                </svg>
-              </button>
-              <button
-                @click.stop="deleteContactModal(kontak)"
-                class="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                title="Hapus kontak"
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                ></path>
+              </svg>
+            </button>
+            <button
+              @click.stop="deleteContactModal(kontak)"
+              class="p-1 text-gray-400 hover:text-red-600 transition-colors"
+              title="Hapus kontak"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg
-                  class="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  ></path>
-                </svg>
-              </button>
-            </div>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                ></path>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Add/Edit Contact Modal -->
-    <ChanelModal :show="showAddModal || showEditModal" @close="closeModal">
-      <div class="p-6">
-        <h3 class="text-lg font-semibold mb-4">
-          {{ showEditModal ? "Edit Kontak" : "Tambah Kontak Baru" }}
-        </h3>
+    <div
+      v-if="showAddModal || showEditModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-4">
+            {{ showEditModal ? "Edit Kontak" : "Tambah Kontak Baru" }}
+          </h3>
 
-        <form
-          @submit.prevent="
-            showEditModal ? updateContactData() : addContactData()
-          "
-        >
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Nama *
-              </label>
-              <input
-                v-model="contactForm.name"
-                type="text"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Masukkan nama kontak"
-              />
+          <form
+            @submit.prevent="
+              showEditModal ? updateContactData() : addContactData()
+            "
+          >
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Nama *
+                </label>
+                <input
+                  v-model="contactForm.name"
+                  type="text"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Masukkan nama kontak"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Nomor Telepon *
+                </label>
+                <input
+                  v-model="contactForm.phone_number"
+                  type="tel"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="+62 812-3456-7890"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  v-model="contactForm.email"
+                  type="email"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="kontak@email.com"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Avatar URL
+                </label>
+                <input
+                  v-model="contactForm.avatar_url"
+                  type="url"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="https://example.com/avatar.jpg"
+                />
+              </div>
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Nomor Telepon *
-              </label>
-              <input
-                v-model="contactForm.phone_number"
-                type="tel"
-                required
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="+62 812-3456-7890"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                v-model="contactForm.email"
-                type="email"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="kontak@email.com"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Avatar URL
-              </label>
-              <input
-                v-model="contactForm.avatar_url"
-                type="url"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/avatar.jpg"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                chanel
-              </label>
-              <select
-                v-model="contactForm.chanel_id"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            <div class="flex gap-3 mt-6">
+              <button
+                type="submit"
+                :disabled="saving"
+                class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                <option value="">Pilih chanel</option>
-                <option
-                  v-for="chanel in chanels"
-                  :key="chanel.id"
-                  :value="chanel.id"
-                >
-                  {{ chanel.name }}
-                </option>
-              </select>
+                {{
+                  saving ? "Menyimpan..." : showEditModal ? "Update" : "Simpan"
+                }}
+              </button>
+              <button
+                type="button"
+                @click="closeModal"
+                :disabled="saving"
+                class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
+              >
+                Batal
+              </button>
             </div>
-          </div>
+          </form>
+        </div>
+      </div>
+    </div>
 
-          <div class="flex gap-3 mt-6">
+    <!-- Delete Confirmation Modal -->
+    <div
+      v-if="showDeleteModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-4 text-red-600">Hapus Kontak</h3>
+          <p class="text-gray-600 mb-6">
+            Apakah Anda yakin ingin menghapus kontak
+            <strong>{{ contactToDelete?.name }}</strong
+            >? Tindakan ini tidak dapat dibatalkan.
+          </p>
+
+          <div class="flex gap-3">
             <button
-              type="submit"
-              :disabled="saving"
-              class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              @click="confirmDelete"
+              :disabled="deleting"
+              class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              {{
-                saving ? "Menyimpan..." : showEditModal ? "Update" : "Simpan"
-              }}
+              {{ deleting ? "Menghapus..." : "Hapus" }}
             </button>
             <button
-              type="button"
-              @click="closeModal"
-              :disabled="saving"
+              @click="showDeleteModal = false"
+              :disabled="deleting"
               class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
             >
               Batal
             </button>
           </div>
-        </form>
-      </div>
-    </ChanelModal>
-
-    <!-- Delete Confirmation Modal -->
-    <ChanelModal :show="showDeleteModal" @close="showDeleteModal = false">
-      <div class="p-6">
-        <h3 class="text-lg font-semibold mb-4 text-red-600">Hapus Kontak</h3>
-        <p class="text-gray-600 mb-6">
-          Apakah Anda yakin ingin menghapus kontak
-          <strong>{{ contactToDelete?.name }}</strong
-          >? Tindakan ini tidak dapat dibatalkan.
-        </p>
-
-        <div class="flex gap-3">
-          <button
-            @click="confirmDelete"
-            :disabled="deleting"
-            class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          >
-            {{ deleting ? "Menghapus..." : "Hapus" }}
-          </button>
-          <button
-            @click="showDeleteModal = false"
-            :disabled="deleting"
-            class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
-          >
-            Batal
-          </button>
         </div>
       </div>
-    </ChanelModal>
+    </div>
 
     <!-- Import Contacts Modal -->
-    <ChanelModal :show="showImportModal" @close="closeImportModal">
-      <div class="p-6 max-h-[80vh] overflow-y-auto">
-        <h3 class="text-lg font-semibold mb-4">Import Kontak</h3>
+    <div
+      v-if="showImportModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div
+        class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+      >
+        <div class="p-6">
+          <h3 class="text-lg font-semibold mb-4">Import Kontak</h3>
 
-        <div class="mb-4">
-          <p class="text-sm text-gray-600 mb-3">
-            Upload file vCard (.vcf) atau CSV (.csv) dari kontak HP Anda
-          </p>
-          <p class="text-sm text-gray-500">
-            <strong>File vCard:</strong> Berisi informasi kontak seperti nama,
-            nomor telepon, dan email
-          </p>
-          <p class="text-sm text-gray-500">
-            <strong>File CSV:</strong> Harus memiliki kolom: <code>nama</code>,
-            <code>phone_number</code>, <code>email</code> (opsional)
-          </p>
-          <div class="mt-2 p-3 bg-blue-50 rounded-lg">
-            <p class="text-xs text-blue-800 font-medium mb-1">
-              📋 Contoh format CSV:
+          <div class="mb-4">
+            <p class="text-sm text-gray-600 mb-3">
+              Upload file vCard (.vcf) atau CSV (.csv) dari kontak HP Anda
             </p>
-            <pre class="text-xs text-blue-700 bg-white p-2 rounded border">
+            <p class="text-sm text-gray-500">
+              <strong>File vCard:</strong> Berisi informasi kontak seperti nama,
+              nomor telepon, dan email
+            </p>
+            <p class="text-sm text-gray-500">
+              <strong>File CSV:</strong> Harus memiliki kolom:
+              <code>nama</code>, <code>phone_number</code>,
+              <code>email</code> (opsional)
+            </p>
+            <div class="mt-2 p-3 bg-blue-50 rounded-lg">
+              <p class="text-xs text-blue-800 font-medium mb-1">
+                📋 Contoh format CSV:
+              </p>
+              <pre class="text-xs text-blue-700 bg-white p-2 rounded border">
 nama,phone_number,email
 John Doe,+6281234567890,john@example.com
 Jane Smith,+6289876543210,jane@example.com</pre
-            >
-          </div>
-        </div>
-
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              File vCard (.vcf) atau CSV (.csv)
-            </label>
-            <input
-              ref="vcfFileInput"
-              type="file"
-              accept=".vcf,.csv"
-              @change="handleFileSelect"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div
-            v-if="importPreview.length > 0"
-            class="border rounded-lg p-4 bg-gray-50"
-          >
-            <h4 class="font-medium mb-2">
-              Preview ({{ importPreview.length }} kontak):
-            </h4>
-            <div class="max-h-60 overflow-y-auto space-y-2">
-              <div
-                v-for="(contact, index) in importPreview"
-                :key="index"
-                class="text-sm p-2 bg-white rounded border"
               >
-                <div class="font-medium">{{ contact.name }}</div>
-                <div class="text-gray-600">{{ contact.phone_number }}</div>
-                <div v-if="contact.email" class="text-gray-500 text-xs">
-                  {{ contact.email }}
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                File vCard (.vcf) atau CSV (.csv)
+              </label>
+              <input
+                ref="vcfFileInput"
+                type="file"
+                accept=".vcf,.csv"
+                @change="handleFileSelect"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div
+              v-if="importPreview.length > 0"
+              class="border rounded-lg p-4 bg-gray-50"
+            >
+              <h4 class="font-medium mb-2">
+                Preview ({{ importPreview.length }} kontak):
+              </h4>
+              <div class="max-h-60 overflow-y-auto space-y-2">
+                <div
+                  v-for="(contact, index) in importPreview"
+                  :key="index"
+                  class="text-sm p-2 bg-white rounded border"
+                >
+                  <div class="font-medium">{{ contact.name }}</div>
+                  <div class="text-gray-600">{{ contact.phone_number }}</div>
+                  <div v-if="contact.email" class="text-gray-500 text-xs">
+                    {{ contact.email }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-if="importErrors.length > 0"
+              class="border border-red-200 rounded-lg p-4 bg-red-50"
+            >
+              <h4 class="font-medium text-red-700 mb-2">
+                Errors ({{ importErrors.length }}):
+              </h4>
+              <div
+                class="max-h-60 overflow-y-auto text-sm text-red-600 space-y-1"
+              >
+                <div v-for="(error, index) in importErrors" :key="index">
+                  {{ error }}
                 </div>
               </div>
             </div>
           </div>
 
-          <div
-            v-if="importErrors.length > 0"
-            class="border border-red-200 rounded-lg p-4 bg-red-50"
-          >
-            <h4 class="font-medium text-red-700 mb-2">
-              Errors ({{ importErrors.length }}):
-            </h4>
-            <div
-              class="max-h-60 overflow-y-auto text-sm text-red-600 space-y-1"
+          <div class="flex gap-3 mt-6 sticky bottom-0 bg-white pt-4 border-t">
+            <button
+              @click="importContacts"
+              :disabled="importing || importPreview.length === 0"
+              class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              <div v-for="(error, index) in importErrors" :key="index">
-                {{ error }}
-              </div>
-            </div>
+              {{ importing ? "Importing..." : "Import Kontak" }}
+            </button>
+            <button
+              @click="closeImportModal"
+              :disabled="importing"
+              class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
+            >
+              Batal
+            </button>
           </div>
         </div>
-
-        <div class="flex gap-3 mt-6 sticky bottom-0 bg-white pt-4 border-t">
-          <button
-            @click="importContacts"
-            :disabled="importing || importPreview.length === 0"
-            class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-          >
-            {{ importing ? "Importing..." : "Import Kontak" }}
-          </button>
-          <button
-            @click="closeImportModal"
-            :disabled="importing"
-            class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
-          >
-            Batal
-          </button>
-        </div>
       </div>
-    </ChanelModal>
+    </div>
   </div>
 </template>
 <script setup>
 import { ref, onMounted, reactive } from "vue";
 import { useContactStore } from "~/composables/useContacts";
-import { useChanelstore } from "~/composables/useChanels";
-import { useToast } from "~/composables/useToast";
-import ChanelModal from "~/components/ChanelModal.vue";
 
 const {
   contacts,
@@ -411,8 +411,6 @@ const {
   updateContact,
   deleteContact,
 } = useContactStore();
-const { chanels, fetchchanels } = useChanelstore();
-const { showToast } = useToast();
 
 const emit = defineEmits(["select-contact"]);
 
@@ -437,21 +435,10 @@ const contactForm = reactive({
   phone_number: "",
   email: "",
   avatar_url: "",
-  chanel_id: "",
 });
 
 const selectContact = (contact) => {
   emit("select-contact", contact);
-};
-
-const formatDate = (dateString) => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 };
 
 const editContact = (contact) => {
@@ -460,7 +447,6 @@ const editContact = (contact) => {
   contactForm.phone_number = contact.phone_number || "";
   contactForm.email = contact.email || "";
   contactForm.avatar_url = contact.avatar_url || "";
-  contactForm.chanel_id = contact.chanel_id || "";
 
   // Store contact ID for update
   contactForm.id = contact.id;
@@ -492,7 +478,7 @@ const resetForm = () => {
   contactForm.phone_number = "";
   contactForm.email = "";
   contactForm.avatar_url = "";
-  contactForm.chanel_id = "";
+
   delete contactForm.id;
 };
 
@@ -504,24 +490,23 @@ const addContactData = async () => {
       phone_number: contactForm.phone_number,
       email: contactForm.email || null,
       avatar_url: contactForm.avatar_url || null,
-      chanel_id: contactForm.chanel_id || null,
     });
     await fetchContacts(); // Refresh kontak setelah tambah
     console.log("[KontakList] Contacts after add:", contacts.value);
     closeModal();
     Swal.fire({
-      icon: 'success',
-      title: 'Berhasil!',
-      text: 'Kontak berhasil ditambahkan',
-      confirmButtonText: 'OK'
+      icon: "success",
+      title: "Berhasil!",
+      text: "Kontak berhasil ditambahkan",
+      confirmButtonText: "OK",
     });
   } catch (error) {
     console.error("Error adding contact:", error);
     Swal.fire({
-      icon: 'error',
-      title: 'Gagal Menambahkan Kontak',
+      icon: "error",
+      title: "Gagal Menambahkan Kontak",
       text: `Gagal menambahkan kontak: ${error.message}`,
-      confirmButtonText: 'OK'
+      confirmButtonText: "OK",
     });
   } finally {
     saving.value = false;
@@ -536,24 +521,23 @@ const updateContactData = async () => {
       phone_number: contactForm.phone_number,
       email: contactForm.email || null,
       avatar_url: contactForm.avatar_url || null,
-      chanel_id: contactForm.chanel_id || null,
     });
     await fetchContacts(); // Refresh kontak setelah update
     console.log("[KontakList] Contacts after update:", contacts.value);
     closeModal();
     Swal.fire({
-      icon: 'success',
-      title: 'Berhasil!',
-      text: 'Kontak berhasil diupdate',
-      confirmButtonText: 'OK'
+      icon: "success",
+      title: "Berhasil!",
+      text: "Kontak berhasil diupdate",
+      confirmButtonText: "OK",
     });
   } catch (error) {
     console.error("Error updating contact:", error);
     Swal.fire({
-      icon: 'error',
-      title: 'Gagal Mengupdate Kontak',
+      icon: "error",
+      title: "Gagal Mengupdate Kontak",
       text: `Gagal mengupdate kontak: ${error.message}`,
-      confirmButtonText: 'OK'
+      confirmButtonText: "OK",
     });
   } finally {
     saving.value = false;
@@ -569,18 +553,18 @@ const confirmDelete = async () => {
     showDeleteModal.value = false;
     contactToDelete.value = null;
     Swal.fire({
-      icon: 'success',
-      title: 'Berhasil!',
-      text: 'Kontak berhasil dihapus',
-      confirmButtonText: 'OK'
+      icon: "success",
+      title: "Berhasil!",
+      text: "Kontak berhasil dihapus",
+      confirmButtonText: "OK",
     });
   } catch (error) {
     console.error("Error deleting contact:", error);
     Swal.fire({
-      icon: 'error',
-      title: 'Gagal Menghapus Kontak',
+      icon: "error",
+      title: "Gagal Menghapus Kontak",
       text: `Gagal menghapus kontak: ${error.message}`,
-      confirmButtonText: 'OK'
+      confirmButtonText: "OK",
     });
   } finally {
     deleting.value = false;
@@ -864,7 +848,6 @@ const importContacts = async () => {
         name: contact.name,
         phone_number: contact.phone_number,
         email: contact.email,
-        chanel_id: null,
         avatar_url: null,
       })
     );
@@ -873,10 +856,10 @@ const importContacts = async () => {
     await fetchContacts();
     closeImportModal();
     Swal.fire({
-      icon: 'success',
-      title: 'Berhasil!',
+      icon: "success",
+      title: "Berhasil!",
       text: `Berhasil mengimport ${importPreview.value.length} kontak`,
-      confirmButtonText: 'OK'
+      confirmButtonText: "OK",
     });
     console.log(
       "[KontakList] Import successful:",
@@ -887,10 +870,10 @@ const importContacts = async () => {
     console.error("Error importing contacts:", error);
     importErrors.value.push(`Error importing: ${error.message}`);
     Swal.fire({
-      icon: 'error',
-      title: 'Gagal Mengimport Kontak',
+      icon: "error",
+      title: "Gagal Mengimport Kontak",
       text: `Gagal mengimport kontak: ${error.message}`,
-      confirmButtonText: 'OK'
+      confirmButtonText: "OK",
     });
   } finally {
     importing.value = false;
@@ -900,10 +883,10 @@ const importContacts = async () => {
 const exportContacts = () => {
   if (contacts.value.length === 0) {
     Swal.fire({
-      icon: 'error',
-      title: 'Tidak ada Kontak untuk di-export',
-      text: 'Tidak ada kontak untuk di-export',
-      confirmButtonText: 'OK'
+      icon: "error",
+      title: "Tidak ada Kontak untuk di-export",
+      text: "Tidak ada kontak untuk di-export",
+      confirmButtonText: "OK",
     });
     return;
   }
@@ -939,24 +922,24 @@ const exportContacts = () => {
     document.body.removeChild(link);
 
     Swal.fire({
-      icon: 'success',
-      title: 'Berhasil!',
+      icon: "success",
+      title: "Berhasil!",
       text: `Berhasil mengexport ${contacts.value.length} kontak`,
-      confirmButtonText: 'OK'
+      confirmButtonText: "OK",
     });
   } catch (error) {
     console.error("Error exporting contacts:", error);
     Swal.fire({
-      icon: 'error',
-      title: 'Gagal Mengexport Kontak',
+      icon: "error",
+      title: "Gagal Mengexport Kontak",
       text: `Gagal mengexport kontak: ${error.message}`,
-      confirmButtonText: 'OK'
+      confirmButtonText: "OK",
     });
   }
 };
 
 onMounted(async () => {
-  await Promise.all([fetchContacts(), fetchchanels()]);
+  await fetchContacts();
   console.log("[KontakList] Contacts after initial fetch:", contacts.value);
 });
 </script>

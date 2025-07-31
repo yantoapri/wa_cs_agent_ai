@@ -97,7 +97,7 @@ export interface BroadcastMessage {
   message: string;
   contact_ids: string[];
   contact_count: number;
-  status: 'draft' | 'pending' | 'sent' | 'failed';
+  status: "draft" | "pending" | "sent" | "failed";
   sent_at?: string;
   created_by?: string;
   created_at: string;
@@ -111,8 +111,15 @@ export interface AutoMessage {
   contact_ids: string[];
   contact_count: number;
   scheduled_at: string;
+  chanel_id?: string;
   schedules?: Array<{ date: string; time: string }>;
-  status: 'scheduled' | 'sent' | 'failed' | 'cancelled';
+  interval_config?: {
+    startDate: string;
+    time: string;
+    weekDays: number[];
+    endDate?: string;
+  };
+  status: "scheduled" | "sent" | "failed" | "cancelled";
   sent_at?: string;
   created_by?: string;
   created_at: string;
