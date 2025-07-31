@@ -522,21 +522,32 @@ const handleSubmit = async () => {
 
   // Additional validation for channel
   if (!selectedChannel.value) {
-    alert("Silakan pilih channel untuk mengirim pesan");
+    Swal.fire({
+      icon: "warning",
+      title: "Peringatan",
+      text: "Silakan pilih channel untuk mengirim pesan",
+      confirmButtonText: "OK",
+    });
     return;
   }
 
   if (!selectedChannel.value.is_active) {
-    alert(
-      "Channel yang dipilih tidak aktif. Silakan pilih channel yang aktif."
-    );
+    Swal.fire({
+      icon: "warning",
+      title: "Channel Tidak Aktif",
+      text: "Channel yang dipilih tidak aktif. Silakan pilih channel yang aktif.",
+      confirmButtonText: "OK",
+    });
     return;
   }
 
   if (!selectedChannel.value.session_name) {
-    alert(
-      "Channel yang dipilih belum terhubung dengan WhatsApp. Silakan hubungkan terlebih dahulu."
-    );
+    Swal.fire({
+      icon: "warning",
+      title: "Channel Belum Terhubung",
+      text: "Channel yang dipilih belum terhubung dengan WhatsApp. Silakan hubungkan terlebih dahulu.",
+      confirmButtonText: "OK",
+    });
     return;
   }
 
@@ -549,9 +560,12 @@ const handleSubmit = async () => {
   );
 
   if (contactsWithPhone.length !== selectedContacts.value.length) {
-    alert(
-      "Beberapa kontak yang dipilih tidak memiliki nomor telepon. Silakan pilih kontak yang memiliki nomor telepon."
-    );
+    Swal.fire({
+      icon: "warning",
+      title: "Kontak Tidak Valid",
+      text: "Beberapa kontak yang dipilih tidak memiliki nomor telepon. Silakan pilih kontak yang memiliki nomor telepon.",
+      confirmButtonText: "OK",
+    });
     return;
   }
 
@@ -561,11 +575,22 @@ const handleSubmit = async () => {
   );
 
   if (invalidPhoneNumbers.length > 0) {
-    alert(
-      `Kontak berikut memiliki format nomor telepon yang tidak valid (harus dimulai dengan 62): ${invalidPhoneNumbers
-        .map((c) => c.name)
-        .join(", ")}`
-    );
+    Swal.fire({
+      icon: "error",
+      title: "Format Nomor Telepon Tidak Valid",
+      html: `
+        <p>Kontak berikut memiliki format nomor telepon yang tidak valid (harus dimulai dengan 62):</p>
+        <ul class="text-left mt-2">
+          ${invalidPhoneNumbers
+            .map(
+              (c) => `<li><strong>${c.name}</strong>: ${c.phone_number}</li>`
+            )
+            .join("")}
+        </ul>
+        <p class="mt-3 text-sm text-gray-600">Format yang benar: +6281234567890 atau 6281234567890</p>
+      `,
+      confirmButtonText: "OK",
+    });
     return;
   }
 
@@ -628,6 +653,17 @@ const handleSubmit = async () => {
     emit("saved");
     emit("refresh-list"); // Emit refresh-list after successful save/update
 
+    // Show success message
+    Swal.fire({
+      icon: "success",
+      title: "Berhasil!",
+      text:
+        props.formType === "broadcast"
+          ? "Broadcast berhasil dimulai dan akan dikirim dengan delay 60 detik antar kontak!"
+          : "Pesan otomatis berhasil disimpan!",
+      confirmButtonText: "OK",
+    });
+
     // Reset progress after a delay
     setTimeout(() => {
       sendingProgress.value = { current: 0, total: 0, message: "" };
@@ -635,6 +671,16 @@ const handleSubmit = async () => {
   } catch (err) {
     console.error("Error saving message:", err);
     sendingProgress.value.message = "Terjadi kesalahan saat mengirim broadcast";
+
+    // Show error with SweetAlert
+    Swal.fire({
+      icon: "error",
+      title: "Gagal Mengirim Pesan",
+      text:
+        err.message ||
+        "Terjadi kesalahan saat mengirim pesan. Silakan coba lagi.",
+      confirmButtonText: "OK",
+    });
   } finally {
     loading.value = false;
   }
@@ -664,9 +710,32 @@ const sendBroadcastToWAHA = async (formData) => {
     }
 
     // Extract contact IDs from the contact objects for the API call
-    const contactIds = formData.contact_ids.map(
-      (contact) => contact.id || contact
-    );
+    console.log("formData.contact_ids:", formData.contact_ids);
+    console.log("availableContacts.value:", availableContacts.value);
+
+    const contactIds = formData.contact_ids
+      .map((contact) => {
+        // If contact is an object with name and phone, we need to find the original contact ID
+        if (typeof contact === "object" && contact.name && contact.phone) {
+          const foundContact = availableContacts.value.find(
+            (c) => c.name === contact.name && c.phone_number === contact.phone
+          );
+          console.log(
+            `Looking for contact: ${contact.name} (${contact.phone})`,
+            foundContact
+          );
+          return foundContact ? foundContact.id : null;
+        }
+        // If contact is already an ID, return it directly
+        return contact;
+      })
+      .filter((id) => id !== null); // Remove any null values
+
+    console.log("Extracted contactIds:", contactIds);
+
+    if (contactIds.length === 0) {
+      throw new Error("Tidak ada kontak yang valid ditemukan");
+    }
 
     // Get contacts data for validation
     const { data: contacts } = await supabase
@@ -675,7 +744,7 @@ const sendBroadcastToWAHA = async (formData) => {
       .in("id", contactIds);
 
     if (!contacts || contacts.length === 0) {
-      throw new Error("No contacts found");
+      throw new Error("Kontak tidak ditemukan dalam database");
     }
 
     // Validate phone numbers
@@ -702,6 +771,12 @@ const sendBroadcastToWAHA = async (formData) => {
         contactIds: contactIds, // Use the extracted contact IDs
         channelId: formData.chanel_id,
         sessionName: selectedChannelData.session_name,
+        metadata: {
+          sender_type: "broadcast",
+          is_broadcast: true,
+          message_type: "broadcast",
+          is_manual_broadcast: true, // Additional flag to identify manual broadcasts
+        },
       },
     });
 

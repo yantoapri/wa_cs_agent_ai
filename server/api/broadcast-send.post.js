@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
-    const { message, contactIds, channelId, sessionName } = body;
+    const { message, contactIds, channelId, sessionName, metadata } = body;
 
     // Validate required fields
     if (!message || !contactIds || !channelId || !sessionName) {
@@ -95,6 +95,9 @@ export default defineEventHandler(async (event) => {
             metadata: {
               sender_type: "broadcast",
               is_broadcast: true,
+              message_type: "broadcast",
+              is_manual_broadcast: true,
+              ...metadata, // Spread any additional metadata from the request
             },
           };
 

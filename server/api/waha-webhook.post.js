@@ -121,15 +121,28 @@ function isFromBroadcastSystem(body) {
   const metadata = body?.payload?.metadata || body?.metadata || {};
   const isBroadcast = metadata.is_broadcast === true;
   const senderType = metadata.sender_type;
+  const messageType = metadata.message_type;
+  const isManualBroadcast = metadata.is_manual_broadcast === true;
 
   console.log("[WAHA Webhook] Broadcast system check:", {
     metadata,
     isBroadcast,
     senderType,
-    isFromBroadcast: isBroadcast || senderType === "broadcast",
+    messageType,
+    isManualBroadcast,
+    isFromBroadcast:
+      isBroadcast ||
+      senderType === "broadcast" ||
+      messageType === "broadcast" ||
+      isManualBroadcast,
   });
 
-  return isBroadcast || senderType === "broadcast";
+  return (
+    isBroadcast ||
+    senderType === "broadcast" ||
+    messageType === "broadcast" ||
+    isManualBroadcast
+  );
 }
 
 // Function to check if the event is message-related (send/receive)

@@ -509,12 +509,19 @@ const addContactData = async () => {
     await fetchContacts(); // Refresh kontak setelah tambah
     console.log("[KontakList] Contacts after add:", contacts.value);
     closeModal();
-    showToast({ message: "Kontak berhasil ditambahkan", type: "success" });
+    Swal.fire({
+      icon: 'success',
+      title: 'Berhasil!',
+      text: 'Kontak berhasil ditambahkan',
+      confirmButtonText: 'OK'
+    });
   } catch (error) {
     console.error("Error adding contact:", error);
-    showToast({
-      message: `Gagal menambahkan kontak: ${error.message}`,
-      type: "error",
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal Menambahkan Kontak',
+      text: `Gagal menambahkan kontak: ${error.message}`,
+      confirmButtonText: 'OK'
     });
   } finally {
     saving.value = false;
@@ -534,12 +541,19 @@ const updateContactData = async () => {
     await fetchContacts(); // Refresh kontak setelah update
     console.log("[KontakList] Contacts after update:", contacts.value);
     closeModal();
-    showToast({ message: "Kontak berhasil diupdate", type: "success" });
+    Swal.fire({
+      icon: 'success',
+      title: 'Berhasil!',
+      text: 'Kontak berhasil diupdate',
+      confirmButtonText: 'OK'
+    });
   } catch (error) {
     console.error("Error updating contact:", error);
-    showToast({
-      message: `Gagal mengupdate kontak: ${error.message}`,
-      type: "error",
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal Mengupdate Kontak',
+      text: `Gagal mengupdate kontak: ${error.message}`,
+      confirmButtonText: 'OK'
     });
   } finally {
     saving.value = false;
@@ -554,12 +568,19 @@ const confirmDelete = async () => {
     console.log("[KontakList] Contacts after delete:", contacts.value);
     showDeleteModal.value = false;
     contactToDelete.value = null;
-    showToast({ message: "Kontak berhasil dihapus", type: "success" });
+    Swal.fire({
+      icon: 'success',
+      title: 'Berhasil!',
+      text: 'Kontak berhasil dihapus',
+      confirmButtonText: 'OK'
+    });
   } catch (error) {
     console.error("Error deleting contact:", error);
-    showToast({
-      message: `Gagal menghapus kontak: ${error.message}`,
-      type: "error",
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal Menghapus Kontak',
+      text: `Gagal menghapus kontak: ${error.message}`,
+      confirmButtonText: 'OK'
     });
   } finally {
     deleting.value = false;
@@ -851,9 +872,11 @@ const importContacts = async () => {
     await Promise.all(importPromises);
     await fetchContacts();
     closeImportModal();
-    showToast({
-      message: `Berhasil mengimport ${importPreview.value.length} kontak`,
-      type: "success",
+    Swal.fire({
+      icon: 'success',
+      title: 'Berhasil!',
+      text: `Berhasil mengimport ${importPreview.value.length} kontak`,
+      confirmButtonText: 'OK'
     });
     console.log(
       "[KontakList] Import successful:",
@@ -863,9 +886,11 @@ const importContacts = async () => {
   } catch (error) {
     console.error("Error importing contacts:", error);
     importErrors.value.push(`Error importing: ${error.message}`);
-    showToast({
-      message: `Gagal mengimport kontak: ${error.message}`,
-      type: "error",
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal Mengimport Kontak',
+      text: `Gagal mengimport kontak: ${error.message}`,
+      confirmButtonText: 'OK'
     });
   } finally {
     importing.value = false;
@@ -874,9 +899,11 @@ const importContacts = async () => {
 
 const exportContacts = () => {
   if (contacts.value.length === 0) {
-    showToast({
-      message: "Tidak ada kontak untuk di-export",
-      type: "error",
+    Swal.fire({
+      icon: 'error',
+      title: 'Tidak ada Kontak untuk di-export',
+      text: 'Tidak ada kontak untuk di-export',
+      confirmButtonText: 'OK'
     });
     return;
   }
@@ -911,15 +938,19 @@ const exportContacts = () => {
     link.click();
     document.body.removeChild(link);
 
-    showToast({
-      message: `Berhasil mengexport ${contacts.value.length} kontak`,
-      type: "success",
+    Swal.fire({
+      icon: 'success',
+      title: 'Berhasil!',
+      text: `Berhasil mengexport ${contacts.value.length} kontak`,
+      confirmButtonText: 'OK'
     });
   } catch (error) {
     console.error("Error exporting contacts:", error);
-    showToast({
-      message: `Gagal mengexport kontak: ${error.message}`,
-      type: "error",
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal Mengexport Kontak',
+      text: `Gagal mengexport kontak: ${error.message}`,
+      confirmButtonText: 'OK'
     });
   }
 };
