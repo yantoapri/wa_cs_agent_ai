@@ -3,6 +3,32 @@
     <div class="bg-white rounded-lg border border-gray-200 p-6">
       <form @submit.prevent="handleSubmit">
         <div class="space-y-6">
+          <!-- Product Selection (for auto-message only) -->
+          <div v-if="formType === 'auto-message'">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Pilih Produk untuk Promosi (Opsional)
+            </label>
+            <select
+              v-model="selectedProduct"
+              class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Pilih produk untuk promosi (opsional)</option>
+              <option
+                v-for="product in availableProducts"
+                :key="product.id"
+                :value="product"
+              >
+                {{ product.name }} - Rp
+                {{ product.price?.toLocaleString("id-ID") }}
+                {{ product.discount ? `(${product.discount}% off)` : "" }}
+              </option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500">
+              Pilih produk jika ingin menggunakan AI untuk generate pesan
+              promosi
+            </p>
+          </div>
+
           <!-- Title -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -22,12 +48,80 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">
               Pesan *
             </label>
+
+            <!-- AI Generate Button (for auto-message only) -->
+            <div v-if="formType === 'auto-message'" class="mb-3">
+              <button
+                type="button"
+                @click="generateAIMessage"
+                :disabled="aiGenerating || !selectedProduct"
+                :class="[
+                  'flex items-center gap-2 px-4 py-2 rounded-md',
+                  aiGenerating || !selectedProduct
+                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                    : 'bg-green-600 text-white hover:bg-green-700',
+                ]"
+              >
+                <svg
+                  v-if="aiGenerating"
+                  class="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <svg
+                  v-else
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  ></path>
+                </svg>
+                {{
+                  aiGenerating
+                    ? "Generating..."
+                    : !selectedProduct
+                    ? "Pilih produk untuk generate pesan"
+                    : "Generate Pesan dengan AI"
+                }}
+              </button>
+              <p v-if="!selectedProduct" class="mt-1 text-xs text-gray-500">
+                Pilih produk terlebih dahulu untuk mengaktifkan fitur generate
+                pesan dengan AI
+              </p>
+            </div>
+
             <textarea
               v-model="form.message"
               rows="6"
               required
-              class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Tulis pesan Anda di sini..."
+              :disabled="aiGenerating"
+              class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
+              :placeholder="
+                aiGenerating
+                  ? 'Generating pesan dengan AI...'
+                  : 'Tulis pesan Anda di sini...'
+              "
             ></textarea>
           </div>
 
@@ -434,6 +528,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import { useSupabaseClient, useSupabaseUser } from "#imports";
 import { useBroadcastMessages } from "~/composables/useBroadcastMessages";
 import { useAutoMessages } from "~/composables/useAutoMessages";
+import { useProducts } from "~/composables/useProducts";
 import { $fetch } from "ofetch";
 import Swal from "sweetalert2";
 
@@ -505,6 +600,14 @@ const selectAll = ref(false);
 // Channel selection
 const availableChannels = ref([]);
 const channelsLoading = ref(false);
+
+// Product selection
+const availableProducts = ref([]);
+const selectedProduct = ref(null);
+const productsLoading = ref(false);
+
+// AI generation
+const aiGenerating = ref(false);
 
 // Loading states
 const loading = ref(false);
@@ -618,6 +721,28 @@ const loadChannels = async () => {
   }
 };
 
+// Load products
+const loadProducts = async () => {
+  if (!user.value) return;
+
+  productsLoading.value = true;
+  try {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("created_by", user.value.id)
+      .order("name");
+
+    if (error) throw error;
+
+    availableProducts.value = data || [];
+  } catch (err) {
+    console.error("Error loading products:", err);
+  } finally {
+    productsLoading.value = false;
+  }
+};
+
 // Toggle select all contacts
 const toggleSelectAll = () => {
   if (selectAll.value) {
@@ -695,6 +820,16 @@ watch(
     }
   },
   { deep: true }
+);
+
+// Watch for form type changes to clear selected product
+watch(
+  () => props.formType,
+  (newFormType) => {
+    if (newFormType !== "auto-message") {
+      selectedProduct.value = null;
+    }
+  }
 );
 
 // Initialize form with edit data
@@ -780,6 +915,16 @@ const initializeForm = () => {
           // Old format: direct array of contact IDs
           selectedContacts.value = props.editData.contact_ids;
         }
+      }
+    }
+
+    // Handle selected product for auto messages
+    if (props.formType === "auto-message" && props.editData.product_id) {
+      const product = availableProducts.value.find(
+        (p) => p.id === props.editData.product_id
+      );
+      if (product) {
+        selectedProduct.value = product;
       }
     }
   } else {
@@ -1013,6 +1158,12 @@ const handleSubmit = async () => {
         props.formType === "auto-message" ? "scheduled" : form.value.status,
       chanel_id: form.value.channelId,
     };
+
+    // Add product information for auto messages
+    if (props.formType === "auto-message" && selectedProduct.value) {
+      formData.product_id = selectedProduct.value.id;
+      formData.product_name = selectedProduct.value.name;
+    }
 
     if (props.formType === "auto-message") {
       if (scheduleType.value === "custom") {
@@ -1252,10 +1403,63 @@ const sendBroadcastToWAHA = async (formData) => {
   }
 };
 
+// Generate AI message
+const generateAIMessage = async () => {
+  if (!selectedProduct.value) {
+    showAlert({
+      icon: "warning",
+      title: "Peringatan",
+      text: "Silakan pilih produk terlebih dahulu",
+      confirmButtonText: "OK",
+    });
+    return;
+  }
+
+  aiGenerating.value = true;
+  try {
+    const response = await $fetch("/api/generate-message-promosi", {
+      method: "POST",
+      body: {
+        product: selectedProduct.value,
+      },
+    });
+
+    if (response.error) {
+      throw new Error(response.error);
+    }
+
+    if (response.result) {
+      // Insert the generated message into the textarea
+      form.value.message = response.result;
+
+      // Show success message
+      showAlert({
+        icon: "success",
+        title: "Berhasil!",
+        text: "Pesan promosi berhasil di-generate dengan AI dan telah dimasukkan ke dalam textarea",
+        confirmButtonText: "OK",
+      });
+    } else {
+      throw new Error("Tidak ada hasil yang di-generate");
+    }
+  } catch (err) {
+    console.error("Error generating AI message:", err);
+    showAlert({
+      icon: "error",
+      title: "Gagal Generate Pesan",
+      text: err.message || "Terjadi kesalahan saat generate pesan dengan AI",
+      confirmButtonText: "OK",
+    });
+  } finally {
+    aiGenerating.value = false;
+  }
+};
+
 // Initialize on mount
 onMounted(async () => {
   await loadContacts();
   await loadChannels(); // Load channels on mount
+  await loadProducts(); // Load products on mount
   initializeForm();
 });
 </script>
