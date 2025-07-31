@@ -299,7 +299,11 @@
         </div>
       </form>
     </div>
-    <div v-if="!showForm" class="p-4 md:p-8 text-gray-400 text-center">
+
+    <div
+      v-if="!showForm && !selectedAgent"
+      class="p-4 md:p-8 text-gray-400 text-center"
+    >
       Pilih agent manusia untuk melihat detail atau klik "Buat Agent Manusia"
       untuk tambah baru.
     </div>

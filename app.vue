@@ -9,9 +9,7 @@ import { useToast } from "~/composables/useToast";
 import { useHead } from "#imports";
 useHead({
   title: "Nutra AI Chat",
-  link: [
-    { rel: "icon", type: "image/x-icon", href: "/assets/img/favicon.ico" },
-  ],
+  link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
 });
 
 const baseToast = ref(null);

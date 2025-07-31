@@ -116,6 +116,22 @@ function checkBroadcastEvent(body) {
   );
 }
 
+// Function to check if the message is from our broadcast system
+function isFromBroadcastSystem(body) {
+  const metadata = body?.payload?.metadata || body?.metadata || {};
+  const isBroadcast = metadata.is_broadcast === true;
+  const senderType = metadata.sender_type;
+
+  console.log("[WAHA Webhook] Broadcast system check:", {
+    metadata,
+    isBroadcast,
+    senderType,
+    isFromBroadcast: isBroadcast || senderType === "broadcast",
+  });
+
+  return isBroadcast || senderType === "broadcast";
+}
+
 // Function to check if the event is message-related (send/receive)
 function isMessageEvent(body) {
   const eventType = body?.event || "";
@@ -242,6 +258,19 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   console.log("[WAHA Webhook] Received body:", JSON.stringify(body, null, 2));
 
+  // Check if this is a broadcast event
+  if (checkBroadcastEvent(body)) {
+    console.log(
+      "[WAHA Webhook] Ignoring broadcast event:",
+      body?.event || "unknown"
+    );
+    return {
+      status: "ok",
+      message: "Event ignored - broadcast event",
+      event_type: body?.event || "unknown",
+    };
+  }
+
   // Check if this is a message-related event
   if (!isMessageEvent(body)) {
     console.log(
@@ -251,6 +280,19 @@ export default defineEventHandler(async (event) => {
     return {
       status: "ok",
       message: "Event ignored - not a message event",
+      event_type: body?.event || "unknown",
+    };
+  }
+
+  // Check if the message is from our broadcast system
+  if (isFromBroadcastSystem(body)) {
+    console.log(
+      "[WAHA Webhook] Ignoring message from broadcast system:",
+      body?.payload?.body || "unknown"
+    );
+    return {
+      status: "ok",
+      message: "Event ignored - message from broadcast system",
       event_type: body?.event || "unknown",
     };
   }
@@ -321,6 +363,18 @@ export default defineEventHandler(async (event) => {
       isRecentAI: isRecentAIMsg(outgoingTo, outgoingContent),
     });
     logAICache();
+
+    // Cek apakah ini adalah pesan broadcast dari sistem kita
+    if (isFromBroadcastSystem(body)) {
+      console.log(
+        "[WAHA Webhook] Outgoing message detected as broadcast (skip processing)",
+        { outgoingTo, outgoingContent }
+      );
+      return {
+        status: "ok",
+        message: "Broadcast outgoing message detected (skip processing)",
+      };
+    }
 
     // Cek apakah ini adalah pesan AI yang baru saja dikirim
     if (metaSenderType === "ai" || isRecentAIMsg(outgoingTo, outgoingContent)) {
@@ -441,6 +495,18 @@ export default defineEventHandler(async (event) => {
       cacheSize: aiOutgoingCache.size,
     });
     logAICache();
+
+    // Cek apakah ini adalah pesan broadcast dari sistem kita
+    if (isFromBroadcastSystem(body)) {
+      console.log(
+        "[WAHA Webhook] Incoming message detected as broadcast (skip processing)",
+        { incomingFrom, incomingContent }
+      );
+      return {
+        status: "ok",
+        message: "Broadcast incoming message detected (skip processing)",
+      };
+    }
 
     // Cek apakah pesan ini adalah hasil dari AI yang baru saja mengirim
     if (

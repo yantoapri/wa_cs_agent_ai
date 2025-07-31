@@ -140,7 +140,9 @@ export const useConversationStore = () => {
         let lastMessage = "";
         if (group.messages && group.messages.length > 0) {
           group.messages.sort(
-            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+            (a, b) =>
+              new Date(b.created_at || 0).getTime() -
+              new Date(a.created_at || 0).getTime()
           );
           lastMessage = group.messages[0].content;
         }
@@ -316,7 +318,9 @@ export const useConversationStore = () => {
         let lastMessage = "";
         if (group.messages && group.messages.length > 0) {
           group.messages.sort(
-            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+            (a, b) =>
+              new Date(b.created_at || 0).getTime() -
+              new Date(a.created_at || 0).getTime()
           );
           lastMessage = group.messages[0].content;
         }
@@ -477,15 +481,141 @@ export const useConversationStore = () => {
     error.value = null;
 
     try {
+      // First, check if the channel is active/connected
+      const { data: channelData, error: channelError } = await supabase
+        .from("chanels")
+        .select("is_active, name")
+        .eq("id", messageData.chanel_id)
+        .single();
+
+      if (channelError) {
+        console.error("Error fetching channel status:", channelError);
+        throw new Error("Gagal memeriksa status channel");
+      }
+
+      if (!channelData?.is_active) {
+        const channelName = channelData?.name || "Unknown";
+        const errorMessage = `Channel "${channelName}" tidak terhubung. Silakan hubungkan channel terlebih dahulu.`;
+        error.value = errorMessage;
+        throw new Error(errorMessage);
+      }
+
+      // Get agent type for the message
+      let agent_type = null;
+      try {
+        const { data: agentData, error: agentErr } = await supabase
+          .from("agents")
+          .select("type")
+          .eq("id", messageData.agent_id)
+          .maybeSingle();
+        if (agentData && agentData.type) {
+          agent_type = agentData.type; // 'ai' atau 'manusia'
+        }
+      } catch (e) {
+        console.error("Error fetching agent type:", e);
+      }
+
+      if (!agent_type) {
+        throw new Error(
+          "agent_type tidak ditemukan untuk agent_id: " + messageData.agent_id
+        );
+      }
+
+      // Send message to WAHA first if it's an outbound message
+      if (messageData.direction === "outbound") {
+        try {
+          // Get contact phone number
+          const { data: contactData, error: contactError } = await supabase
+            .from("contacts")
+            .select("phone_number")
+            .eq("id", messageData.contact_id)
+            .single();
+
+          if (contactError) {
+            console.error("Error fetching contact:", contactError);
+            throw new Error("Gagal mendapatkan nomor telepon contact");
+          }
+
+          // Get channel session name
+          const { data: channelSessionData, error: sessionError } =
+            await supabase
+              .from("chanels")
+              .select("session_name")
+              .eq("id", messageData.chanel_id)
+              .single();
+
+          if (sessionError) {
+            console.error("Error fetching channel session:", sessionError);
+            throw new Error("Gagal mendapatkan session channel");
+          }
+
+          // Prepare WAHA message data
+          const wahaMessageData: any = {
+            session: channelSessionData.session_name,
+            to: contactData.phone_number,
+          };
+
+          // Add text if present
+          if (messageData.content && messageData.content.trim()) {
+            wahaMessageData.text = messageData.content;
+          }
+
+          // Add media if present
+          if (messageData.media_url) {
+            wahaMessageData.media = messageData.media_url;
+          }
+
+          console.log("Sending message to WAHA first:", wahaMessageData);
+
+          // Send to WAHA API first
+          const wahaResponse = await $fetch(`/api/waha-send-message`, {
+            method: "POST",
+            body: wahaMessageData,
+          });
+
+          if (!wahaResponse || (wahaResponse as any).error) {
+            console.error("WAHA API error:", wahaResponse);
+            throw new Error(
+              (wahaResponse as any)?.message || "Gagal mengirim pesan ke WAHA"
+            );
+          }
+
+          console.log("Message sent to WAHA successfully:", wahaResponse);
+        } catch (wahaError) {
+          console.error("Error sending message to WAHA:", wahaError);
+          throw new Error(
+            wahaError instanceof Error
+              ? wahaError.message
+              : "Gagal mengirim pesan ke WAHA"
+          );
+        }
+      }
+
+      // Prepare message data for database insertion (using same structure as message.post.js)
+      const dbMessageData = {
+        agent_id: messageData.agent_id,
+        chanel_id: messageData.chanel_id,
+        contact_id: messageData.contact_id,
+        message_type: messageData.message_type,
+        media_url: messageData.media_url || null,
+        content: messageData.content,
+        from: messageData.agent_id, // Use agent_id as from
+        to: messageData.contact_id, // Use contact_id as to
+        agent_type: agent_type,
+      };
+
+      // Save message to database only after successful WAHA send
       const { data, error: insertError } = await supabase
         .from("messages")
-        .insert([messageData])
+        .insert([dbMessageData])
         .select()
         .single();
 
       if (insertError) throw insertError;
 
+      // Add to local messages
       messages.value.push(data);
+
       return data;
     } catch (err) {
       error.value =

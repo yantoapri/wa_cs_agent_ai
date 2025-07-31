@@ -1,5 +1,5 @@
 <template>
-  <div :class="sidebar ? 'p-8' : 'p-8'">
+  <div :class="sidebar ? 'p-8' : 'p-8'" class="h-full">
     <div class="flex justify-between items-center mb-6">
       <h2 class="mt-0 text-xl font-bold">Agent AI</h2>
       <button
@@ -65,7 +65,7 @@
         ></path>
       </svg>
     </div>
-    <div class="mt-6">
+    <div class="mt-6 flex-1 overflow-y-auto">
       <div
         v-for="(ai, idx) in props.aiList"
         :key="ai.id || idx"

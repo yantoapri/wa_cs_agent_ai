@@ -1,9 +1,10 @@
 <template>
   <div class="flex flex-col md:flex-row h-[calc(100vh-40px)]">
- 
-    <!-- Sidebar -->
-    <div class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col md:block hidden">
- 
+    <!-- Mobile: Show list full screen when no agent selected -->
+    <div
+      v-if="!selectedAI || !selectedAI.id"
+      class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col md:block"
+    >
       <div class="flex-1 overflow-y-auto">
         <AgentAIList
           :ai-list="aiAgents"
@@ -14,13 +15,75 @@
         />
       </div>
     </div>
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col bg-gray-100 px-2 md:px-8">
+
+    <!-- Desktop: Always show sidebar -->
+    <div
+      v-else
+      class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col md:block hidden"
+    >
+      <div class="flex-1 overflow-y-auto">
+        <AgentAIList
+          :ai-list="aiAgents"
+          :selected="selectedAI"
+          @select="onSelectAI"
+          @add="onAddAI"
+          sidebar
+        />
+      </div>
+    </div>
+
+    <!-- Main Content - Hidden on mobile when no agent selected -->
+    <div
+      v-if="selectedAI && selectedAI.id"
+      class="flex-1 flex flex-col bg-gray-100 px-2 md:px-8"
+    >
       <template v-if="selectedAI && selectedAI.id">
-        <div class="pt-4 md:pt-6 flex flex-col md:flex-row items-start md:items-center justify-between">
-          <h2 class="text-xl font-semibold mb-2 md:mb-0">
-            {{ selectedAI.name }}
-          </h2>
+        <div
+          class="px-4 md:px-8 pt-4 md:pt-6 flex flex-col md:flex-row items-start md:items-center justify-between"
+        >
+          <div class="flex items-center gap-3 mb-2 md:mb-0">
+            <!-- Mobile back button -->
+            <button
+              @click="selectedAI = {}"
+              class="md:hidden bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-lg transition-colors"
+              title="Kembali ke daftar"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <!-- Agent Name Display with Avatar -->
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-sm"
+              >
+                {{
+                  selectedAI.name
+                    ? selectedAI.name.charAt(0).toUpperCase()
+                    : "A"
+                }}
+              </div>
+              <div>
+                <h1 class="text-xl md:text-2xl font-bold text-gray-800">
+                  {{ selectedAI.name }}
+                </h1>
+                <p class="text-gray-500 text-sm">
+                  {{ selectedAI.description || "Tidak ada deskripsi" }}
+                </p>
+              </div>
+            </div>
+          </div>
           <div class="flex gap-3 items-center">
             <button
               class="bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 md:px-6 py-2 text-base cursor-pointer flex items-center gap-2"
@@ -194,33 +257,15 @@
             </div>
           </div>
         </div>
-        <!-- Agent Name Display -->
-        <div class="px-8 pt-6 pb-2">
-          <div class="flex items-center gap-3 mb-4">
-            <div
-              class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-sm"
-            >
-              {{
-                selectedAI.name ? selectedAI.name.charAt(0).toUpperCase() : "A"
-              }}
-            </div>
-            <div>
-              <h1 class="text-2xl font-bold text-gray-800">
-                {{ selectedAI.name }}
-              </h1>
-              <p class="text-gray-500 text-sm">
-                {{ selectedAI.description || "Tidak ada deskripsi" }}
-              </p>
-            </div>
-          </div>
-        </div>
 
-        <div class="px-8 pt-2 flex gap-6 mb-6 border-b border-gray-200">
+        <div
+          class="px-4 md:px-8 pt-2 flex gap-4 md:gap-6 mb-4 md:mb-6 border-b border-gray-200 overflow-x-auto"
+        >
           <button
             v-for="t in ['gaya', 'pengetahuan', 'edit']"
             :key="t"
             :class="[
-              'px-5 py-2 font-medium border-b-2',
+              'px-3 md:px-5 py-2 font-medium border-b-2 whitespace-nowrap',
               tab === t
                 ? 'text-blue-600 border-blue-600'
                 : 'text-gray-700 border-transparent',
@@ -231,44 +276,47 @@
             {{ t.charAt(0).toUpperCase() + t.slice(1) }}
           </button>
         </div>
-        <div class="flex-1 overflow-y-auto px-8 py-4">
+        <div class="flex-1 overflow-y-auto px-4 md:px-8 py-4">
           <div v-if="tab === 'gaya'">
-            <div class="agentai-subtabs">
-              <button
-                class="agentai-subtab-btn"
-                :class="{ active: subtab === 'gaya' }"
-                @click="subtab = 'gaya'"
-              >
-                Gaya Bicara
-              </button>
-              <button
-                class="agentai-subtab-btn"
-                :class="{ active: subtab === 'handover' }"
-                @click="subtab = 'handover'"
-              >
-                Kondisi Handover
-              </button>
-              <button
-                class="agentai-subtab-btn"
-                :class="{ active: subtab === 'followup' }"
-                @click="subtab = 'followup'"
-              >
-                Followup
-              </button>
-              <button
-                class="agentai-subtab-btn"
-                :class="{ active: subtab === 'kirim' }"
-                @click="subtab = 'kirim'"
-              >
-                Kirim Gambar
-              </button>
+            <div class="agentai-subtabs overflow-x-auto">
+              <div class="flex gap-2 md:gap-6 min-w-max">
+                <button
+                  class="agentai-subtab-btn whitespace-nowrap"
+                  :class="{ active: subtab === 'gaya' }"
+                  @click="subtab = 'gaya'"
+                >
+                  Gaya Bicara
+                </button>
+                <button
+                  class="agentai-subtab-btn whitespace-nowrap"
+                  :class="{ active: subtab === 'handover' }"
+                  @click="subtab = 'handover'"
+                >
+                  Kondisi Handover
+                </button>
+                <button
+                  class="agentai-subtab-btn whitespace-nowrap"
+                  :class="{ active: subtab === 'followup' }"
+                  @click="subtab = 'followup'"
+                >
+                  Followup
+                </button>
+                <button
+                  class="agentai-subtab-btn whitespace-nowrap"
+                  :class="{ active: subtab === 'kirim' }"
+                  @click="subtab = 'kirim'"
+                >
+                  Kirim Gambar
+                </button>
+              </div>
             </div>
             <div v-if="subtab === 'gaya'">
               <h3 class="font-semibold text-lg mb-2">Gaya bicara Agent</h3>
               <div class="mb-2 text-gray-500">Maximum 28/15000 karakter</div>
               <textarea
                 v-model="selectedAI.gayaBicara"
-                class="w-full h-30 p-3 text-base border border-gray-300 rounded-lg resize-y"
+                class="w-full h-32 md:h-30 p-3 text-base border border-gray-300 rounded-lg resize-y"
+                placeholder="Masukkan gaya bicara agent..."
               ></textarea>
               <div class="mt-2">
                 <a href="#" class="text-blue-600 no-underline"
@@ -285,7 +333,7 @@
               <textarea
                 v-model="handoverInput"
                 placeholder="e.g. saya ingin bicara dengan atasan anda"
-                class="w-full h-18 p-3 text-base border border-gray-300 rounded-lg resize-y mb-4"
+                class="w-full h-20 md:h-18 p-3 text-base border border-gray-300 rounded-lg resize-y mb-4"
               ></textarea>
               <button
                 @click="addHandover"
@@ -359,7 +407,7 @@
               <textarea
                 v-model="selectedAI.followupKeyword"
                 placeholder="cth: saya ingin booking"
-                class="w-full h-15 p-3 text-base border border-gray-300 rounded-lg resize-y mb-4"
+                class="w-full h-16 md:h-15 p-3 text-base border border-gray-300 rounded-lg resize-y mb-4"
               ></textarea>
               <div class="mb-2">
                 Agen AI akan
@@ -424,7 +472,7 @@
                 <textarea
                   v-model="selectedAI.followupReply"
                   placeholder="e.g. tanyakan apakah customer masih ingin booking"
-                  class="w-full h-15 p-3 text-base border border-gray-300 rounded-lg resize-y mb-4"
+                  class="w-full h-16 md:h-15 p-3 text-base border border-gray-300 rounded-lg resize-y mb-4"
                 ></textarea>
                 <div class="mb-2">apabila pelanggan tidak membalas setelah</div>
                 <div class="followup-delay-group">
@@ -495,14 +543,68 @@
                 placeholder="e.g. boleh minta gambar produknya"
                 class="w-full mb-2 px-3 py-2 border rounded"
               />
-              <input
-                v-model="kirimGambarUrl"
-                placeholder="URL gambar"
-                class="w-full mb-2 px-3 py-2 border rounded"
-              />
+
+              <!-- Image Upload Section -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Gambar
+                </label>
+                <div class="flex items-center space-x-4">
+                  <label
+                    class="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg border border-blue-200 flex items-center space-x-2"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      ></path>
+                    </svg>
+                    <span>Pilih Gambar</span>
+                    <input
+                      type="file"
+                      ref="kirimGambarFileInput"
+                      @change="handleKirimGambarUpload"
+                      accept="image/*"
+                      class="hidden"
+                    />
+                  </label>
+                  <button
+                    v-if="kirimGambarPreview"
+                    @click="removeKirimGambarImage"
+                    class="text-red-600 hover:text-red-800 text-sm"
+                  >
+                    Hapus Gambar
+                  </button>
+                </div>
+
+                <!-- Image Preview -->
+                <div v-if="kirimGambarPreview" class="mt-3">
+                  <div class="relative inline-block">
+                    <img
+                      :src="kirimGambarPreview"
+                      alt="Preview"
+                      class="max-w-xs max-h-48 rounded-lg border border-gray-200"
+                    />
+                    <div
+                      class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded"
+                    >
+                      {{ kirimGambarFileName }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <button
                 @click="addKirimGambar"
-                class="bg-blue-700 text-white border-none rounded-xl px-4 py-2.5 text-base mb-4 cursor-pointer"
+                :disabled="!kirimGambarKeyword.trim() || !kirimGambarFile"
+                class="bg-blue-700 text-white border-none rounded-xl px-4 py-2.5 text-base mb-4 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Tambah Kondisi Kirim Gambar
               </button>
@@ -520,73 +622,417 @@
                 <div
                   v-for="item in selectedAI.kirimGambarList"
                   :key="item.id"
-                  class="mb-2 flex items-center"
+                  class="mb-4 p-3 border rounded-lg"
                 >
-                  <span v-if="editingKirimGambarId !== item.id">
-                    <b>{{ item.keyword }}</b> -
-                    <a
-                      :href="item.imageUrl"
-                      target="_blank"
-                      class="text-blue-600 underline"
-                      >Lihat Gambar</a
-                    >
-                  </span>
-                  <span v-else class="flex-1">
+                  <div v-if="editingKirimGambarId !== item.id">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <div class="mb-2">
+                          <strong>Kata kunci:</strong> {{ item.keyword }}
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <img
+                            :src="item.imageUrl"
+                            alt="Gambar"
+                            class="w-16 h-16 object-cover rounded border"
+                          />
+                          <div class="text-sm text-gray-600">
+                            {{ item.fileName || "Gambar" }}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="ml-4 flex gap-2">
+                        <button
+                          @click="editKirimGambar(item)"
+                          class="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Ubah
+                        </button>
+                        <button
+                          @click="deleteKirimGambar(item)"
+                          class="bg-red-500 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Hapus
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="space-y-3">
                     <input
                       v-model="editingKirimGambarKeyword"
-                      class="border rounded px-2 py-1 w-40 mr-2"
+                      placeholder="Kata kunci"
+                      class="w-full px-3 py-2 border rounded"
                     />
-                    <input
-                      v-model="editingKirimGambarUrl"
-                      class="border rounded px-2 py-1 w-40 mr-2"
-                    />
-                    <button
-                      @click="saveEditKirimGambar(item)"
-                      class="bg-blue-600 text-white px-2 py-1 rounded mr-1"
-                    >
-                      Simpan
-                    </button>
-                    <button
-                      @click="cancelEditKirimGambar"
-                      class="bg-gray-300 text-black px-2 py-1 rounded"
-                    >
-                      Batal
-                    </button>
-                  </span>
-                  <div
-                    v-if="editingKirimGambarId !== item.id"
-                    class="ml-2 flex gap-2"
-                  >
-                    <button
-                      @click="editKirimGambar(item)"
-                      class="bg-blue-600 text-white px-3 py-1 rounded"
-                    >
-                      Ubah
-                    </button>
-                    <button
-                      @click="deleteKirimGambar(item)"
-                      class="bg-red-500 text-white px-3 py-1 rounded"
-                    >
-                      Hapus
-                    </button>
+
+                    <!-- Edit Image Upload -->
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Upload Gambar Baru
+                      </label>
+                      <div class="flex items-center space-x-4">
+                        <label
+                          class="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg border border-blue-200 flex items-center space-x-2"
+                        >
+                          <svg
+                            class="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            ></path>
+                          </svg>
+                          <span>Pilih Gambar</span>
+                          <input
+                            type="file"
+                            ref="editKirimGambarFileInput"
+                            @change="handleEditKirimGambarUpload"
+                            accept="image/*"
+                            class="hidden"
+                          />
+                        </label>
+                      </div>
+
+                      <!-- Edit Image Preview -->
+                      <div v-if="editingKirimGambarPreview" class="mt-3">
+                        <div class="relative inline-block">
+                          <img
+                            :src="editingKirimGambarPreview"
+                            alt="Preview"
+                            class="max-w-xs max-h-48 rounded-lg border border-gray-200"
+                          />
+                          <div
+                            class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded"
+                          >
+                            {{ editingKirimGambarFileName }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                      <button
+                        @click="saveEditKirimGambar(item)"
+                        class="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                      >
+                        Simpan
+                      </button>
+                      <button
+                        @click="cancelEditKirimGambar"
+                        class="bg-gray-300 text-black px-3 py-1 rounded text-sm"
+                      >
+                        Batal
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           <div v-else-if="tab === 'pengetahuan'">
-            <div class="font-semibold mb-0.5">Pengetahuan Agent</div>
-            <div class="text-gray-500 mb-3">
-              Tambahkan informasi Produk, Tutorial Penggunaan, SOP, FAQ, dan
-              lainnya. Tidak ada limit maximum.
+            <div class="agentai-subtabs overflow-x-auto">
+              <div class="flex gap-2 md:gap-6 min-w-max">
+                <button
+                  class="agentai-subtab-btn whitespace-nowrap"
+                  :class="{ active: pengetahuanSubtab === 'umum' }"
+                  @click="pengetahuanSubtab = 'umum'"
+                >
+                  Pengetahuan Umum
+                </button>
+                <button
+                  class="agentai-subtab-btn whitespace-nowrap"
+                  :class="{ active: pengetahuanSubtab === 'produk' }"
+                  @click="pengetahuanSubtab = 'produk'"
+                >
+                  Produk
+                </button>
+                <button
+                  class="agentai-subtab-btn whitespace-nowrap"
+                  :class="{ active: pengetahuanSubtab === 'ongkir' }"
+                  @click="pengetahuanSubtab = 'ongkir'"
+                >
+                  Integrasi Ongkir
+                </button>
+              </div>
             </div>
-            <textarea
-              v-model="selectedAI.pengetahuan"
-              class="w-full min-h-[180px] p-3 text-base border border-gray-300 rounded-lg resize-y"
-              placeholder="Add Agent's knowledege here"
-            >
-Add Agent's knowledege here</textarea
-            >
+
+            <!-- Pengetahuan Umum Subtab -->
+            <div v-if="pengetahuanSubtab === 'umum'">
+              <div class="font-semibold mb-0.5">Pengetahuan Agent</div>
+              <div class="text-gray-500 mb-3">
+                Tambahkan informasi Produk, Tutorial Penggunaan, SOP, FAQ, dan
+                lainnya. Tidak ada limit maximum.
+              </div>
+              <textarea
+                v-model="selectedAI.pengetahuan"
+                class="w-full min-h-[200px] md:min-h-[180px] p-3 text-base border border-gray-300 rounded-lg resize-y"
+                placeholder="Add Agent's knowledge here"
+              ></textarea>
+            </div>
+
+            <!-- Produk Subtab -->
+            <div v-else-if="pengetahuanSubtab === 'produk'">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold text-lg">Produk</h3>
+                <button
+                  @click="openProductSelectionModal"
+                  class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Tambah Produk
+                </button>
+              </div>
+
+              <!-- Product Cards Grid -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div
+                  v-for="(product, index) in selectedAI.products || []"
+                  :key="product.id"
+                  class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+                >
+                  <!-- Product Header -->
+                  <div
+                    class="flex justify-between items-center p-3 border-b border-gray-100"
+                  >
+                    <span class="font-bold text-gray-700"
+                      ># {{ index + 1 }}</span
+                    >
+                    <button
+                      @click="deleteProduct(product.id)"
+                      class="text-red-500 hover:text-red-700 transition-colors"
+                      title="Hapus produk"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Product Image -->
+                  <div class="relative">
+                    <div
+                      class="w-full h-48 bg-gray-100 flex items-center justify-center"
+                    >
+                      <img
+                        v-if="product.image"
+                        :src="product.image"
+                        :alt="product.name"
+                        class="w-full h-full object-cover"
+                      />
+                      <div v-else class="text-gray-400 text-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="h-16 w-16 mx-auto mb-2"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <p class="text-sm">No Image</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Product Details -->
+                  <div class="p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">
+                      {{ product.name }}
+                    </h4>
+                    <p class="text-gray-600 mb-2">
+                      Rp {{ formatPrice(product.price) }}
+                    </p>
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm text-gray-500"
+                        >Stok: {{ product.stock }}</span
+                      >
+                      <span v-if="product.weight" class="text-sm text-gray-500">
+                        Berat: {{ product.weight }} {{ product.weight_unit }}
+                      </span>
+                      <span
+                        v-if="product.discount > 0"
+                        class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full"
+                      >
+                        {{ product.discount }}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Empty State -->
+              <div
+                v-if="!selectedAI.products || selectedAI.products.length === 0"
+                class="text-center py-8 text-gray-500"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-16 w-16 mx-auto mb-4 text-gray-300"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  />
+                </svg>
+                <p class="text-lg font-medium mb-2">Belum ada produk</p>
+                <p class="text-sm">
+                  Klik "Tambah Produk" untuk menambahkan produk ke agent
+                </p>
+              </div>
+            </div>
+
+            <!-- Integrasi Ongkir Subtab -->
+            <div v-else-if="pengetahuanSubtab === 'ongkir'">
+              <div class="font-semibold mb-4">Konfigurasi Pengiriman</div>
+              <div class="text-gray-500 mb-6">
+                Atur informasi pengirim dan jasa pengiriman yang tersedia
+              </div>
+
+              <div class="space-y-6">
+                <!-- Pengirim Information -->
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                  <h4 class="font-semibold text-lg mb-4">Informasi Pengirim</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Provinsi Pengirim
+                      </label>
+                      <input
+                        v-model="ongkirConfig.provinsiPengirim"
+                        type="text"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Contoh: DKI Jakarta"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Kota Pengirim
+                      </label>
+                      <input
+                        v-model="ongkirConfig.kotaPengirim"
+                        type="text"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Contoh: Jakarta Selatan"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Kecamatan Pengirim
+                      </label>
+                      <input
+                        v-model="ongkirConfig.kecamatanPengirim"
+                        type="text"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Contoh: Kebayoran Baru"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tarif Ongkir -->
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                  <h4 class="font-semibold text-lg mb-4">Tarif Ongkir</h4>
+                  <div class="text-gray-600 mb-4">
+                    Atur tarif ongkir per kilogram untuk setiap jasa pengiriman:
+                  </div>
+                  <div class="space-y-3">
+                    <div
+                      v-for="jasa in jasaPengirimanOptions"
+                      :key="jasa.value"
+                      class="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+                      :class="{
+                        'bg-blue-50 border-blue-300':
+                          ongkirConfig.jasaPengiriman.includes(jasa.value),
+                      }"
+                    >
+                      <div class="flex items-center">
+                        <input
+                          type="checkbox"
+                          :value="jasa.value"
+                          v-model="ongkirConfig.jasaPengiriman"
+                          class="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <div>
+                          <div class="font-medium text-sm">
+                            {{ jasa.label }}
+                          </div>
+                          <div class="text-xs text-gray-500">
+                            {{ jasa.description }}
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        v-if="ongkirConfig.jasaPengiriman.includes(jasa.value)"
+                        class="flex items-center gap-2"
+                      >
+                        <span class="text-sm text-gray-600">Rp</span>
+                        <input
+                          v-model="ongkirConfig.tarifPerKg[jasa.value]"
+                          type="number"
+                          min="0"
+                          class="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="0"
+                        />
+                        <span class="text-sm text-gray-600">/kg</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="flex justify-end">
+                  <div class="text-sm text-gray-500">
+                    Konfigurasi ongkir akan disimpan saat klik "Simpan Semua"
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div v-else-if="tab === 'edit'">
@@ -684,6 +1130,295 @@ Add Agent's knowledege here</textarea
         </div>
       </template>
     </div>
+
+    <!-- Desktop: Show empty state when no agent selected -->
+    <div
+      v-else
+      class="hidden md:flex flex-1 items-center justify-center text-gray-400 text-xl bg-gray-100"
+    >
+      <div class="text-center">
+        <div class="mb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-16 w-16 mx-auto text-gray-300"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
+          </svg>
+        </div>
+        <p class="text-lg font-medium text-gray-500 mb-2">Pilih Agent AI</p>
+        <p class="text-sm text-gray-400">
+          Pilih agent dari daftar untuk melihat detail
+        </p>
+      </div>
+    </div>
+
+    <!-- Product Modal -->
+    <ChanelModal :show="showProductModal" @close="closeProductModal">
+      <div class="p-6 max-h-[80vh] overflow-y-auto">
+        <h3 class="text-lg font-semibold mb-4">
+          {{ editingProduct ? "Edit Produk" : "Tambah Produk Baru" }}
+        </h3>
+
+        <form @submit.prevent="saveProduct">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Nama Produk *
+              </label>
+              <input
+                v-model="productForm.name"
+                type="text"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Masukkan nama produk"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Harga *
+              </label>
+              <input
+                v-model="productForm.price"
+                type="number"
+                required
+                min="0"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Stok *
+              </label>
+              <input
+                v-model="productForm.stock"
+                type="number"
+                required
+                min="0"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Diskon (%)
+              </label>
+              <input
+                v-model="productForm.discount"
+                type="number"
+                min="0"
+                max="100"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Deskripsi
+              </label>
+              <textarea
+                v-model="productForm.description"
+                rows="3"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Deskripsi produk..."
+              ></textarea>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Gambar Produk
+              </label>
+              <div class="flex items-center space-x-4">
+                <label
+                  class="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-lg border border-blue-200 flex items-center space-x-2"
+                >
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    ></path>
+                  </svg>
+                  <span>Pilih Gambar</span>
+                  <input
+                    type="file"
+                    ref="productImageInput"
+                    @change="handleProductImageUpload"
+                    accept="image/*"
+                    class="hidden"
+                  />
+                </label>
+                <button
+                  v-if="productForm.image"
+                  @click="removeProductImage"
+                  type="button"
+                  class="text-red-600 hover:text-red-800 text-sm"
+                >
+                  Hapus Gambar
+                </button>
+              </div>
+
+              <!-- Image Preview -->
+              <div v-if="productForm.image" class="mt-3">
+                <div class="relative inline-block">
+                  <img
+                    :src="productForm.image"
+                    alt="Preview"
+                    class="max-w-xs max-h-48 rounded-lg border border-gray-200"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-3 mt-6">
+            <button
+              type="submit"
+              :disabled="savingProduct"
+              class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              {{
+                savingProduct
+                  ? "Menyimpan..."
+                  : editingProduct
+                  ? "Update"
+                  : "Simpan"
+              }}
+            </button>
+            <button
+              type="button"
+              @click="closeProductModal"
+              :disabled="savingProduct"
+              class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
+            >
+              Batal
+            </button>
+          </div>
+        </form>
+      </div>
+    </ChanelModal>
+
+    <!-- Product Selection Modal -->
+    <ChanelModal
+      :show="showProductSelectionModal"
+      @close="closeProductSelectionModal"
+    >
+      <div class="p-6 max-h-[80vh] overflow-y-auto">
+        <h3 class="text-lg font-semibold mb-4">Pilih Produk</h3>
+        <p class="text-gray-600 mb-4">
+          Pilih produk yang akan ditambahkan ke pengetahuan agent:
+        </p>
+
+        <!-- Loading State -->
+        <div v-if="modalLoading" class="text-center py-8">
+          <div class="text-gray-500">Memuat produk...</div>
+        </div>
+
+        <!-- Product List -->
+        <div v-else class="space-y-3">
+          <div
+            v-for="product in allProducts"
+            :key="product.id"
+            class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+          >
+            <input
+              type="checkbox"
+              :value="product.id"
+              v-model="selectedProductIds"
+              class="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <div class="flex items-center flex-1">
+              <!-- Product Image -->
+              <div
+                class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-3"
+              >
+                <img
+                  v-if="product.image"
+                  :src="product.image"
+                  :alt="product.name"
+                  class="w-10 h-10 object-cover rounded"
+                />
+                <svg
+                  v-else
+                  class="w-6 h-6 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+
+              <!-- Product Info -->
+              <div class="flex-1">
+                <h4 class="font-medium text-gray-900">{{ product.name }}</h4>
+                <p class="text-sm text-gray-600">
+                  Rp {{ formatPrice(product.price) }}
+                </p>
+                <p v-if="product.weight" class="text-xs text-gray-500 mt-1">
+                  Berat: {{ product.weight }} {{ product.weight_unit }}
+                </p>
+                <p
+                  v-if="product.description"
+                  class="text-xs text-gray-500 mt-1"
+                >
+                  {{ product.description.substring(0, 50)
+                  }}{{ product.description.length > 50 ? "..." : "" }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div
+          v-if="!modalLoading && allProducts.length === 0"
+          class="text-center py-8"
+        >
+          <div class="text-gray-500">Belum ada produk tersedia</div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3 mt-6">
+          <button
+            @click="saveSelectedProducts"
+            :disabled="selectedProductIds.length === 0"
+            class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          >
+            Gunakan Produk ({{ selectedProductIds.length }} produk)
+          </button>
+          <button
+            @click="closeProductSelectionModal"
+            class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
+          >
+            Batal
+          </button>
+        </div>
+      </div>
+    </ChanelModal>
   </div>
 </template>
 <script setup>
@@ -694,6 +1429,8 @@ import { useAgentAIStore } from "~/composables/useAgentAI";
 import { useChanelstore } from "~/composables/useChanels";
 import { useChanelAgentConnectionStore } from "~/composables/useChanelAgentConnections";
 import { useToast } from "~/composables/useToast";
+import { useProducts } from "~/composables/useProducts";
+import Swal from "sweetalert2";
 
 const { showToast } = useToast();
 // Ambil config WAHA hanya dari import.meta.env
@@ -703,6 +1440,7 @@ const wahaApiKey = import.meta.env.VITE_WAHA_API;
 const { aiAgents, fetchAgentsByType, updateAgent } = useAgentStore();
 const { getAIConfigByAgentId, saveAIConfig } = useAgentAIStore();
 const { chanels, fetchchanels } = useChanelstore();
+const { products: allProducts, fetchProducts, loading } = useProducts();
 const {
   connections: chanelConnectionsData,
   loading: chanelConnectionsLoading,
@@ -724,6 +1462,41 @@ const tab = ref("gaya");
 const subtab = ref("gaya");
 const selectedAI = ref({});
 const emit = defineEmits(["refresh-ai-list"]);
+
+// Pengetahuan sub-tabs
+const pengetahuanSubtab = ref("umum");
+
+// Product management
+const products = ref([]);
+const showProductModal = ref(false);
+const editingProduct = ref(null);
+const savingProduct = ref(false);
+const productForm = ref({
+  name: "",
+  price: "",
+  stock: "",
+  discount: "",
+  description: "",
+  image: "",
+});
+const productImageInput = ref(null);
+
+// Ongkir configuration
+const ongkirConfig = ref({
+  provinsiPengirim: "",
+  kotaPengirim: "",
+  kecamatanPengirim: "",
+  jasaPengiriman: [],
+  tarifPerKg: {}, // Tambahkan field tarif per kg
+});
+
+const jasaPengirimanOptions = ref([
+  { value: "pos", label: "POS Indonesia", description: "Layanan Pos" },
+  { value: "sicepat", label: "SiCepat", description: "Ekspedisi SiCepat" },
+  { value: "jnt", label: "J&T Express", description: "Ekspedisi J&T" },
+  { value: "jne", label: "JNE", description: "Ekspedisi JNE" },
+  { value: "spx", label: "SiPaling", description: "Ekspedisi SiPaling" },
+]);
 
 // Load AI agents from database
 onMounted(async () => {
@@ -860,6 +1633,7 @@ async function onSelectAI(ai) {
         handoverList: aiConfig.handover_conditions || [],
         followupConfigs: aiConfig.followup_configs || [],
         kirim_gambar_configs: aiConfig.kirim_gambar_configs || [],
+        products: aiConfig.products || [], // Load products from database
       };
       // Mapping seluruh followup_configs ke followupList
       selectedAI.value.followupList = aiConfig.followup_configs || [];
@@ -874,6 +1648,9 @@ async function onSelectAI(ai) {
   } catch (err) {
     console.error("Error loading AI config:", err);
   }
+
+  // Load ongkir config
+  await loadOngkirConfig();
 
   // Load chanel_agent_connection data only when agent is selected
   await fetchchanels();
@@ -920,6 +1697,8 @@ async function sendChat() {
       kepintaran: selectedAI.value.kepintaran,
       no_hp: selectedAI.value.no_hp,
       name: selectedAI.value.name,
+      products: selectedAI.value.products || [],
+      ongkir_config: ongkirConfig.value,
     });
     // Cek jika pesan mengandung followup keyword
     if (
@@ -1138,6 +1917,8 @@ async function onSaveAll() {
       handover_conditions: selectedAI.value.handoverList || [],
       followup_configs: selectedAI.value.followupConfigs,
       kirim_gambar_configs: selectedAI.value.kirimGambarConfigs,
+      products: selectedAI.value.products || [], // Save products to database
+      ongkir_config: ongkirConfig.value, // Save ongkir config to database
     });
 
     showToast({
@@ -1157,11 +1938,21 @@ const editingKirimGambarId = ref(null);
 const editingKirimGambarKeyword = ref("");
 const editingKirimGambarUrl = ref("");
 
+// New image upload variables for kirim gambar
+const kirimGambarFile = ref(null);
+const kirimGambarPreview = ref("");
+const kirimGambarFileName = ref("");
+const kirimGambarFileInput = ref(null);
+const editKirimGambarFileInput = ref(null);
+const editingKirimGambarFile = ref(null);
+const editingKirimGambarPreview = ref("");
+const editingKirimGambarFileName = ref("");
+
 function addKirimGambar() {
   if (!selectedAI.value.kirimGambarList) selectedAI.value.kirimGambarList = [];
   const keyword = kirimGambarKeyword.value.trim();
-  const url = kirimGambarUrl.value.trim();
-  if (keyword && url) {
+
+  if (keyword && kirimGambarFile.value) {
     // Validasi duplikat keyword
     const isDuplicate = selectedAI.value.kirimGambarList.some(
       (k) => k.keyword.trim().toLowerCase() === keyword.toLowerCase()
@@ -1170,44 +1961,146 @@ function addKirimGambar() {
       showToast({ message: "Kondisi kirim gambar sudah ada!", type: "info" });
       return;
     }
-    const nextId =
-      selectedAI.value.kirimGambarList.length > 0
-        ? Math.max(...selectedAI.value.kirimGambarList.map((k) => k.id)) + 1
-        : 1;
-    selectedAI.value.kirimGambarList.push({
-      id: nextId,
-      keyword,
-      imageUrl: url,
+
+    // Upload image first
+    uploadKirimGambarImage().then((imageUrl) => {
+      if (imageUrl) {
+        const nextId =
+          selectedAI.value.kirimGambarList.length > 0
+            ? Math.max(...selectedAI.value.kirimGambarList.map((k) => k.id)) + 1
+            : 1;
+        selectedAI.value.kirimGambarList.push({
+          id: nextId,
+          keyword,
+          imageUrl: imageUrl,
+          fileName: kirimGambarFileName.value,
+        });
+        clearKirimGambarInputs();
+        saveKirimGambarToLocal();
+      }
     });
-    kirimGambarKeyword.value = "";
-    kirimGambarUrl.value = "";
-    saveKirimGambarToLocal();
   }
 }
+
+async function uploadKirimGambarImage() {
+  if (!kirimGambarFile.value) return null;
+
+  try {
+    const formData = new FormData();
+    formData.append("image", kirimGambarFile.value);
+
+    const response = await $fetch("/api/upload-image", {
+      method: "POST",
+      body: formData,
+    });
+
+    return response.url;
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    showToast({ message: "Gagal upload gambar", type: "error" });
+    return null;
+  }
+}
+
+function handleKirimGambarUpload(event) {
+  const file = event.target.files[0];
+  if (file && file.type.startsWith("image/")) {
+    kirimGambarFile.value = file;
+    kirimGambarFileName.value = file.name;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      kirimGambarPreview.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function removeKirimGambarImage() {
+  kirimGambarFile.value = null;
+  kirimGambarPreview.value = "";
+  kirimGambarFileName.value = "";
+  if (kirimGambarFileInput.value) {
+    kirimGambarFileInput.value.value = "";
+  }
+}
+
+function clearKirimGambarInputs() {
+  kirimGambarKeyword.value = "";
+  removeKirimGambarImage();
+}
+
 function editKirimGambar(item) {
   editingKirimGambarId.value = item.id;
   editingKirimGambarKeyword.value = item.keyword;
-  editingKirimGambarUrl.value = item.imageUrl;
+  editingKirimGambarFile.value = null;
+  editingKirimGambarPreview.value = "";
+  editingKirimGambarFileName.value = "";
 }
-function saveEditKirimGambar(item) {
+
+async function saveEditKirimGambar(item) {
   const idx = selectedAI.value.kirimGambarList.findIndex(
     (k) => k.id === item.id
   );
   if (idx !== -1) {
+    let imageUrl = item.imageUrl; // Keep existing image if no new one uploaded
+
+    // If new image is uploaded, upload it first
+    if (editingKirimGambarFile.value) {
+      try {
+        const formData = new FormData();
+        formData.append("image", editingKirimGambarFile.value);
+
+        const response = await $fetch("/api/upload-image", {
+          method: "POST",
+          body: formData,
+        });
+
+        imageUrl = response.url;
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        showToast({ message: "Gagal upload gambar", type: "error" });
+        return;
+      }
+    }
+
     selectedAI.value.kirimGambarList[idx].keyword =
       editingKirimGambarKeyword.value;
-    selectedAI.value.kirimGambarList[idx].imageUrl =
-      editingKirimGambarUrl.value;
+    selectedAI.value.kirimGambarList[idx].imageUrl = imageUrl;
+    if (editingKirimGambarFileName.value) {
+      selectedAI.value.kirimGambarList[idx].fileName =
+        editingKirimGambarFileName.value;
+    }
+
     editingKirimGambarId.value = null;
     editingKirimGambarKeyword.value = "";
-    editingKirimGambarUrl.value = "";
+    editingKirimGambarFile.value = null;
+    editingKirimGambarPreview.value = "";
+    editingKirimGambarFileName.value = "";
     saveKirimGambarToLocal();
   }
 }
+
+function handleEditKirimGambarUpload(event) {
+  const file = event.target.files[0];
+  if (file && file.type.startsWith("image/")) {
+    editingKirimGambarFile.value = file;
+    editingKirimGambarFileName.value = file.name;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      editingKirimGambarPreview.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
 function cancelEditKirimGambar() {
   editingKirimGambarId.value = null;
   editingKirimGambarKeyword.value = "";
-  editingKirimGambarUrl.value = "";
+  editingKirimGambarFile.value = null;
+  editingKirimGambarPreview.value = "";
+  editingKirimGambarFileName.value = "";
 }
 function deleteKirimGambar(item) {
   selectedAI.value.kirimGambarList = selectedAI.value.kirimGambarList.filter(
@@ -1274,6 +2167,192 @@ function deleteFollowup(idx) {
     editingFollowupIdx.value = null;
   }
 }
+
+// Product management functions
+const formatPrice = (price) => {
+  return new Intl.NumberFormat("id-ID").format(price || 0);
+};
+
+const resetProductForm = () => {
+  productForm.value = {
+    name: "",
+    price: "",
+    stock: "",
+    discount: "",
+    description: "",
+    image: "",
+  };
+  editingProduct.value = null;
+};
+
+const closeProductModal = () => {
+  showProductModal.value = false;
+  resetProductForm();
+};
+
+const handleProductImageUpload = (event) => {
+  const file = event.target.files[0];
+  if (file && file.type.startsWith("image/")) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      productForm.value.image = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+const removeProductImage = () => {
+  productForm.value.image = "";
+  if (productImageInput.value) {
+    productImageInput.value.value = "";
+  }
+};
+
+const saveProduct = async () => {
+  savingProduct.value = true;
+  try {
+    const productData = {
+      name: productForm.value.name,
+      price: parseInt(productForm.value.price) || 0,
+      stock: parseInt(productForm.value.stock) || 0,
+      discount: parseInt(productForm.value.discount) || 0,
+      description: productForm.value.description,
+      image: productForm.value.image,
+    };
+
+    if (editingProduct.value) {
+      // Update existing product
+      const index = products.value.findIndex(
+        (p) => p.id === editingProduct.value.id
+      );
+      if (index !== -1) {
+        products.value[index] = { ...products.value[index], ...productData };
+      }
+    } else {
+      // Add new product
+      const newProduct = {
+        id: Date.now(), // Simple ID generation
+        ...productData,
+      };
+      products.value.push(newProduct);
+    }
+
+    showToast({
+      message: editingProduct.value
+        ? "Produk berhasil diupdate"
+        : "Produk berhasil ditambahkan",
+      type: "success",
+    });
+
+    closeProductModal();
+  } catch (error) {
+    console.error("Error saving product:", error);
+    showToast({
+      message: "Gagal menyimpan produk",
+      type: "error",
+    });
+  } finally {
+    savingProduct.value = false;
+  }
+};
+
+const deleteProduct = async (productId) => {
+  const product = selectedAI.value.products.find((p) => p.id === productId);
+
+  const result = await Swal.fire({
+    title: "Hapus Produk dari Agent",
+    text: `Apakah Anda yakin ingin menghapus produk "${product?.name}" dari agent ini?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Ya, Hapus!",
+    cancelButtonText: "Batal",
+    reverseButtons: true,
+  });
+
+  if (result.isConfirmed) {
+    selectedAI.value.products = selectedAI.value.products.filter(
+      (p) => p.id !== productId
+    );
+    showToast({
+      message: "Produk berhasil dihapus dari agent",
+      type: "success",
+    });
+  }
+};
+
+// Ongkir configuration functions
+// Load ongkir config when agent is selected
+const loadOngkirConfig = async () => {
+  if (selectedAI.value.id) {
+    try {
+      const aiConfig = await getAIConfigByAgentId(selectedAI.value.id);
+      if (aiConfig && aiConfig.ongkir_config) {
+        ongkirConfig.value = {
+          provinsiPengirim: "",
+          kotaPengirim: "",
+          kecamatanPengirim: "",
+          jasaPengiriman: [],
+          tarifPerKg: {},
+          ...aiConfig.ongkir_config,
+        };
+      }
+    } catch (error) {
+      console.error("Error loading ongkir config:", error);
+    }
+  }
+};
+
+// Product selection modal
+const showProductSelectionModal = ref(false);
+const selectedProductIds = ref([]);
+const modalLoading = ref(false);
+
+const openProductSelectionModal = async () => {
+  showProductSelectionModal.value = true;
+  selectedProductIds.value = [];
+  modalLoading.value = true;
+  try {
+    await fetchProducts();
+  } finally {
+    modalLoading.value = false;
+  }
+};
+
+const closeProductSelectionModal = () => {
+  showProductSelectionModal.value = false;
+  selectedProductIds.value = [];
+};
+
+const saveSelectedProducts = async () => {
+  const selectedProducts = allProducts.value.filter((product) =>
+    selectedProductIds.value.includes(product.id)
+  );
+
+  if (selectedProducts.length > 0) {
+    // Tambahkan produk ke list produk agent
+    if (!selectedAI.value.products) {
+      selectedAI.value.products = [];
+    }
+
+    // Filter produk yang belum ada di list
+    const existingProductIds = selectedAI.value.products.map((p) => p.id);
+    const newProducts = selectedProducts.filter(
+      (product) => !existingProductIds.includes(product.id)
+    );
+
+    // Tambahkan produk baru ke list
+    selectedAI.value.products.push(...newProducts);
+
+    showToast({
+      message: `${newProducts.length} produk berhasil digunakan oleh agent (klik "Simpan Semua" untuk menyimpan)`,
+      type: "success",
+    });
+  }
+
+  closeProductSelectionModal();
+};
 </script>
 <style scoped>
 .agentai-main-layout {
@@ -1344,20 +2423,18 @@ function deleteFollowup(idx) {
   padding: 0 32px;
 }
 .agentai-subtabs {
-  display: flex;
-  gap: 24px;
   margin-bottom: 18px;
   background: #fafbfc;
   border-radius: 8px 8px 0 0;
-  padding: 8px 18px 0 18px;
+  padding: 8px 12px 0 12px;
 }
 .agentai-subtab-btn {
   background: none;
   border: none;
   color: #222;
-  font-size: 1em;
+  font-size: 0.9em;
   font-weight: 500;
-  padding: 10px 18px 8px 18px;
+  padding: 8px 12px 6px 12px;
   border-bottom: 2px solid transparent;
   cursor: pointer;
 }

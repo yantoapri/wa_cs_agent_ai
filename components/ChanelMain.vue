@@ -224,14 +224,20 @@ import { useAgentStore } from "~/composables/useAgents";
 import { useChanelstore } from "~/composables/useChanels";
 import { useChanelAgentConnectionStore } from "~/composables/useChanelAgentConnections";
 import { useToast } from "~/composables/useToast";
+import { useSupabaseClient } from "#imports";
 // Ambil config WAHA hanya dari import.meta.env
 const baseUrl = import.meta.env.VITE_BASE_URL_WAHA;
 const wahaApiKey = import.meta.env.VITE_WAHA_API;
 
 const props = defineProps({ chanel: Object });
-const emit = defineEmits(["update-whatsapp-number", "chanel-deleted"]);
+const emit = defineEmits([
+  "update-whatsapp-number",
+  "chanel-deleted",
+  "channel-status-updated",
+]);
 const { aiAgents, fetchAgentsByType } = useAgentStore();
 const { showToast } = useToast();
+const supabase = useSupabaseClient();
 
 // Pindahkan ke atas sebelum watcher
 const { updatechanel, deletechanel } = useChanelstore();
@@ -390,6 +396,13 @@ async function fetchSessionStatus(sessionName) {
       authenticated: status.value === "WORKING",
       ready: status.value === "WORKING",
     };
+
+    // Update is_active field in database based on session status
+    if (props.chanel && props.chanel.id) {
+      const isActive = status.value === "WORKING";
+      await updateChannelActiveStatus(props.chanel.id, isActive);
+    }
+
     // QR code
     if (status.value === "SCAN_QR_CODE") {
       try {
@@ -435,6 +448,11 @@ async function fetchSessionStatus(sessionName) {
       ready: false,
     };
     qrCode.value = "";
+
+    // Update is_active to false when there's an error
+    if (props.chanel && props.chanel.id) {
+      await updateChannelActiveStatus(props.chanel.id, false);
+    }
   }
 }
 
@@ -448,6 +466,20 @@ watch(
     }
   },
   { immediate: true }
+);
+
+// Watch for session status changes to update database
+watch(
+  () => sessionStatus.value.ready,
+  async (isReady) => {
+    if (props.chanel && props.chanel.id) {
+      const currentStatus = isReady;
+      // Only update if the status is different from what we expect
+      if (currentStatus !== props.chanel.is_active) {
+        await updateChannelActiveStatus(props.chanel.id, currentStatus);
+      }
+    }
+  }
 );
 
 onUnmounted(() => {
@@ -520,6 +552,12 @@ async function onDisconnect() {
         "X-Api-Key": wahaApiKey,
       },
     });
+
+    // Update is_active to false when manually disconnecting
+    if (props.chanel && props.chanel.id) {
+      await updateChannelActiveStatus(props.chanel.id, false);
+    }
+
     await fetchSessionStatus(sessionName);
   } catch (e) {
     showToast({ message: "Gagal memutuskan hubungan!", type: "error" });
@@ -563,6 +601,46 @@ async function onDisconnectAgentAI(agentId) {
       message: "Gagal memutuskan agent AI: " + (err?.message || err),
       type: "error",
     });
+  }
+}
+
+async function updateChannelActiveStatus(chanelId, isActive) {
+  try {
+    const { data, error } = await supabase
+      .from("chanels")
+      .update({ is_active: isActive })
+      .eq("id", chanelId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating channel active status:", error);
+      throw error;
+    }
+    console.log("Channel active status updated successfully:", data);
+
+    // Show toast notification
+    if (isActive) {
+      showToast({
+        message: "Channel berhasil terhubung dan aktif!",
+        type: "success",
+      });
+    } else {
+      showToast({
+        message: "Channel telah diputuskan dan tidak aktif",
+        type: "warning",
+      });
+    }
+
+    // Emit event to parent component
+    emit("channel-status-updated", { chanelId, isActive });
+  } catch (err) {
+    console.error("Error updating channel active status:", err);
+    showToast({
+      message: "Gagal mengupdate status channel",
+      type: "error",
+    });
+    throw err;
   }
 }
 </script>

@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col h-screen bg-gray-100">
     <div
-      class="flex items-center justify-between bg-white border-b border-gray-200 px-8 h-16"
+      class="flex items-center justify-between border-b border-gray-200 px-8 h-16"
     >
       <div class="flex items-center">
         <div class="text-lg font-bold text-gray-800 mr-8">
@@ -11,15 +11,16 @@
           <button
             v-for="t in tabs"
             :key="t.value"
-            class="px-6 py-2 text-base font-medium rounded-t-md border-b-2 transition-colors duration-200 focus:outline-none"
+            class="px-4 py-2 text-base font-medium rounded-md transition-colors duration-200 focus:outline-none flex items-center justify-center"
             :class="
               tab === t.value
-                ? 'text-blue-600 border-blue-600 bg-white'
-                : 'text-gray-700 border-transparent bg-gray-100 hover:bg-gray-200'
+                ? 'text-blue-600 bg-blue-50 border border-blue-200'
+                : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
             "
             @click="tab = t.value"
+            :title="t.label"
           >
-            {{ t.label }}
+            <span v-html="t.icon"></span>
           </button>
         </div>
       </div>
@@ -52,16 +53,16 @@
         </button>
         <div
           v-if="dropdownOpen"
-          class="fixed right-8 top-16 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+          class="fixed right-8 top-16 w-40 border border-gray-200 rounded-lg shadow-lg z-50"
         >
           <button
-            class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+            class="block w-full text-left px-4 py-2 text-gray-700"
             @click="goToDoc"
           >
             Doc
           </button>
           <button
-            class="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+            class="block w-full text-left px-4 py-2 text-red-600"
             @click="handleLogout"
           >
             Logout
@@ -99,9 +100,7 @@
           @click="showSidebar = false"
         ></div>
         <!-- Sidebar -->
-        <aside
-          class="relative w-64 max-w-full bg-blue-50 h-full shadow-lg z-50 p-6"
-        >
+        <aside class="relative w-64 max-w-full h-full shadow-lg z-50 p-6">
           <!-- User Profile Section (mobile only) -->
           <div class="flex flex-col items-center gap-2 mb-8">
             <button
@@ -132,16 +131,16 @@
             </button>
             <div
               v-if="dropdownOpen"
-              class="absolute left-6 top-24 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+              class="absolute left-6 top-24 w-40 border border-gray-200 rounded-lg shadow-lg z-50"
             >
               <button
-                class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                class="block w-full text-left px-4 py-2 text-gray-700"
                 @click="goToDoc"
               >
                 Doc
               </button>
               <button
-                class="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                class="block w-full text-left px-4 py-2 text-red-600"
                 @click="handleLogout"
               >
                 Logout
@@ -154,16 +153,18 @@
             <button
               v-for="t in tabs"
               :key="t.value"
-              class="flex items-center gap-3 text-lg py-2 px-2 rounded hover:bg-blue-100"
+              class="flex items-center gap-3 text-lg py-3 px-3 rounded-lg transition-colors"
               :class="
-                tab === t.value ? 'font-bold text-blue-600' : 'text-gray-700'
+                tab === t.value
+                  ? 'font-bold text-blue-600 bg-blue-50'
+                  : 'text-gray-700 hover:bg-gray-50'
               "
               @click="
                 tab = t.value;
                 showSidebar = false;
               "
             >
-              <!-- Icon placeholder, bisa diganti sesuai kebutuhan -->
+              <span v-html="t.icon"></span>
               <span>{{ t.label }}</span>
             </button>
           </nav>
@@ -315,6 +316,126 @@
           </div>
         </template>
       </template>
+      <template v-else-if="tab === 'chat'">
+        <!-- MOBILE: hanya salah satu yang tampil -->
+        <template v-if="!isDesktop">
+          <!-- Chat List -->
+          <div
+            v-if="!selectedBroadcast && !selectedAutoMessage && !showChatForm"
+            class="w-full bg-white flex flex-col items-stretch overflow-y-auto"
+          >
+            <ChatList
+              ref="chatListRef"
+              v-model:activeSubTab="chatSubTab"
+              :selected-broadcast="selectedBroadcast"
+              :selected-auto-message="selectedAutoMessage"
+              @select-broadcast="onSelectBroadcast"
+              @select-auto-message="onSelectAutoMessage"
+              @add-broadcast="onAddBroadcast"
+              @add-auto-message="onAddAutoMessage"
+            />
+          </div>
+          <!-- Chat Main -->
+          <div v-else class="w-full flex flex-col bg-gray-100">
+            <ChatMain
+              :selected-broadcast="selectedBroadcast"
+              :selected-auto-message="selectedAutoMessage"
+              :show-form="showChatForm"
+              :form-type="chatFormType"
+              :form-edit-data="chatFormEditData"
+              @back="onBackFromChat"
+              @edit="onEditChatItem"
+              @form-saved="onChatFormSaved"
+              @refresh-list="onRefreshChatList"
+            />
+          </div>
+        </template>
+        <!-- DESKTOP: tampil berdampingan -->
+        <template v-else>
+          <div
+            class="w-80 bg-white border-r border-gray-200 py-6 flex flex-col items-stretch overflow-y-auto"
+          >
+            <ChatList
+              ref="chatListRef"
+              v-model:activeSubTab="chatSubTab"
+              :selected-broadcast="selectedBroadcast"
+              :selected-auto-message="selectedAutoMessage"
+              @select-broadcast="onSelectBroadcast"
+              @select-auto-message="onSelectAutoMessage"
+              @add-broadcast="onAddBroadcast"
+              @add-auto-message="onAddAutoMessage"
+            />
+          </div>
+          <div class="flex-1 flex flex-col bg-gray-100">
+            <ChatMain
+              :selected-broadcast="selectedBroadcast"
+              :selected-auto-message="selectedAutoMessage"
+              :show-form="showChatForm"
+              :form-type="chatFormType"
+              :form-edit-data="chatFormEditData"
+              @back="onBackFromChat"
+              @edit="onEditChatItem"
+              @form-saved="onChatFormSaved"
+              @refresh-list="onRefreshChatList"
+            />
+          </div>
+        </template>
+      </template>
+
+      <!-- Product Tab -->
+      <template v-else-if="tab === 'produk'">
+        <!-- Product List and Main -->
+        <!-- MOBILE: hanya salah satu yang tampil -->
+        <template v-if="!isDesktop">
+          <div
+            v-if="!selectedProduct"
+            class="w-full bg-white flex flex-col items-stretch overflow-y-auto"
+          >
+            <ProductList
+              ref="productListRef"
+              :selected-product="selectedProduct"
+              @select-product="onSelectProduct"
+              @add-product="onAddProduct"
+            />
+          </div>
+          <div v-else class="w-full flex flex-col bg-gray-100">
+            <ProductMain
+              :selected-product="selectedProduct"
+              :show-form="productFormInMain"
+              :form-edit-data="productFormEditData"
+              @back="onBackFromProduct"
+              @edit-product="onEditProduct"
+              @form-saved="onProductFormSaved"
+              @refresh-list="onRefreshProductList"
+            />
+          </div>
+        </template>
+        <!-- DESKTOP: tampil berdampingan -->
+        <template v-else>
+          <div
+            class="w-80 bg-white border-r border-gray-200 py-6 flex flex-col items-stretch overflow-y-auto"
+          >
+            <ProductList
+              ref="productListRef"
+              :selected-product="selectedProduct"
+              @select-product="onSelectProduct"
+              @add-product="onAddProduct"
+            />
+          </div>
+          <div class="flex-1 flex flex-col bg-gray-100">
+            <ProductMain
+              :selected-product="selectedProduct"
+              :show-form="productFormInMain"
+              :form-edit-data="productFormEditData"
+              @back="onBackFromProduct"
+              @edit-product="onEditProduct"
+              @form-saved="onProductFormSaved"
+              @refresh-list="onRefreshProductList"
+            />
+          </div>
+        </template>
+      </template>
+
       <template v-else-if="tab === 'kontak'">
         <!-- MOBILE: hanya salah satu yang tampil -->
         <template v-if="!isDesktop">
@@ -388,14 +509,69 @@ import ChanelMain from "~/components/ChanelMain.vue";
 import AgentAIMain from "~/components/AgentAIMain.vue";
 import AgentManusiaMain from "~/components/AgentManusiaMain.vue";
 import MyProfile from "~/components/MyProfile.vue";
+import ChatList from "~/components/ChatList.vue";
+import ChatMain from "~/components/ChatMain.vue";
+import ChatForm from "~/components/ChatForm.vue";
+import ProductList from "~/components/ProductList.vue";
+import ProductMain from "~/components/ProductMain.vue";
 
 const tabs = [
-  { value: "inbox", label: "Inbox" },
-  { value: "kontak", label: "Kontak" },
-  { value: "chanel", label: "Chanel" },
-  { value: "agent-ai", label: "Agent AI" },
-  { value: "agent-manusia", label: "Agent Manusia" },
-  { value: "my-profile", label: "My Profile" },
+  {
+    value: "inbox",
+    label: "Inbox",
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+    </svg>`,
+  },
+  {
+    value: "kontak",
+    label: "Kontak",
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+    </svg>`,
+  },
+  {
+    value: "chanel",
+    label: "Chanel",
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
+    </svg>`,
+  },
+  {
+    value: "chat",
+    label: "Chat",
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+    </svg>`,
+  },
+  {
+    value: "produk",
+    label: "Produk",
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+    </svg>`,
+  },
+  {
+    value: "agent-ai",
+    label: "Agent AI",
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+    </svg>`,
+  },
+  {
+    value: "agent-manusia",
+    label: "Agent Manusia",
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+    </svg>`,
+  },
+  {
+    value: "my-profile",
+    label: "My Profile",
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+    </svg>`,
+  },
 ];
 const runtimeConfig = useRuntimeConfig();
 const tab = ref("inbox");
@@ -407,6 +583,24 @@ const selectedContact = ref(null);
 const chanelListRef = ref(null);
 const agentAIListRef = ref(null);
 const agentManusiaListRef = ref(null);
+
+// Chat sub tabs
+const chatSubTabs = [
+  { value: "broadcast", label: "Broadcast" },
+  { value: "auto-message", label: "Pesan Otomatis" },
+];
+const chatSubTab = ref("broadcast");
+const selectedBroadcast = ref(null);
+const selectedAutoMessage = ref(null);
+const showChatForm = ref(false);
+const chatFormType = ref("broadcast");
+const chatFormEditData = ref(null);
+
+// Product state
+const selectedProduct = ref(null);
+const productFormEditData = ref(null);
+const productFormInMain = ref(false);
+const productListRef = ref(null);
 
 // User authentication
 const user = useSupabaseUser();
@@ -485,6 +679,102 @@ function onRefreshAgentManusiaList() {
 
 function onClearSelectedAgent() {
   selectedAgent.value = null;
+}
+
+// Chat functions
+function onSelectBroadcast(broadcast) {
+  selectedBroadcast.value = broadcast;
+  selectedAutoMessage.value = null;
+}
+
+function onSelectAutoMessage(autoMessage) {
+  selectedAutoMessage.value = autoMessage;
+  selectedBroadcast.value = null;
+}
+
+function onAddBroadcast() {
+  showChatForm.value = true;
+  chatFormType.value = "broadcast";
+  chatFormEditData.value = null;
+  selectedBroadcast.value = null;
+  selectedAutoMessage.value = null;
+}
+
+function onAddAutoMessage() {
+  showChatForm.value = true;
+  chatFormType.value = "auto-message";
+  chatFormEditData.value = null;
+  selectedBroadcast.value = null;
+  selectedAutoMessage.value = null;
+}
+
+function onBackFromChat() {
+  selectedBroadcast.value = null;
+  selectedAutoMessage.value = null;
+  showChatForm.value = false;
+  chatFormEditData.value = null;
+}
+
+function onChatFormSaved() {
+  showChatForm.value = false;
+  chatFormEditData.value = null;
+}
+
+function onEditChatItem(item) {
+  showChatForm.value = true;
+  chatFormEditData.value = item;
+  chatFormType.value = item.scheduledAt ? "auto-message" : "broadcast";
+  selectedBroadcast.value = null;
+  selectedAutoMessage.value = null;
+}
+
+const chatListRef = ref(null);
+
+function onRefreshChatList() {
+  console.log("Parent: Refreshing chat list...");
+  if (chatListRef.value) {
+    chatListRef.value.fetchBroadcastMessages();
+    chatListRef.value.fetchAutoMessages();
+  } else {
+    console.error("Parent: chatListRef is null");
+  }
+}
+
+// Product functions
+function onSelectProduct(product) {
+  selectedProduct.value = product;
+}
+
+function onAddProduct() {
+  productFormInMain.value = true;
+  productFormEditData.value = null;
+  selectedProduct.value = null;
+}
+
+function onEditProduct(product) {
+  productFormInMain.value = true;
+  productFormEditData.value = product;
+  selectedProduct.value = null;
+}
+
+function onBackFromProduct() {
+  selectedProduct.value = null;
+  productFormInMain.value = false;
+  productFormEditData.value = null;
+}
+
+function onProductFormSaved() {
+  productFormInMain.value = false;
+  productFormEditData.value = null;
+}
+
+function onRefreshProductList() {
+  console.log("Parent: Refreshing product list...");
+  if (productListRef.value) {
+    productListRef.value.fetchProducts();
+  } else {
+    console.error("Parent: productListRef is null");
+  }
 }
 
 const dropdownOpen = ref(false);

@@ -90,3 +90,45 @@ export interface chanelAgentConnection {
   created_at: string;
   updated_at: string;
 }
+
+export interface BroadcastMessage {
+  id: string;
+  title: string;
+  message: string;
+  contact_ids: string[];
+  contact_count: number;
+  status: 'draft' | 'pending' | 'sent' | 'failed';
+  sent_at?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AutoMessage {
+  id: string;
+  title: string;
+  message: string;
+  contact_ids: string[];
+  contact_count: number;
+  scheduled_at: string;
+  schedules?: Array<{ date: string; time: string }>;
+  status: 'scheduled' | 'sent' | 'failed' | 'cancelled';
+  sent_at?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  stock: number;
+  discount: number;
+  image?: string;
+  is_active: boolean;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}

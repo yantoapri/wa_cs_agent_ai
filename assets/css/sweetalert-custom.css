@@ -1,0 +1,47 @@
+/* Custom SweetAlert Styles */
+.swal2-popup {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  border-radius: 12px;
+}
+
+.swal2-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.swal2-html-container {
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.swal2-confirm {
+  background-color: #dc2626 !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  padding: 12px 24px !important;
+}
+
+.swal2-cancel {
+  background-color: #3b82f6 !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  padding: 12px 24px !important;
+}
+
+.swal2-confirm:hover {
+  background-color: #b91c1c !important;
+}
+
+.swal2-cancel:hover {
+  background-color: #2563eb !important;
+}
+
+.swal2-icon {
+  border-width: 3px;
+}
+
+.swal2-icon.swal2-warning {
+  border-color: #f59e0b;
+  color: #f59e0b;
+} 
