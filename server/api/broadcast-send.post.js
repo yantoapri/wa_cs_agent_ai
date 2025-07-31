@@ -101,7 +101,12 @@ export default defineEventHandler(async (event) => {
             },
           };
 
-          console.log(`[Broadcast] Sending message body:`, messageBody);
+          console.log(`[Broadcast] Sending message body with metadata:`, {
+            session: messageBody.session,
+            chatId: messageBody.chatId,
+            text: messageBody.text.substring(0, 50) + "...",
+            metadata: messageBody.metadata,
+          });
 
           // Send message to WAHA
           const wahaResponse = await $fetch(`${baseUrl}/api/sendText`, {

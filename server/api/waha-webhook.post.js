@@ -123,6 +123,18 @@ function isFromBroadcastSystem(body) {
   const senderType = metadata.sender_type;
   const messageType = metadata.message_type;
   const isManualBroadcast = metadata.is_manual_broadcast === true;
+  const isAutoMessage = metadata.is_auto_message === true;
+  const isScheduledMessage = metadata.is_scheduled_message === true;
+
+  const result =
+    isBroadcast ||
+    senderType === "broadcast" ||
+    messageType === "broadcast" ||
+    isManualBroadcast ||
+    senderType === "auto_message" ||
+    isAutoMessage ||
+    messageType === "scheduled" ||
+    isScheduledMessage;
 
   console.log("[WAHA Webhook] Broadcast system check:", {
     metadata,
@@ -130,19 +142,15 @@ function isFromBroadcastSystem(body) {
     senderType,
     messageType,
     isManualBroadcast,
-    isFromBroadcast:
-      isBroadcast ||
-      senderType === "broadcast" ||
-      messageType === "broadcast" ||
-      isManualBroadcast,
+    isAutoMessage,
+    isScheduledMessage,
+    isFromBroadcast: result,
+    bodyKeys: Object.keys(body || {}),
+    payloadKeys: Object.keys(body?.payload || {}),
+    metadataKeys: Object.keys(metadata),
   });
 
-  return (
-    isBroadcast ||
-    senderType === "broadcast" ||
-    messageType === "broadcast" ||
-    isManualBroadcast
-  );
+  return result;
 }
 
 // Function to check if the event is message-related (send/receive)
@@ -298,7 +306,13 @@ export default defineEventHandler(async (event) => {
   }
 
   // Check if the message is from our broadcast system
-  if (isFromBroadcastSystem(body)) {
+  const isBroadcastSystem = isFromBroadcastSystem(body);
+  console.log(
+    "[WAHA Webhook] Broadcast system check result:",
+    isBroadcastSystem
+  );
+
+  if (isBroadcastSystem) {
     console.log(
       "[WAHA Webhook] Ignoring message from broadcast system:",
       body?.payload?.body || "unknown"

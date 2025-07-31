@@ -432,6 +432,16 @@ watch(selectedContacts, (newValue) => {
     availableContacts.value.length > 0;
 });
 
+// Helper function to create auto message metadata
+const createAutoMessageMetadata = () => {
+  return {
+    sender_type: "auto_message",
+    is_auto_message: true,
+    message_type: "scheduled",
+    is_scheduled_message: true,
+  };
+};
+
 // Initialize form with edit data
 const initializeForm = () => {
   if (props.editData) {
@@ -624,6 +634,9 @@ const handleSubmit = async () => {
           ).toISOString();
         }
       }
+
+      // Add metadata to identify auto messages
+      formData.metadata = createAutoMessageMetadata();
     }
 
     if (isEditing.value) {
