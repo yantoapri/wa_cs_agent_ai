@@ -14,15 +14,15 @@
       <div class="bg-white rounded-xl border border-gray-200 p-5">
         <div class="text-sm text-gray-500">Paket Aktif</div>
         <div class="mt-1 flex flex-wrap items-center gap-3">
-          <div class="text-xl font-semibold capitalize">{{ dashboard.plan || 'Tidak diketahui' }}</div>
+          <div class="text-xl font-semibold capitalize">{{ userPackageValue?.name || 'Tidak diketahui' }}</div>
           <div v-if="dashboard.startAt && dashboard.endAt" class="text-sm text-gray-600">
             {{ new Date(dashboard.startAt).toLocaleDateString() }} - {{ new Date(dashboard.endAt).toLocaleDateString() }}
           </div>
         </div>
-        <div class="mt-2 text-xs text-gray-500">Free trial 3 hari berlaku dari tanggal mulai.</div>
-        <div v-if="!userPackageValue" class="mt-4 p-4 border rounded-lg bg-blue-50 text-blue-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        
+        <div class="mt-4 p-4 border rounded-lg bg-blue-50 text-blue-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <div class="font-medium">Anda sedang dalam masa Trial 3 hari</div>
+            <div class="font-medium" v-if="userPackageValue==5">Anda sedang dalam masa Trial 3 hari</div>
             <div class="text-sm text-blue-700">Upgrade paket untuk membuka semua fitur tanpa batasan.</div>
           </div>
           <button @click="goUpgrade" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Upgrade Paket</button>
@@ -213,6 +213,9 @@ async function fetchUserPackage() {
       .select('*,package(*)')
       .eq('auth_id', user.value.id)
       .maybeSingle()
+      dashboard.startAt=data.start_at;
+      dashboard.endAt=data.end_at;
+      userPackageValue.value=data.package
     if (error) {
       console.error('fetchUserPackage error', error)
       userPackageValue.value = null
@@ -230,16 +233,7 @@ async function fetchUserPackage() {
     // Jika client: lanjutkan load data dashboard
     userPackageValue.value = data?.package || null
 
-    // Paket aktif (periode)
-    const { data: pkg } = await supabase
-      .from('user_package')
-      .select('start_at, end_at, created_at')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    dashboard.startAt = pkg?.start_at || null
-    dashboard.endAt = pkg?.end_at || null
-
+   
     // Plan dari package/invoice
     dashboard.plan = data?.package?.name || null
 

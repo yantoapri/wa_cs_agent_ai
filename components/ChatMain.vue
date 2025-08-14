@@ -278,6 +278,26 @@ import { useToast } from "~/composables/useToast";
 import ChatForm from "~/components/ChatForm.vue";
 import Swal from "sweetalert2";
 
+// Fallback for SweetAlert if not available
+const showAlert = (options) => {
+  console.log("[ChatMain] showAlert called with options:", options);
+  console.log("[ChatMain] Swal available:", typeof Swal !== "undefined");
+  console.log(
+    "[ChatMain] Swal.fire available:",
+    typeof Swal !== "undefined" && Swal.fire
+  );
+
+  if (typeof Swal !== "undefined" && Swal.fire) {
+    console.log("[ChatMain] Using SweetAlert");
+    return Swal.fire(options);
+  } else {
+    console.log("[ChatMain] Using fallback alert");
+    // Fallback to native alert
+    alert(options.text || options.title || "Alert");
+    return Promise.resolve({ isConfirmed: true });
+  }
+};
+
 const props = defineProps({
   selectedBroadcast: {
     type: Object,
@@ -491,7 +511,7 @@ const handleSendAutoMessage = async () => {
 const handleDeleteBroadcast = async () => {
   if (!props.selectedBroadcast) return;
 
-  const result = await Swal.fire({
+  const result = await showAlert({
     title: "Hapus Broadcast",
     text: `Apakah Anda yakin ingin menghapus broadcast "${props.selectedBroadcast.title}"?`,
     icon: "warning",
@@ -513,7 +533,7 @@ const handleDeleteBroadcast = async () => {
 const handleDeleteAutoMessage = async () => {
   if (!props.selectedAutoMessage) return;
 
-  const result = await Swal.fire({
+  const result = await showAlert({
     title: "Hapus Pesan Otomatis",
     text: `Apakah Anda yakin ingin menghapus pesan otomatis "${props.selectedAutoMessage.title}"?`,
     icon: "warning",
@@ -535,7 +555,7 @@ const handleDeleteAutoMessage = async () => {
 const handleCancelAutoMessage = async () => {
   if (!props.selectedAutoMessage) return;
 
-  const result = await Swal.fire({
+  const result = await showAlert({
     title: "Batalkan Pesan Otomatis",
     text: `Apakah Anda yakin ingin membatalkan pesan otomatis "${props.selectedAutoMessage.title}"?`,
     icon: "warning",

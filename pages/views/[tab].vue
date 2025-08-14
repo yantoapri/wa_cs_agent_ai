@@ -13,7 +13,8 @@
 
       <!-- Navigation Icons -->
       <nav class="flex-1 flex flex-col items-center py-4 space-y-2">
-        <div v-for="t in tabs" :key="t.value" class="relative group">
+      
+        <div v-for="t in filteredTabs" :key="t.value" class="relative group">
           <NuxtLink
             :to="`/views/${t.value}`"
             class="w-12 h-12 flex items-center justify-center rounded-lg transition-all duration-200 focus:outline-none"
@@ -237,7 +238,7 @@
             <!-- Menu List -->
             <nav class="flex flex-col gap-4">
               <NuxtLink
-                v-for="t in tabs"
+                v-for="t in filteredTabs"
                 :key="t.value"
                 :to="`/views/${t.value}`"
                 class="flex items-center gap-3 text-lg py-3 px-3 rounded-lg transition-colors"
@@ -263,6 +264,18 @@
           <DashboardMain />
         </template>
 
+        <!-- ADMIN ROUTES -->
+        <template v-else-if="currentTab === 'manage-user'">
+          <ManageUserMain />
+        </template>
+
+        <template v-else-if="currentTab === 'manage-package'">
+          <ManagePackageMain />
+        </template>
+
+        <template v-else-if="currentTab === 'invoice-pembayaran'">
+          <InvoiceMain />
+        </template>
         <!-- INBOX -->
         <template v-else-if="currentTab === 'inbox'">
           <!-- MOBILE: hanya salah satu yang tampil -->
@@ -556,6 +569,21 @@
             </div>
           </template>
         </template>
+        <template v-else-if="currentTab === 'manage-user'">
+          <div>
+            <ManageUserMain/>
+          </div>
+        </template>
+        <template v-else-if="currentTab === 'manage-package'">
+          <div>
+            <ManagePackageMain/>
+          </div>
+        </template>
+         <template v-else-if="currentTab === 'payment'">
+          <div>
+            <Payment/>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -587,7 +615,7 @@
 
 <script setup>
 definePageMeta({ middleware: "auth" });
-import { ref, computed, onMounted, watch, reactive } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { onClickOutside } from "@vueuse/core";
 import { useSupabaseUser, useSupabaseClient } from "#imports";
 import { useRouter, useRoute } from "vue-router";
@@ -607,8 +635,12 @@ import ChatForm from "~/components/ChatForm.vue";
 import ProductList from "~/components/ProductList.vue";
 import ProductMain from "~/components/ProductMain.vue";
 import DashboardMain from "~/components/DashboardMain.vue";
+import ManageUserMain from "~/components/ManageUserMain.vue";
+import ManagePackageMain from "~/components/ManagePackageMain.vue";
+import InvoiceMain from "~/components/InvoiceMain.vue";
+import Payment from "../../components/Payment.vue";
 
-const tabs = [
+const baseTabs = [
   {
     value: "dashboard",
     label: "Dashboard",
@@ -672,6 +704,40 @@ const tabs = [
   },
 ];
 
+// Admin-only tabs for superadmin (role=1)
+const adminTabs = [
+  {
+    value: "dashboard",
+    label: "Dashboard",
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>`,
+  },
+  {
+    value: "manage-user",
+    label: "Manage User",
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-4 0-7 2-7 5v1h14v-1c0-3-3-5-7-5z"/></svg>`,
+  },
+  {
+    value: "manage-package",
+    label: "Manage Package",
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12l-8 4-8-4m16 0l-8-4-8 4m0 0v6l8 4 8-4v-6"/></svg>`,
+  },
+  {
+    value: "invoice-pembayaran",
+    label: "Invoice",
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+  },
+];
+
+// Role-based displayed tabs with restriction handling
+const isSuperadmin = ref(false);
+const restricted = ref(false);
+const displayedTabs = computed(() => (isSuperadmin.value ? adminTabs : baseTabs));
+const filteredTabs = computed(() => {
+  const list = displayedTabs.value;
+  if (!restricted.value) return list;
+  return list.filter((t) => t.value === "dashboard");
+});
+
 const route = useRoute();
 const currentTab = computed(() => {
   const t = route.params.tab;
@@ -679,10 +745,10 @@ const currentTab = computed(() => {
 });
 
 const agentTab = ref("ai");
-const selectedConversation = ref(null);
-const selectedAgent = ref(null);
-const selectedchanel = ref(null);
-const selectedContact = ref(null);
+  const selectedConversation = ref(null);
+  const selectedAgent = ref(null);
+  const selectedchanel = ref(null);
+  const selectedContact = ref(null);
 const chanelListRef = ref(null);
 const agentAIListRef = ref(null);
 const agentManusiaListRef = ref(null);
@@ -902,7 +968,7 @@ function goToDoc() {
 }
 
 function goUpgrade() {
-  router.push('/pricing/payment?plan=pro');
+  router.push('/views/payment?plan=pro');
 }
 
 onClickOutside(userMenuRef, closeDropdown);
@@ -911,17 +977,39 @@ const showSidebar = ref(false);
 const showMainSidebar = ref(false);
 const showMoreTabs = ref(false);
 const maxTabs = 4;
-const visibleTabs = computed(() => tabs.slice(0, maxTabs));
-const moreTabs = computed(() => tabs.slice(maxTabs));
-const hasMoreTabs = computed(() => tabs.length > maxTabs);
+const visibleTabs = computed(() => filteredTabs.value.slice(0, maxTabs));
+const moreTabs = computed(() => filteredTabs.value.slice(maxTabs));
+const hasMoreTabs = computed(() => filteredTabs.value.length > maxTabs);
 
 const isDesktop = ref(false);
 function checkDesktop() {
   isDesktop.value = window.innerWidth >= 768;
 }
+
 onMounted(() => {
   checkDesktop();
   window.addEventListener("resize", checkDesktop);
+});
+
+// Fetch role and package restriction to control tabs
+onMounted(async () => {
+  try {
+    if (!user?.value?.id) return;
+    const { data: userRow } = await supabase
+      .from("users")
+      .select("role")
+      .eq("auth_id", user.value.id)
+      .maybeSingle();
+
+    const role = userRow?.role;
+    const tmpIsSuperadmin =
+      (typeof role === "string" && role.toLowerCase() === "superadmin") ||
+      role === 1;
+    isSuperadmin.value = tmpIsSuperadmin;
+  
+    const now = new Date();
+    restricted.value = !tmpIsSuperadmin && endAt !== null && endAt >= now;
+  } catch {}
 });
 
 watch(agentTab, (val) => {

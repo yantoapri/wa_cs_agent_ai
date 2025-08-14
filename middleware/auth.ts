@@ -17,17 +17,11 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       .eq('auth_id', user.value.id)
       .maybeSingle()
 
-    // Ambil periode paket terakhir
-    const { data: pkg } = await supabase
-      .from('user_package')
-      .select('end_at')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
+  
 
     const role = userRow?.role
     const isSuperadmin = (typeof role === 'string' && role.toLowerCase() === 'superadmin') || role === 1
-    const endAt = pkg?.end_at ? new Date(pkg.end_at) : null
+    const endAt = userRow?.end_at ? new Date(userRow.end_at) : null
     const now = new Date()
 
     const restricted = !isSuperadmin && endAt !== null && endAt >= now

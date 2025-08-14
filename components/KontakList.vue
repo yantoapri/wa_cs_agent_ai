@@ -401,6 +401,24 @@ Jane Smith,+6289876543210,jane@example.com</pre
 <script setup>
 import { ref, onMounted, reactive } from "vue";
 import { useContactStore } from "~/composables/useContacts";
+import Swal from "sweetalert2";
+
+// Fallback for SweetAlert if not available
+const showAlert = (options) => {
+  console.log('[KontakList] showAlert called with options:', options);
+  console.log('[KontakList] Swal available:', typeof Swal !== 'undefined');
+  console.log('[KontakList] Swal.fire available:', typeof Swal !== 'undefined' && Swal.fire);
+  
+  if (typeof Swal !== "undefined" && Swal.fire) {
+    console.log('[KontakList] Using SweetAlert');
+    return Swal.fire(options);
+  } else {
+    console.log('[KontakList] Using fallback alert');
+    // Fallback to native alert
+    alert(options.text || options.title || "Alert");
+    return Promise.resolve({ isConfirmed: true });
+  }
+};
 
 const {
   contacts,
@@ -494,7 +512,7 @@ const addContactData = async () => {
     await fetchContacts(); // Refresh kontak setelah tambah
     console.log("[KontakList] Contacts after add:", contacts.value);
     closeModal();
-    Swal.fire({
+    showAlert({
       icon: "success",
       title: "Berhasil!",
       text: "Kontak berhasil ditambahkan",
@@ -502,7 +520,7 @@ const addContactData = async () => {
     });
   } catch (error) {
     console.error("Error adding contact:", error);
-    Swal.fire({
+    showAlert({
       icon: "error",
       title: "Gagal Menambahkan Kontak",
       text: `Gagal menambahkan kontak: ${error.message}`,
@@ -525,7 +543,7 @@ const updateContactData = async () => {
     await fetchContacts(); // Refresh kontak setelah update
     console.log("[KontakList] Contacts after update:", contacts.value);
     closeModal();
-    Swal.fire({
+    showAlert({
       icon: "success",
       title: "Berhasil!",
       text: "Kontak berhasil diupdate",
@@ -533,7 +551,7 @@ const updateContactData = async () => {
     });
   } catch (error) {
     console.error("Error updating contact:", error);
-    Swal.fire({
+    showAlert({
       icon: "error",
       title: "Gagal Mengupdate Kontak",
       text: `Gagal mengupdate kontak: ${error.message}`,
@@ -552,7 +570,7 @@ const confirmDelete = async () => {
     console.log("[KontakList] Contacts after delete:", contacts.value);
     showDeleteModal.value = false;
     contactToDelete.value = null;
-    Swal.fire({
+    showAlert({
       icon: "success",
       title: "Berhasil!",
       text: "Kontak berhasil dihapus",
@@ -560,7 +578,7 @@ const confirmDelete = async () => {
     });
   } catch (error) {
     console.error("Error deleting contact:", error);
-    Swal.fire({
+    showAlert({
       icon: "error",
       title: "Gagal Menghapus Kontak",
       text: `Gagal menghapus kontak: ${error.message}`,
@@ -855,7 +873,7 @@ const importContacts = async () => {
     await Promise.all(importPromises);
     await fetchContacts();
     closeImportModal();
-    Swal.fire({
+    showAlert({
       icon: "success",
       title: "Berhasil!",
       text: `Berhasil mengimport ${importPreview.value.length} kontak`,
@@ -869,7 +887,7 @@ const importContacts = async () => {
   } catch (error) {
     console.error("Error importing contacts:", error);
     importErrors.value.push(`Error importing: ${error.message}`);
-    Swal.fire({
+    showAlert({
       icon: "error",
       title: "Gagal Mengimport Kontak",
       text: `Gagal mengimport kontak: ${error.message}`,
@@ -882,7 +900,7 @@ const importContacts = async () => {
 
 const exportContacts = () => {
   if (contacts.value.length === 0) {
-    Swal.fire({
+    showAlert({
       icon: "error",
       title: "Tidak ada Kontak untuk di-export",
       text: "Tidak ada kontak untuk di-export",
@@ -921,7 +939,7 @@ const exportContacts = () => {
     link.click();
     document.body.removeChild(link);
 
-    Swal.fire({
+    showAlert({
       icon: "success",
       title: "Berhasil!",
       text: `Berhasil mengexport ${contacts.value.length} kontak`,
@@ -929,7 +947,7 @@ const exportContacts = () => {
     });
   } catch (error) {
     console.error("Error exporting contacts:", error);
-    Swal.fire({
+    showAlert({
       icon: "error",
       title: "Gagal Mengexport Kontak",
       text: `Gagal mengexport kontak: ${error.message}`,

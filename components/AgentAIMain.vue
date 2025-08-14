@@ -2262,7 +2262,7 @@ const saveProduct = async () => {
 const deleteProduct = async (productId) => {
   const product = selectedAI.value.products.find((p) => p.id === productId);
 
-  const result = await Swal.fire({
+  const result = await showAlert({
     title: "Hapus Produk dari Agent",
     text: `Apakah Anda yakin ingin menghapus produk "${product?.name}" dari agent ini?`,
     icon: "warning",

@@ -152,6 +152,26 @@ import { useToast } from "~/composables/useToast";
 import ProductForm from "~/components/ProductForm.vue";
 import Swal from "sweetalert2";
 
+// Fallback for SweetAlert if not available
+const showAlert = (options) => {
+  console.log("[ProductMain] showAlert called with options:", options);
+  console.log("[ProductMain] Swal available:", typeof Swal !== "undefined");
+  console.log(
+    "[ProductMain] Swal.fire available:",
+    typeof Swal !== "undefined" && Swal.fire
+  );
+
+  if (typeof Swal !== "undefined" && Swal.fire) {
+    console.log("[ProductMain] Using SweetAlert");
+    return Swal.fire(options);
+  } else {
+    console.log("[ProductMain] Using fallback alert");
+    // Fallback to native alert
+    alert(options.text || options.title || "Alert");
+    return Promise.resolve({ isConfirmed: true });
+  }
+};
+
 const props = defineProps({
   selectedProduct: {
     type: Object,
@@ -203,7 +223,7 @@ const formatDate = (dateString) => {
 const handleDeleteProduct = async () => {
   if (!props.selectedProduct) return;
 
-  const result = await Swal.fire({
+  const result = await showAlert({
     title: "Hapus Produk",
     text: `Apakah Anda yakin ingin menghapus produk "${props.selectedProduct.name}"?`,
     icon: "warning",
