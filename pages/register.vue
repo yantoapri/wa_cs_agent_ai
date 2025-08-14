@@ -72,6 +72,7 @@
 
 <script setup>
 import { useToast } from "~/composables/useToast";
+import { onMounted } from 'vue'; // Import onMounted
 const { showToast } = useToast();
 
 const email = ref("");
@@ -80,22 +81,55 @@ const error = ref("");
 const loading = ref(false);
 
 const supabase = useSupabaseClient();
+const route = useRoute();
+const router = useRouter();
+const user = useSupabaseUser(); // Get Supabase user
+
+// Redirect if already logged in
+onMounted(() => {
+  if (user.value) {
+    router.push('/views');
+  }
+});
 
 async function register() {
   loading.value = true;
   error.value = "";
   try {
-    const { error: signUpError } = await supabase.auth.signUp({
+    const signUpResponse = await supabase.auth.signUp({
       email: email.value,
       password: password.value,
     });
-    if (signUpError) {
-      error.value = signUpError.message;
+    if (signUpResponse.error) {
+      error.value = signUpResponse.error.message;
     } else {
+      // Save user data to public users table
+      // Get the user ID from the signUp response
+      if (signUpResponse.data && signUpResponse.data.user) {
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert([
+            {
+              auth_id: signUpResponse.data.user.id,
+              username: email.value,
+              email: email.value,
+              role: 2,
+              is_active: true
+            }
+          ]);
+        
+        if (insertError) {
+          console.error('Error inserting user data:', insertError);
+          // Note: We're not stopping the registration even if this fails
+          // In a production app, you might want to handle this more gracefully
+        }
+      }
+      
       showToast({
-        message: "Registrasi berhasil! Silakan cek email untuk verifikasi.",
+        message: "Registrasi berhasil! Silakan login untuk melanjutkan.",
         type: "success",
       });
+      router.push("/login"); // Redirect to login page after successful registration
     }
   } finally {
     loading.value = false;

@@ -1,6 +1,8 @@
 <template>
-  <div class="max-w-md w-full bg-white p-8 rounded-lg shadow">
-    <h1 class="text-2xl font-bold mb-6">My Profile</h1>
+  <div class="w-full p-6 ">
+    <div class="w-full bg-white p-8 rounded-lg shadow h-full">
+      <div class="w-1/3">
+        <h1 class="text-2xl font-bold mb-6">My Profile</h1>
     <div class="mb-6">
       <label class="block text-gray-700 font-medium mb-1">Email</label>
       <input
@@ -50,6 +52,8 @@
         {{ message }}
       </div>
     </form>
+      </div>
+    </div>
   </div>
 </template>
 

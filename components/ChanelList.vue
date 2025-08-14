@@ -32,8 +32,9 @@
           type="text"
           placeholder="Nama chanel"
           required
-          class="px-3 mb-3 py-2 text-base border border-gray-300 rounded w-full"
+          :class="['px-3 mb-3 py-2 text-base border rounded w-full', nameError ? 'border-red-500' : 'border-gray-300']"
         />
+        <p v-if="nameError" class="text-red-500 text-sm mb-3">{{ nameError }}</p>
 
         <button
           type="submit"
@@ -93,11 +94,24 @@ const {
 } = useChanelstore();
 const showForm = ref(false);
 const newchanel = ref({ name: "", type: "whatsapp" });
+const nameError = ref(null); // Added
+
 const emit = defineEmits(["select-chanel"]);
 
 const props = defineProps({
   refreshKey: { type: Number, default: 0 }, // untuk trigger refresh dari parent
 });
+
+// Added validateName function
+const validateName = () => {
+  const regex = /^[a-zA-Z0-9_-]*$/;
+  if (!regex.test(newchanel.value.name)) {
+    nameError.value = "Session name can only contain alphanumeric characters, hyphens, and underscores ( a-z, A-Z, 0-9, -, _ ).";
+    return false;
+  }
+  nameError.value = null;
+  return true;
+};
 
 // Ambil config WAHA hanya dari import.meta.env
 const wahaUsername = import.meta.env.VITE_WAHA_USERNAME || "";
@@ -113,6 +127,11 @@ const wahaAuth =
 
 async function addchanel() {
   try {
+    // Call validateName before proceeding
+    if (!validateName()) {
+      return; // Stop if validation fails
+    }
+
     let iconUrl = "";
     if (newchanel.value.type === "whatsapp") {
       iconUrl = "https://img.icons8.com/color/48/000000/whatsapp--v1.png";
@@ -121,79 +140,108 @@ async function addchanel() {
         "https://img.icons8.com/color/48/000000/facebook-messenger--v1.png";
     }
 
-    await addchanelToDB({
-      name: newchanel.value.name,
-      type: newchanel.value.type,
-      icon_url: iconUrl,
-      whatsapp_number: "",
-      takeover_ai: false,
-      waktu_takeover: 0,
-      limit_balasan_ai: false,
-      maksimum_balasan_ai: 0,
-    });
+    let createdchanel = null;
+    try {
+      // Step 1: Simpan data chanel awal ke database untuk mendapatkan ID
+      createdchanel = await addchanelToDB({
+        name: newchanel.value.name,
+        type: newchanel.value.type,
+        icon_url: iconUrl,
+        whatsapp_number: "",
+        takeover_ai: false,
+        waktu_takeover: 0,
+        limit_balasan_ai: false,
+        maksimum_balasan_ai: 0,
+      });
 
-    await fetchchanels();
+      console.log("Result from addchanelToDB - createdchanel:", createdchanel);
 
-    // Jika chanel WhatsApp, buat session baru di WAHA
-    if (newchanel.value.type === "whatsapp") {
-      const webhookUrl = `${publicBaseUrl}/api/waha-webhook`;
-      // Cari chanel yang baru saja dibuat
-      const createdchanel = chanels.value.find(
-        (c) => c.name === newchanel.value.name && c.type === "whatsapp"
-      );
-      if (createdchanel) {
-        try {
-          const res = await fetch(`${baseUrl}/api/sessions`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Api-Key": wahaApiKey,
-            },
-            body: JSON.stringify({
-              name: createdchanel.name,
-              config: {
-                webhooks: [
-                  {
-                    url: webhookUrl,
-                    events: ["message.any"],
-                    hmac: { key: null },
-                    retries: {
-                      delaySeconds: 2,
-                      attempts: 15,
-                      policy: "exponential",
+      await fetchchanels(); // Refresh daftar chanel untuk mendapatkan chanel yang baru dibuat
+
+      // Jika chanel WhatsApp, buat session baru di WAHA
+      console.log("Chanel type:", newchanel.value.type);
+      if (newchanel.value.type === "whatsapp") {
+        const webhookUrl = `${publicBaseUrl}/api/waha-webhook`;
+        console.log("Created chanel object:", createdchanel);
+        console.log("WAHA Base URL:", baseUrl);
+        console.log("WAHA API Key:", wahaApiKey);
+        console.log("Webhook URL:", webhookUrl);
+
+        if (createdchanel) {
+          try {
+            const res = await fetch(`${baseUrl}/api/sessions`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Api-Key": wahaApiKey,
+              },
+              body: JSON.stringify({
+                name: createdchanel.name,
+                config: {
+                  webhooks: [
+                    {
+                      url: webhookUrl,
+                      events: ["message.any"],
+                      hmac: { key: null },
+                      retries: {
+                        delaySeconds: 2,
+                        attempts: 15,
+                        policy: "exponential",
+                      },
+                      customHeaders: null,
                     },
-                    customHeaders: null,
-                  },
-                ],
-                metadata: { chanel_id: createdchanel.id },
-                noweb: {
-                  markOnline: true,
-                  store: {
-                    enabled: false,
-                    fullSync: false,
+                  ],
+                  metadata: { chanel_id: createdchanel.id },
+                  noweb: {
+                    markOnline: true,
+                    store: {
+                      enabled: false,
+                      fullSync: false,
+                    },
                   },
                 },
-              },
-            }),
-          });
-          const sessionResp = await res.json();
-          if (sessionResp && sessionResp.name) {
-            // Update chanel di database, set session_name
-            await updatechanel(createdchanel.id, {
-              session_name: sessionResp.name,
+              }),
             });
+            const sessionResp = await res.json();
+            console.log("WAHA API Response (raw):", res);
+            console.log("WAHA API Response (parsed):", sessionResp);
+            if (sessionResp && sessionResp.name) {
+              // Update chanel di database, set session_name
+              await updatechanel(createdchanel.id, {
+                session_name: sessionResp.name,
+              });
+              showToast({ message: "Chanel berhasil ditambahkan dan sesi WAHA dibuat!", type: "success" });
+            } else {
+              // Jika pembuatan sesi WAHA gagal, hapus chanel dari database
+              await deletechanel(createdchanel.id);
+              await fetchchanels(); // Refresh daftar chanel setelah penghapusan
+              showToast({ message: "Gagal membuat sesi WAHA, chanel dihapus.", type: "error" });
+            }
+          } catch (e) {
+            console.error("Gagal membuat session WAHA:", e);
+            // Jika terjadi error saat fetch, hapus chanel dari database
+            if (createdchanel) {
+              await deletechanel(createdchanel.id);
+              await fetchchanels(); // Refresh daftar chanel setelah penghapusan
+            }
+            showToast({ message: "Gagal membuat sesi WAHA, chanel dihapus.", type: "error" });
           }
-        } catch (e) {
-          console.error("Gagal membuat session WAHA:", e);
         }
       }
-    }
+      else {
+        // Jika bukan chanel WhatsApp, langsung sukses
+        showToast({ message: "Chanel berhasil ditambahkan!", type: "success" });
+      }
 
-    newchanel.value = { name: "", type: "whatsapp" };
-    showForm.value = false;
-  } catch (err) {
-    console.error("Error adding chanel:", err);
-    showToast({ message: "Gagal menambahkan chanel", type: "error" });
+      newchanel.value = { name: "", type: "whatsapp" };
+      showForm.value = false;
+    } catch (err) {
+      console.error("Error adding chanel:", err);
+      showToast({ message: `Gagal menambahkan chanel: ${err.message}`, type: "error" });
+    }
+  } catch (err) { // This is the new catch block for the outermost try
+    console.error("Error adding chanel (outer):", err);
+    showToast({ message: `Gagal menambahkan chanel: ${err.message}`, type: "error" });
   }
 }
 

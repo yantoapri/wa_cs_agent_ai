@@ -374,7 +374,7 @@ export default defineEventHandler(async (event) => {
     // Cek apakah pesan outgoing ini baru saja dikirim oleh AI
     const outgoingContent = body?.payload?.body || body?.payload?.text || null;
     const outgoingTo = normalizePhone(
-      (body?.payload?.to || body?.payload?.chatId || rawPayloadFrom).replace(
+      body?.payload?.to.replace(
         "@c.us",
         ""
       )

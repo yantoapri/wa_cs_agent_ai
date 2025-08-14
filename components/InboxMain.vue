@@ -47,14 +47,14 @@
 
       <div v-else class="space-y-2 mb-4 flex-1 overflow-y-auto">
         <div
-          v-if="messages.length === 0"
+          v-if="displayMessages.length === 0"
           class="text-center py-8 text-gray-400"
         >
           Belum ada pesan dalam percakapan ini
         </div>
         <template v-else>
           <template v-for="(message, idx) in sortedMessages" :key="message.id">
-            <template v-if="shouldShowDate(messages, idx)">
+            <template v-if="shouldShowDate(displayMessages, idx)">
               <div class="flex justify-center my-4">
                 <span
                   class="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full shadow"
@@ -63,70 +63,51 @@
               </div>
             </template>
             <!-- Bubble chat: kanan jika from == contact, kiri jika from == chanel -->
-            <div
-              class="w-full flex"
-              :class="
-                normalizePhone(message.from) ===
-                normalizePhone(selectedConversation.contact?.phone_number)
-                  ? 'justify-end'
-                  : 'justify-start'
-              "
-            >
-              <div
-                :class="[
-                  'max-w-[70%] px-4 py-2 rounded-lg mb-2 align-top',
-                  normalizePhone(message.from) ===
-                  normalizePhone(selectedConversation.contact?.phone_number)
-                    ? 'bg-blue-500 text-white ml-auto' // bubble kanan (user)
-                    : 'bg-gray-100 text-gray-900 mr-auto', // bubble kiri (agent)
-                ]"
-              >
-                <div
-                  class="text-xs mb-1"
-                  :class="
-                    normalizePhone(message.from) ===
-                    normalizePhone(selectedConversation.contact?.phone_number)
-                      ? 'text-blue-100'
-                      : 'text-gray-500'
-                  "
-                >
-                  {{
-                    normalizePhone(message.from) ===
-                    normalizePhone(selectedConversation.contact?.phone_number)
-                      ? selectedConversation.contact?.name ||
-                        selectedConversation.contact?.phone_number ||
-                        "User"
-                      : selectedConversation.agent?.name || "Agent"
-                  }}
-                </div>
-                <div v-if="message.media_url" class="mb-2">
-                  <img
-                    :src="message.media_url"
-                    alt="media"
-                    class="max-w-full max-h-60 rounded-lg border"
-                    :class="
-                      normalizePhone(message.from) ===
-                      normalizePhone(selectedConversation.contact?.phone_number)
-                        ? 'ml-auto'
-                        : 'mr-auto'
-                    "
-                  />
-                </div>
-                <div class="text-sm whitespace-pre-line">
-                  {{ message.content }}
-                </div>
-                <div
-                  class="text-xs text-gray-200 mt-1"
-                  v-if="
-                    normalizePhone(message.from) ===
-                    normalizePhone(selectedConversation.contact?.phone_number)
-                  "
-                >
-                  {{ formatTime(message.created_at) }}
-                </div>
-                <div class="text-xs text-gray-400 mt-1" v-else>
-                  {{ formatTime(message.created_at) }}
-                </div>
+                        <div
+                                      class="w-full flex"
+                                      :class="selectedConversation.contact?.phone_number!=message.from ? 'justify-end' : 'justify-start'"
+                                    >
+                                   
+                                      <div
+                                        :class="[
+                                          'max-w-[70%] px-4 py-2 rounded-lg mb-2 align-top',
+                                          selectedConversation.contact?.phone_number!=message.from
+                                            ? 'bg-blue-500 text-white ml-auto' // bubble kanan (user)
+                                            : 'bg-gray-100 text-gray-900 mr-auto', // bubble kiri (agent)
+                                        ]"
+                                      >
+                                        <div
+                                          class="text-xs mb-1"
+                                          :class="selectedConversation.contact?.phone_number==message.from  ? 'text-gray-900' : 'text-white'"
+                                        >
+                                          {{
+                                            selectedConversation.contact?.phone_number==message.from 
+                                              ? selectedConversation.contact?.name ||
+                                                selectedConversation.contact?.phone_number ||
+                                                "User"
+                                              : selectedConversation.agent?.name || "Agent"
+                                          }}
+                                        </div>
+                                        <div v-if="message.media_url" class="mb-2">
+                                          <img
+                                            :src="message.media_url"
+                                            alt="media"
+                                            class="max-w-full max-h-60 rounded-lg border"
+                                            :class="(selectedConversation.contact?.phone_number!=message.from && selectedConversation.contact?.phone_number!=message.to) ? 'ml-auto' : 'mr-auto'"
+                                          />
+                                        </div>
+                                        <div class="text-sm whitespace-pre-line">
+                                          {{ message.content }}
+                                        </div>
+                                        <div
+                                          class="text-xs text-gray-200 mt-1"
+                                          v-if="(selectedConversation.contact?.phone_number!=message.from && selectedConversation.contact?.phone_number!=message.to)"
+                                        >
+                                          {{ formatTime(message.created_at) }}
+                                        </div>
+                                        <div class="text-xs text-gray-400 mt-1" v-else>
+                                          {{ formatTime(message.created_at) }}
+                                        </div>
               </div>
             </div>
           </template>
@@ -536,6 +517,7 @@
 import { ref, watch, onBeforeUnmount, computed, nextTick } from "vue";
 import { useConversationStore } from "~/composables/useConversationStore";
 import { useToast } from "~/composables/useToast";
+import { useChanelstore } from "~/composables/useChanels";
 
 const props = defineProps({
   selectedConversation: Object,
@@ -549,6 +531,24 @@ const {
   fetchMessagesByGroupManusia,
   markMessagesAsRead,
 } = useConversationStore();
+// Separate message arrays for AI and human agents
+const aiMessages = ref([]);
+const humanMessages = ref([]);
+
+// Computed property to determine which messages to display based on agent type
+const displayMessages = computed(() => {
+  if (!props.selectedConversation) return [];
+  
+  if (props.selectedConversation.agent?.type === "ai") {
+    return aiMessages.value;
+  } else if (props.selectedConversation.agent?.type === "manusia") {
+    return humanMessages.value;
+  }
+  
+  return messages.value; // fallback to original messages array
+});
+
+const { getchanelById } = useChanelstore();
 const { showToast } = useToast();
 const newMessage = ref("");
 const sending = ref(false);
@@ -562,6 +562,9 @@ const selectedImage = ref(null);
 const imagePreview = ref("");
 const imageCaption = ref("");
 const selectedCategory = ref("smileys");
+
+// Periodic refresh
+const refreshInterval = ref(null);
 
 // Emoji categories
 const emojiCategories = ref({
@@ -1595,8 +1598,34 @@ const getConversationAvatar = (conversation) => {
   );
 };
 
+// Reactive variable to store current channel status
+const channelStatus = ref("Connected");
+
+// Function to fetch and update channel status
+const updateChannelStatus = async (conversation) => {
+  if (!conversation || !conversation.chanel || !conversation.chanel.id) {
+    channelStatus.value = "Not Connected";
+    return;
+  }
+
+  try {
+    const chanelData = await getchanelById(conversation.chanel.id);
+    if (chanelData && chanelData.is_active) {
+      channelStatus.value = "Connected";
+    } else {
+      channelStatus.value = "Not Connected";
+    }
+  } catch (error) {
+    console.error("Error fetching channel status:", error);
+    channelStatus.value = "Not Connected";
+  }
+};
+
 const getConversationStatus = (conversation) => {
-  return "Active";
+  // Update channel status asynchronously
+  updateChannelStatus(conversation);
+  // Return the current cached status
+  return channelStatus.value;
 };
 
 const formatTime = (dateString) => {
@@ -1739,6 +1768,28 @@ const sendMessage = async () => {
     // Clear inputs
     newMessage.value = "";
     removeImage();
+    
+    // Add message to the correct local array
+    if (props.selectedConversation?.agent?.type === "ai") {
+      // For AI agents, we need to fetch the message again as it might have been processed
+      const aiMsgs = await fetchMessagesByGroupAi(
+        props.selectedConversation.agent.id,
+        props.selectedConversation.contact.id,
+        props.selectedConversation.chanel.id
+      );
+      aiMessages.value = aiMsgs || [];
+    } else if (props.selectedConversation?.agent?.type === "manusia") {
+      // For human agents, add the message to the local array
+      // Note: We're not directly adding to humanMessages.value here because
+      // the periodic refresh will update it, but we could also add it directly
+      const humanMsgs = await fetchMessagesByGroupManusia(
+        props.selectedConversation.agent.id,
+        props.selectedConversation.contact.id,
+        props.selectedConversation.chanel.id
+      );
+      humanMessages.value = humanMsgs || [];
+    }
+    
     showToast({ message: "Pesan berhasil dikirim", type: "success" });
   } catch (error) {
     console.error("Error sending message:", error);
@@ -1752,7 +1803,7 @@ const sendMessage = async () => {
 };
 
 const sortedMessages = computed(() => {
-  return [...messages.value].sort(
+  return [...displayMessages.value].sort(
     (a, b) => new Date(a.created_at) - new Date(b.created_at)
   );
 });
@@ -1771,22 +1822,61 @@ watch(newMessage, () => {
 watch(
   () => props.selectedConversation,
   async (newConversation) => {
+    // Clear any existing interval
+    if (refreshInterval.value) {
+      clearInterval(refreshInterval.value);
+      refreshInterval.value = null;
+    }
+    
     if (!isMounted) return;
     try {
       if (newConversation) {
         if (newConversation.agent.type === "ai") {
-          await fetchMessagesByGroupAi(
+          const aiMsgs = await fetchMessagesByGroupAi(
             newConversation.agent.id,
             newConversation.contact.id,
             newConversation.chanel.id
           );
+          aiMessages.value = aiMsgs || [];
         }
         if (newConversation.agent.type === "manusia") {
-          await fetchMessagesByGroupManusia(
+          const humanMsgs = await fetchMessagesByGroupManusia(
             newConversation.agent.id,
             newConversation.contact.id,
             newConversation.chanel.id
           );
+          humanMessages.value = humanMsgs || [];
+          
+          // Set up periodic refresh if channel is active
+          // First check the current channel status from database
+          try {
+            const chanelData = await getchanelById(newConversation.chanel.id);
+            if (chanelData && chanelData.is_active) {
+              refreshInterval.value = setInterval(async () => {
+                if (isMounted && props.selectedConversation) {
+                  try {
+                    const humanMsgs = await fetchMessagesByGroupManusia(
+                      props.selectedConversation.agent.id,
+                      props.selectedConversation.contact.id,
+                      props.selectedConversation.chanel.id
+                    );
+                    humanMessages.value = humanMsgs || [];
+                    
+                    // Update humanMessages with read status for inbound messages
+                    humanMessages.value = humanMessages.value.map(msg => ({
+                      ...msg,
+                      is_read: msg.direction === "inbound" ? true : msg.is_read
+                    }));
+                    console.log("[InboxMain] Messages refreshed");
+                  } catch (err) {
+                    console.error("[InboxMain] Error refreshing messages:", err);
+                  }
+                }
+              }, 30000); // 30 seconds
+            }
+          } catch (error) {
+            console.error("Error checking channel status for refresh:", error);
+          }
         }
         if (!isMounted) return;
         await markMessagesAsRead(
@@ -1794,8 +1884,23 @@ watch(
           newConversation.contact.id,
           newConversation.chanel.id
         );
+        
+        // Update our local arrays with the read status
+        if (newConversation.agent.type === "ai") {
+          // Update aiMessages with read status
+          aiMessages.value = aiMessages.value.map(msg => ({
+            ...msg,
+            is_read: msg.direction === "inbound" ? true : msg.is_read
+          }));
+        } else if (newConversation.agent.type === "manusia") {
+          // Update humanMessages with read status
+          humanMessages.value = humanMessages.value.map(msg => ({
+            ...msg,
+            is_read: msg.direction === "inbound" ? true : msg.is_read
+          }));
+        }
         if (!isMounted) return;
-        console.log("[InboxMain] Messages loaded:", messages.value);
+        console.log("[InboxMain] Messages loaded:", displayMessages.value);
       }
     } catch (err) {
       console.error("[InboxMain] Error in watcher:", err);
@@ -1803,4 +1908,13 @@ watch(
   },
   { immediate: true }
 );
+
+// Clear interval on unmount
+onBeforeUnmount(() => {
+  if (refreshInterval.value) {
+    clearInterval(refreshInterval.value);
+    refreshInterval.value = null;
+  }
+  isMounted = false;
+});
 </script>

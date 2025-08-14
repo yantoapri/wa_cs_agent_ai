@@ -69,12 +69,21 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'; // Import onMounted
 const email = ref("");
 const password = ref("");
 const error = ref("");
 const loading = ref(false);
 const supabase = useSupabaseClient();
 const router = useRouter();
+const user = useSupabaseUser(); // Get Supabase user
+
+// Redirect if already logged in
+onMounted(() => {
+  if (user.value) {
+    router.push('/views/dashboard');
+  }
+});
 
 async function login() {
   loading.value = true;
@@ -87,7 +96,7 @@ async function login() {
     if (loginError) {
       error.value = loginError.message;
     } else {
-      router.push("/");
+      router.push("/views/dashboard"); // Redirect to /views/dashboard after successful login
     }
   } finally {
     loading.value = false;
