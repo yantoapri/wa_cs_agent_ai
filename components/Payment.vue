@@ -14,15 +14,13 @@
           <div class="border border-gray-200 rounded-xl p-5 bg-white">
             <div class="flex items-start justify-between gap-4">
               <div>
-                <div class="text-sm text-gray-500">Paket dipilih</div>
-                <div class="mt-1 text-2xl font-bold">{{ planLabel }}</div>
-                <div v-if="monthlyPrice" class="text-gray-600 mt-1">Rp {{ toIDR(monthlyPrice) }} / bulan</div>
-                <div v-else class="text-gray-600 mt-1">Gratis 3 hari (trial)</div>
+                <div class="text-sm text-gray-500">Paket Dipilih</div>
+                <div class="mt-1 text-2xl font-bold capitalize">{{ planLabel }}</div>
               </div>
-              <NuxtLink to="/#pricing" class="text-sm text-blue-600 hover:underline">Ubah paket</NuxtLink>
+              <button @click="openPackageModal" class="text-sm text-blue-600 hover:underline">Ubah paket</button>
             </div>
 
-            <div v-if="plan.value !== 'free'" class="mt-5">
+            <div v-if="plan !== 'free'" class="mt-5">
               <div class="text-sm font-medium text-gray-700 mb-2">Siklus Pembayaran</div>
               <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden">
                 <button
@@ -58,8 +56,8 @@
               <div class="mt-2 text-xs text-gray-500">Tambahkan berita transfer: "Pembelian {{ planLabel }} - {{ billingCycleLabel }}"</div>
             </div>
 
-            <div v-if="plan.value !== 'free'" class="mt-4 text-xs text-gray-500">
-              Konfirmasi pembayaran Anda akan diproses manual. Setelah transfer, klik tombol "Saya sudah transfer" di ringkasan untuk melanjutkan.
+            <div v-if="plan !== 'free'" class="mt-4 text-xs text-gray-500">
+              Konfirmasi pembayaran Anda akan diproses manual. Setelah transfer, klik tombol "Submit" di ringkasan untuk melanjutkan.
             </div>
             <div v-else class="mt-4 text-sm text-green-700">
               Paket Trial tidak membutuhkan pembayaran. Klik tombol "Aktifkan Trial" di ringkasan untuk mulai menggunakan.
@@ -76,33 +74,33 @@
                 <span>Paket</span>
                 <span>{{ planLabel }}</span>
               </div>
-              <div class="flex justify-between" v-if="plan.value !== 'free'">
+              <div class="flex justify-between" v-if="plan !== 'free'">
                 <span>Harga Bulanan</span>
                 <span>Rp {{ toIDR(monthlyPrice) }}</span>
               </div>
-              <div class="flex justify-between" v-if="plan.value !== 'free'">
+              <div class="flex justify-between" v-if="plan !== 'free'">
                 <span>Siklus</span>
                 <span>{{ billingCycleLabel }}</span>
               </div>
               <hr class="my-2" />
-              <div class="flex justify-between" v-if="plan.value !== 'free'">
+              <div class="flex justify-between" v-if="plan !== 'free'">
                 <span>Subtotal</span>
                 <span>Rp {{ toIDR(subtotal) }}</span>
               </div>
-              <div class="flex justify-between text-green-700" v-if="plan.value !== 'free' && discount > 0">
+              <div class="flex justify-between text-green-700" v-if="plan !== 'free' && discount > 0">
                 <span>Diskon (2 bulan gratis)</span>
                 <span>- Rp {{ toIDR(discount) }}</span>
               </div>
               <div class="flex justify-between text-base font-semibold mt-2">
                 <span>Total</span>
-                <span v-if="plan.value !== 'free'">Rp {{ toIDR(totalDue) }}</span>
+                <span v-if="plan !== 'free'">Rp {{ toIDR(totalDue) }}</span>
                 <span v-else>Rp 0</span>
               </div>
             </div>
 
             <div class="mt-5 space-y-2">
               <button
-                v-if="plan.value !== 'free'"
+                v-if="plan !== 'free'"
                 @click="submitInvoice()"
                 class="w-full px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700"
               >Submit</button>
@@ -111,11 +109,38 @@
                 @click="activateTrial()"
                 class="w-full px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700"
               >Aktifkan Trial</button>
-              <NuxtLink to="/#pricing" class="block text-center text-xs text-gray-500 hover:underline">Kembali ke Pricing</NuxtLink>
+              <NuxtLink to="/views/dashboard" class="block text-center text-xs text-gray-500 hover:underline">Kembali ke Dashboard</NuxtLink>
             </div>
           </div>
         </aside>
       </div>
+
+      <!-- Package Selection Modal -->
+      <div v-if="showPackageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 my-8">
+          <div class="p-6">
+            <h3 class="text-lg font-semibold mb-4">Pilih Paket Baru</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div v-for="pkg in packages" :key="pkg.id" class="border rounded-lg p-4 flex flex-col">
+                <h4 class="font-bold text-lg">{{ pkg.name }}</h4>
+                <p class="text-gray-600">Rp {{ toIDR(pkg.harga) }} / bulan</p>
+                <ul class="text-sm space-y-2 mt-4">
+                  <li>{{ pkg.limit_ai }} Pesan AI</li>
+                  <li>{{ pkg.limit_agent }} Agen</li>
+                  <li>{{ pkg.limit_broadcast }} Broadcast</li>
+                  <li>{{ pkg.limit_chanel }} Channel</li>
+                  <li>{{ pkg.limit_produk }} Produk</li>
+                </ul>
+                <button @click="selectPackage(pkg)" class="mt-auto bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Pilih</button>
+              </div>
+            </div>
+            <div class="text-right mt-4">
+              <button @click="showPackageModal = false" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg">Batal</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
@@ -123,6 +148,7 @@
 <script setup>
 import { useHead, useRoute, useRouter, useSupabaseUser, useSupabaseClient, computed, ref, onMounted } from '#imports'
 import { useToast } from '~/composables/useToast'
+import { usePackages } from '~/composables/usePackages';
 
 definePageMeta({ layout: 'authenticated', middleware: 'auth' })
 useHead({ title: 'Pembayaran - Nutra AI Chat' })
@@ -132,13 +158,42 @@ const router = useRouter()
 const user = useSupabaseUser()
 const { showToast } = useToast()
 const supabase = useSupabaseClient()
+const { packages, fetchPackages } = usePackages();
 
-// Plan & harga per bulan
-const plan = computed(() => (route.query.plan || 'free').toString())
-const planPrices = { free: 0, pro: 149000, business: 500000, corporate: 1500000 }
-const planNames = { free: 'Free Trial 3 Hari', pro: 'Pro', business: 'Business', corporate: 'Corporate' }
-const planLabel = computed(() => planNames[plan.value] || plan.value)
-const monthlyPrice = computed(() => planPrices[plan.value] || 0)
+
+const showPackageModal = ref(false);
+const userPackage = ref(null);
+
+const plan = ref(route.query.plan || 'free');
+const planNames = { free: 'Free Trial 3 Hari', pro: 'Pro', business: 'Business', corporate: 'Corporate' };
+const planLabel = computed(() => planNames[plan.value] || plan.value);
+const monthlyPrice = computed(() => (packages.value?.find(p => p.name.toLowerCase() === plan.value)?.harga || 0));
+
+async function fetchUserPackage() {
+  if (!user.value) return;
+  const { data, error } = await supabase
+    .from('users')
+    .select('package(*)')
+    .eq('auth_id', user.value.id)
+    .single();
+  if (error) {
+    console.error('Error fetching user package:', error);
+    return;
+  }
+  userPackage.value = data.package;
+  if (data.package) {
+    plan.value = data.package.name.toLowerCase();
+  }
+}
+
+function openPackageModal() {
+  showPackageModal.value = true;
+}
+
+function selectPackage(selectedPackage) {
+  plan.value = selectedPackage.name.toLowerCase();
+  showPackageModal.value = false;
+}
 
 // Siklus pembayaran
 const billingCycle = ref('monthly') // 'monthly' | 'yearly'
@@ -158,10 +213,13 @@ const totalDue = computed(() => Math.max(0, subtotal.value - discount.value))
 // Bank transfer (fixed)
 const bankInfo = { code: 'BCA', name: 'BCA', accountNumber: '861-1055501', accountName: 'PT Nutra USA Indonesia' }
 
-onMounted(() => {
+onMounted(async () => {
   if (!user?.value) {
     router.replace(`/register?plan=${encodeURIComponent(plan.value)}`)
+    return;
   }
+  await fetchUserPackage();
+  await fetchPackages();
 })
 
 function toIDR(n) {
@@ -172,8 +230,28 @@ async function copy(text) {
   try { await navigator.clipboard.writeText(text); showToast({ type: 'success', message: 'Disalin ke clipboard' }) } catch {}
 }
 
+async function getPublicUserId() {
+  if (!user.value) return null;
+  const { data, error } = await supabase
+    .from('users')
+    .select('id')
+    .eq('auth_id', user.value.id)
+    .single();
+  
+  if (error) {
+    console.error('Error fetching public user id:', error);
+    return null;
+  }
+  return data.id;
+}
+
 async function submitInvoice() {
   try {
+    const publicUserId = await getPublicUserId();
+    if (!publicUserId) {
+      throw new Error('Could not find user profile.');
+    }
+
     const now = new Date()
     // Hitung tanggal mulai (3 hari setelah transaksi)
     const start = new Date(now)
@@ -189,7 +267,7 @@ async function submitInvoice() {
     // Simpan invoice
     const invoicePayload = {
       invoice_number: `INV-${Date.now()}`,
-      user_id: user?.value?.id || null,
+      user_id: publicUserId,
       plan: plan.value,
       billing_cycle: billingCycle.value,
       price_monthly: monthlyPrice.value,
@@ -201,25 +279,15 @@ async function submitInvoice() {
       bank_name: bankInfo.name,
       bank_account_number: bankInfo.accountNumber,
       bank_account_name: bankInfo.accountName,
-      status: 'pending',
+      status: 1,
       created_at: now.toISOString(),
     }
     const { error: invError } = await supabase.from('invoices').insert([invoicePayload])
     if (invError) throw invError
 
-    // Simpan user_package
-    const userPackagePayload = {
-      user_id: user?.value?.id || null,
-      package_id: null,
-      created_at: now.toISOString(),
-      start_at: start.toISOString(),
-      end_at: end.toISOString(),
-    }
-    const { error: upError } = await supabase.from('user_package').insert([userPackagePayload])
-    if (upError) throw upError
 
     showToast({ type: 'success', message: 'Invoice dan paket berhasil dibuat.' })
-    router.push('/views/dashboard')
+    router.push('/views/billing-payment')
   } catch (e) {
     console.error(e)
     showToast({ type: 'error', message: 'Gagal membuat invoice/paket.' })

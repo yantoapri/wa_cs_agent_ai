@@ -14,11 +14,11 @@ export default defineEventHandler(async (event) => {
 
     if (!baseUrl || !wahaApiKey) {
       console.error(
-        "[Auto Message Scheduler] WAHA configuration tidak ditemukan"
+        "[Auto Message Scheduler] Wa configuration tidak ditemukan"
       );
       return {
         error: true,
-        message: "WAHA configuration tidak ditemukan",
+        message: "Wa configuration tidak ditemukan",
       };
     }
 

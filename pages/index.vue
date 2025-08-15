@@ -76,50 +76,32 @@
           <p class="mt-3 text-gray-600">Harga terjangkau, fitur lengkap untuk semua skala bisnis.</p>
         </div>
 
-        <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Pro -->
-          <div class="rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition">
-            <div class="text-sm font-semibold text-blue-600">Pro</div>
-            <div class="mt-2 text-3xl font-extrabold">Rp 149.000<span class="text-base font-medium text-gray-500">/bulan</span></div>
+        <div v-if="loading" class="text-center mt-10">Loading...</div>
+        <div v-else-if="error" class="text-center mt-10 text-red-500">{{ error }}</div>
+        
+        <div v-else class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div v-for="pkg in packages" :key="pkg.id" class="rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition flex flex-col">
+            <div class="text-sm font-semibold text-blue-600">{{ pkg.name }}</div>
+            <div class="mt-2 text-3xl font-extrabold">
+              {{ new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(pkg.harga) }}
+              <span class="text-base font-medium text-gray-500">/bulan</span>
+            </div>
+            <p class="mt-3 text-sm text-gray-500 flex-grow">{{ pkg.deskripsi }}</p>
             <ul class="mt-4 space-y-2 text-gray-600 text-sm">
-              <li>1 Channel WhatsApp</li>
-              <li>Agent AI dasar</li>
-              <li>Riwayat chat 30 hari</li>
-              <li>Dukungan email</li>
+              <li>{{ pkg.limit_chanel }} Channel WhatsApp</li>
+              <li>{{ pkg.limit_agent }} Agent</li>
+              <li>{{ pkg.limit_ai }} AI Limit</li>
+              <li>{{ pkg.limit_broadcast }} Broadcast</li>
+              <li>{{ pkg.limit_produk }} Produk</li>
             </ul>
-            <button @click="handleSelectPlan('pro')" class="mt-6 inline-block w-full text-center px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700">Coba Pro</button>
-          </div>
-
-          <!-- Business -->
-          <div class="rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition relative">
-            <div class="absolute -top-3 right-4 px-2 py-0.5 text-xs rounded-full bg-blue-600 text-white">Terpopuler</div>
-            <div class="text-sm font-semibold text-blue-600">Business</div>
-            <div class="mt-2 text-3xl font-extrabold">Rp 500.000<span class="text-base font-medium text-gray-500">/bulan</span></div>
-            <ul class="mt-4 space-y-2 text-gray-600 text-sm">
-              <li>3 Channel WhatsApp</li>
-              <li>Agent AI lanjutan</li>
-              <li>Broadcast & Auto Message</li>
-              <li>Dukungan chat</li>
-            </ul>
-            <button @click="handleSelectPlan('business')" class="mt-6 inline-block w-full text-center px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700">Pilih Business</button>
-          </div>
-
-          <!-- Corporate -->
-          <div class="rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition">
-            <div class="text-sm font-semibold text-blue-600">Corporate</div>
-            <div class="mt-2 text-3xl font-extrabold">Rp 1.500.000<span class="text-base font-medium text-gray-500">/bulan</span></div>
-            <ul class="mt-4 space-y-2 text-gray-600 text-sm">
-              <li>Tak terbatas Channel</li>
-              <li>Agent AI kustom</li>
-              <li>Integrasi & SLA</li>
-              <li>Dedicated support</li>
-            </ul>
-            <button @click="handleSelectPlan('corporate')" class="mt-6 inline-block w-full text-center px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700">Hubungi Sales</button>
+            <button @click="handleSelectPlan(pkg.name.toLowerCase())" class="mt-6 inline-block w-full text-center px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700">
+              Pilih {{ pkg.name }}
+            </button>
           </div>
         </div>
 
         <div class="mt-6 text-center text-sm text-gray-500">
-          Catatan: Free trial 3 hari untuk semua paket. Harga setara Pro 149rb, Business 500rb, Corporate 1,5jt per bulan.
+          Catatan: Free trial 3 hari untuk semua paket.
         </div>
       </div>
     </section>
@@ -153,7 +135,10 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import { useHead } from '#imports'
+import { usePackages } from '~/composables/usePackages'
+
 useHead({
   title: 'Nutra AI Chat - Public',
   meta: [
@@ -163,11 +148,18 @@ useHead({
 
 const user = useSupabaseUser()
 const router = useRouter()
+const { packages, loading, error, fetchPackages } = usePackages()
+
+onMounted(fetchPackages)
+
 function handleSelectPlan(plan) {
+  const selectedPackage = packages.value.find(p => p.name.toLowerCase() === plan)
+  const planName = selectedPackage ? selectedPackage.name.toLowerCase() : plan
+  
   if (!user?.value) {
-    router.push(`/register?plan=${plan}`)
+    router.push(`/register?plan=${planName}`)
   } else {
-    router.push(`/pricing/payment?plan=${plan}`)
+    router.push(`/pricing/payment?plan=${planName}`)
   }
 }
 </script>

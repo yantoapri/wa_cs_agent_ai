@@ -101,7 +101,7 @@
             <span class="text-blue-600 font-medium">
               {{
                 restartingWaha
-                  ? "Sedang restart WAHA..."
+                  ? "Sedang restart Wa..."
                   : restartingSession
                   ? "Sedang restart session..."
                   : status == "STOPPED"
@@ -182,24 +182,7 @@
               <span>menit</span>
             </div>
           </div>
-          <div class="form-group">
-            <label>Limit Balasan AI</label>
-            <select v-model="editData.limitBalasanAI" class="form-input">
-              <option value="0">Tidak Aktif</option>
-              <option value="1">Aktif</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Maksimum Balasan AI</label>
-            <div style="display: flex; align-items: center; gap: 8px">
-              <input
-                v-model="editData.maksimumBalasanAI"
-                class="form-input"
-                style="flex: 1"
-              />
-              <span>balasan</span>
-            </div>
-          </div>
+      
           <button class="edit-btn" type="submit">Edit chanel</button>
         </form>
         <div style="margin-top: 32px">
@@ -381,7 +364,7 @@ async function fetchSessionStatus(sessionName) {
         });
         status.value = "SCAN_QR_CODE";
       } catch (restartErr) {
-        console.error("[chanelMain] Gagal restart WAHA/session:", restartErr);
+        console.error("[chanelMain] Gagal restart Wa/session:", restartErr);
         status.value = data.status;
       } finally {
         restartingSession.value = false;
@@ -523,7 +506,7 @@ async function onDeletechanel() {
             },
           });
         } catch (e) {
-          console.error("Gagal menghapus session WAHA:", e);
+          console.error("Gagal menghapus session Wa:", e);
         }
       }
       await deletechanel(props.chanel.id);

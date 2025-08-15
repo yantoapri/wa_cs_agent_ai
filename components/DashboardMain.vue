@@ -12,7 +12,7 @@
     <div v-else class="space-y-6">
       <!-- Kartu informasi paket -->
       <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <div class="text-sm text-gray-500">Paket Aktif</div>
+        <div class="text-sm text-gray-500">Paket Anda</div>
         <div class="mt-1 flex flex-wrap items-center gap-3">
           <div class="text-xl font-semibold capitalize">{{ userPackageValue?.name || 'Tidak diketahui' }}</div>
           <div v-if="dashboard.startAt && dashboard.endAt" class="text-sm text-gray-600">
@@ -20,9 +20,9 @@
           </div>
         </div>
         
-        <div class="mt-4 p-4 border rounded-lg bg-blue-50 text-blue-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div v-if="is_trial||new Date(dashboard.endAt)>=new Date()" class="mt-4 p-4 border rounded-lg bg-blue-50 text-blue-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <div class="font-medium" v-if="userPackageValue==5">Anda sedang dalam masa Trial 3 hari</div>
+            <div class="font-medium" v-if="is_trial">Anda sedang dalam masa Trial 3 hari</div>
             <div class="text-sm text-blue-700">Upgrade paket untuk membuka semua fitur tanpa batasan.</div>
           </div>
           <button @click="goUpgrade" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Upgrade Paket</button>
@@ -198,7 +198,7 @@ function getProgressOffset(percent) {
 
 // nilai fallback jika relasi package tidak ditemukan
 const planLimits = { pro: 10000, business: 50000, corporate: 200000 }
-
+const is_trial=ref(false)
 const userPackageValue = ref(null)
 
 async function fetchUserPackage() {
@@ -216,6 +216,7 @@ async function fetchUserPackage() {
       dashboard.startAt=data.start_at;
       dashboard.endAt=data.end_at;
       userPackageValue.value=data.package
+      is_trial.value=data.is_trial;
     if (error) {
       console.error('fetchUserPackage error', error)
       userPackageValue.value = null
@@ -328,7 +329,9 @@ async function fetchUserPackage() {
 }
 
 function goUpgrade() {
-  router.push('/pricing/payment?plan=pro')
+  console.log("tes")
+  
+  router.push('/views/payment?plan=pro')
 }
 
 onMounted(async () => {

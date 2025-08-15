@@ -113,7 +113,7 @@ const validateName = () => {
   return true;
 };
 
-// Ambil config WAHA hanya dari import.meta.env
+// Ambil configwahanya dari import.meta.env
 const wahaUsername = import.meta.env.VITE_WAHA_USERNAME || "";
 const wahaPassword = import.meta.env.VITE_WAHA_PASSWORD || "";
 const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
@@ -162,10 +162,6 @@ async function addchanel() {
       console.log("Chanel type:", newchanel.value.type);
       if (newchanel.value.type === "whatsapp") {
         const webhookUrl = `${publicBaseUrl}/api/waha-webhook`;
-        console.log("Created chanel object:", createdchanel);
-        console.log("WAHA Base URL:", baseUrl);
-        console.log("WAHA API Key:", wahaApiKey);
-        console.log("Webhook URL:", webhookUrl);
 
         if (createdchanel) {
           try {
@@ -203,28 +199,26 @@ async function addchanel() {
               }),
             });
             const sessionResp = await res.json();
-            console.log("WAHA API Response (raw):", res);
-            console.log("WAHA API Response (parsed):", sessionResp);
             if (sessionResp && sessionResp.name) {
               // Update chanel di database, set session_name
               await updatechanel(createdchanel.id, {
                 session_name: sessionResp.name,
               });
-              showToast({ message: "Chanel berhasil ditambahkan dan sesi WAHA dibuat!", type: "success" });
+              showToast({ message: "Chanel berhasil ditambahkan dan sesi Wa dibuat!", type: "success" });
             } else {
-              // Jika pembuatan sesi WAHA gagal, hapus chanel dari database
+              // Jika pembuatan sesiwagagal, hapus chanel dari database
               await deletechanel(createdchanel.id);
               await fetchchanels(); // Refresh daftar chanel setelah penghapusan
-              showToast({ message: "Gagal membuat sesi WAHA, chanel dihapus.", type: "error" });
+              showToast({ message: "Gagal membuat sesi Wa, chanel dihapus.", type: "error" });
             }
           } catch (e) {
-            console.error("Gagal membuat session WAHA:", e);
+            console.error("Gagal membuat session Wa:", e);
             // Jika terjadi error saat fetch, hapus chanel dari database
             if (createdchanel) {
               await deletechanel(createdchanel.id);
               await fetchchanels(); // Refresh daftar chanel setelah penghapusan
             }
-            showToast({ message: "Gagal membuat sesi WAHA, chanel dihapus.", type: "error" });
+            showToast({ message: "Gagal membuat sesi Wa, chanel dihapus.", type: "error" });
           }
         }
       }
@@ -258,7 +252,7 @@ async function removechanel(chanel) {
           },
         });
       } catch (e) {
-        console.error("Gagal menghapus session WAHA:", e);
+        console.error("Gagal menghapus session Wa:", e);
       }
     }
     await deletechanel(chanel.id);
@@ -284,7 +278,7 @@ function selectchanel(chanel) {
     typeof chanel.limit_balasan_ai
   );
 
-  // Start session di WAHA jika chanel bertipe WhatsApp
+  // Start session diwajika chanel bertipe WhatsApp
   if (chanel.type === "whatsapp") {
     fetch(`${baseUrl}/api/sessions/${chanel.session_name}/start`, {
       method: "POST",
@@ -293,7 +287,7 @@ function selectchanel(chanel) {
         "X-Api-Key": wahaApiKey,
       },
     }).catch((e) => {
-      console.error("Gagal start session WAHA:", e);
+      console.error("Gagal start session Wa:", e);
     });
   }
 

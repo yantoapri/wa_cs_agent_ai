@@ -14,7 +14,7 @@ export function usePackages() {
       const { data, error: fetchError } = await supabase
         .from('package')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('id', { ascending: true });
       
       if (fetchError) throw fetchError;
       packages.value = data || [];

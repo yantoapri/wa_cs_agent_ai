@@ -1,11 +1,24 @@
 <template>
-  <div class="p-8">
-    <h2 class="text-2xl font-bold mb-6">Manage Packages</h2>
-
-    <div class="flex justify-end mb-4">
-      <button @click="openAddModal" class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-        Add Package
-      </button>
+  <div class="flex flex-col h-full bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200 px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Package Management</h1>
+          <p class="text-sm text-gray-600 mt-1">Manage subscription packages</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button
+            @click="openAddModal"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+          >
+            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Add Package
+          </button>
+        </div>
+      </div>
     </div>
 
     <div v-if="loading" class="text-center">Loading...</div>

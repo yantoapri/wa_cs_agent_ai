@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
     if (!baseUrl || !wahaApiKey) {
       return {
         error: true,
-        message: "WAHA configuration tidak ditemukan",
+        message: "Wa configuration tidak ditemukan",
       };
     }
 
@@ -77,7 +77,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    console.log("Sending message to WAHA:", {
+    console.log("Sending message to Wa:", {
       url: media ? `${baseUrl}/api/sendImage` : `${baseUrl}/api/sendText`,
       session: session,
       to: to,
@@ -93,7 +93,7 @@ export default defineEventHandler(async (event) => {
     const endpoint = media ? "/api/sendImage" : "/api/sendText";
     const fullUrl = `${baseUrl}${endpoint}`;
 
-    console.log("Full WAHA URL:", fullUrl);
+    console.log("Full Wa URL:", fullUrl);
     console.log("WAHA Payload:", JSON.stringify(wahaPayload, null, 2));
 
     // Send message to WAHA
@@ -114,23 +114,23 @@ export default defineEventHandler(async (event) => {
       return {
         error: false,
         message: media
-          ? "Gambar berhasil dikirim ke WAHA"
-          : "Pesan berhasil dikirim ke WAHA",
+          ? "Gambar berhasil dikirim ke Wa"
+          : "Pesan berhasil dikirim ke Wa",
         data: wahaResponse,
       };
     } else {
-      console.error("WAHA API error:", wahaResponse);
+      console.error("Wa API error:", wahaResponse);
       return {
         error: true,
-        message: wahaResponse?.message || "Gagal mengirim pesan ke WAHA",
+        message: wahaResponse?.message || "Gagal mengirim pesan ke Wa",
         data: wahaResponse,
       };
     }
   } catch (err) {
-    console.error("Error in waha-send-message API:", err);
+    console.error("Error in wa-send-message API:", err);
     return {
       error: true,
-      message: err.message || "Terjadi kesalahan saat mengirim pesan ke WAHA",
+      message: err.message || "Terjadi kesalahan saat mengirim pesan ke Waha",
     };
   }
 });

@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     if (!baseUrl || !wahaApiKey) {
       return {
         error: true,
-        message: "WAHA configuration tidak ditemukan",
+        message: "Wa configuration tidak ditemukan",
       };
     }
 

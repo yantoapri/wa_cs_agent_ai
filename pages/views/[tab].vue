@@ -580,8 +580,13 @@
           </div>
         </template>
          <template v-else-if="currentTab === 'payment'">
-          <div>
+          <div  class="w-full h-full flex flex-col bg-gray-100">
             <Payment/>
+          </div>
+        </template>
+        <template v-else-if="currentTab === 'billing-payment'">
+          <div  class="w-full h-full flex flex-col bg-gray-100">
+            <BillingHistory/>
           </div>
         </template>
       </div>
@@ -639,6 +644,7 @@ import ManageUserMain from "~/components/ManageUserMain.vue";
 import ManagePackageMain from "~/components/ManagePackageMain.vue";
 import InvoiceMain from "~/components/InvoiceMain.vue";
 import Payment from "../../components/Payment.vue";
+import BillingHistory from "~/components/BillingHistory.vue";
 
 const baseTabs = [
   {
@@ -701,6 +707,11 @@ const baseTabs = [
     icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
     </svg>`,
+  },
+  {
+    value: "billing-payment",
+    label: "Billing & Payment",
+    icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
   },
 ];
 

@@ -101,8 +101,8 @@ const restricted = ref(false)
 const filteredTabs = computed(() => {
   const list = displayedTabs.value
   if (!restricted.value) return list
-  // hanya tampilkan dashboard
-  return list.filter(t => t.value === 'dashboard')
+  // hanya tampilkan dashboard dan payment
+  return list.filter(t => t.value === 'dashboard' || t.value === 'payment')
 })
 
 const dropdownOpen = ref(false)

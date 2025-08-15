@@ -1398,7 +1398,7 @@ const sendBroadcastToWAHA = async (formData) => {
     sendingProgress.value.message =
       "Broadcast berhasil dimulai dan akan dikirim dengan delay 60 detik antar kontak!";
   } catch (error) {
-    console.error("Error sending broadcast to WAHA:", error);
+    console.error("Error sending broadcast to Wa:", error);
     throw error;
   }
 };

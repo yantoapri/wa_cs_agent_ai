@@ -565,7 +565,7 @@ export const useConversationStore = () => {
             wahaMessageData.media = messageData.media_url;
           }
 
-          console.log("Sending message to WAHA first:", wahaMessageData);
+          console.log("Sending message to Wa first:", wahaMessageData);
 
           // Send to WAHA API first
           const wahaResponse = await $fetch(`/api/waha-send-message`, {
@@ -574,19 +574,19 @@ export const useConversationStore = () => {
           });
 
           if (!wahaResponse || (wahaResponse as any).error) {
-            console.error("WAHA API error:", wahaResponse);
+            console.error("Wa API error:", wahaResponse);
             throw new Error(
-              (wahaResponse as any)?.message || "Gagal mengirim pesan ke WAHA"
+              (wahaResponse as any)?.message || "Gagal mengirim pesan ke Wa"
             );
           }
 
-          console.log("Message sent to WAHA successfully:", wahaResponse);
+          console.log("Message sent to Wa successfully:", wahaResponse);
         } catch (wahaError) {
-          console.error("Error sending message to WAHA:", wahaError);
+          console.error("Error sending message to Wa:", wahaError);
           throw new Error(
             wahaError instanceof Error
               ? wahaError.message
-              : "Gagal mengirim pesan ke WAHA"
+              : "Gagal mengirim pesan ke Wa"
           );
         }
       }
