@@ -629,7 +629,6 @@ async function onSave() {
     if (form.value.id) {
       await updateAgent(form.value.id, form.value);
       showToast({ message: "Data agent berhasil disimpan.", type: "success" });
-      console.log("AgentManusiaMain: Emitting refresh-list after update");
       emit("refresh-list");
       closeModal();
     } else {
@@ -643,7 +642,6 @@ async function onSave() {
         message: "Data agent berhasil ditambahkan.",
         type: "success",
       });
-      console.log("AgentManusiaMain: Emitting refresh-list after add");
       emit("refresh-list");
       closeModal();
     }
@@ -661,7 +659,6 @@ async function onDelete() {
   try {
     await deleteAgent(form.value.id);
     showToast({ message: "Data agent berhasil dihapus.", type: "success" });
-    console.log("AgentManusiaMain: Emitting refresh-list after delete");
     closeModal();
     emit("refresh-list");
   } catch (e) {

@@ -35,7 +35,7 @@
           <span class="block font-semibold text-lg">{{
             getConversationName(selectedConversation)
           }}</span>
-          <span class="text-gray-500 text-sm">{{
+          <span class="text-gray-500 text-sm">{{ 
             getConversationStatus(selectedConversation)
           }}</span>
         </div>
@@ -80,7 +80,7 @@
                                           class="text-xs mb-1"
                                           :class="selectedConversation.contact?.phone_number==message.from  ? 'text-gray-900' : 'text-white'"
                                         >
-                                          {{
+                                          {{ 
                                             selectedConversation.contact?.phone_number==message.from 
                                               ? selectedConversation.contact?.name ||
                                                 selectedConversation.contact?.phone_number ||
@@ -303,7 +303,7 @@
                     {{ selectedImage.name }}
                   </span>
                   <p class="text-xs text-gray-500">
-                    {{
+                    {{ 
                       selectedImage.size
                         ? (selectedImage.size / 1024 / 1024).toFixed(1) + " MB"
                         : ""
@@ -1731,7 +1731,6 @@ const sendMessage = async () => {
       formData.append("image", selectedImage.value);
 
       try {
-        console.log("Uploading image to Supabase...");
         const uploadResponse = await $fetch("/api/upload-image", {
           method: "POST",
           body: formData,
@@ -1742,7 +1741,6 @@ const sendMessage = async () => {
         }
 
         mediaUrl = uploadResponse.url;
-        console.log("Image uploaded to Supabase:", mediaUrl);
       } catch (error) {
         console.error("Error uploading image to Supabase:", error);
         throw new Error(
@@ -1867,7 +1865,6 @@ watch(
                       ...msg,
                       is_read: msg.direction === "inbound" ? true : msg.is_read
                     }));
-                    console.log("[InboxMain] Messages refreshed");
                   } catch (err) {
                     console.error("[InboxMain] Error refreshing messages:", err);
                   }
@@ -1900,7 +1897,6 @@ watch(
           }));
         }
         if (!isMounted) return;
-        console.log("[InboxMain] Messages loaded:", displayMessages.value);
       }
     } catch (err) {
       console.error("[InboxMain] Error in watcher:", err);

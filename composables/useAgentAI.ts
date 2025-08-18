@@ -1,10 +1,12 @@
 import { ref, readonly } from "vue";
 import type { AgentAIConfig } from "../types/supabase";
+import { useSupabaseUser } from "#imports";
 
 export const useAgentAIStore = () => {
   const aiConfigs = ref<AgentAIConfig[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const user = useSupabaseUser();
 
   const supabase = useSupabaseClient();
 
@@ -22,7 +24,6 @@ export const useAgentAIStore = () => {
         .maybeSingle();
 
       if (fetchError) {
-        console.error("Supabase error:", fetchError);
         throw fetchError;
       }
 
@@ -63,7 +64,6 @@ export const useAgentAIStore = () => {
         .single();
 
       if (upsertError) {
-        console.error("Upsert error:", upsertError);
         throw upsertError;
       }
 
@@ -226,9 +226,31 @@ export const useAgentAIStore = () => {
     error.value = null;
 
     try {
+      if (!user.value) {
+        aiConfigs.value = [];
+        return [];
+      }
+
+      // 1. Get agent_ids for the current user
+      const { data: agents, error: agentsError } = await supabase
+        .from("agents")
+        .select("id")
+        .eq("created_by", user.value.id);
+
+      if (agentsError) throw agentsError;
+
+      const agentIds = agents.map((agent) => agent.id);
+
+      if (agentIds.length === 0) {
+        aiConfigs.value = [];
+        return [];
+      }
+
+      // 2. Fetch AI configs for those agents
       const { data, error: fetchError } = await supabase
         .from("agent_ai_configs")
         .select("*")
+        .in("agent_id", agentIds)
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;

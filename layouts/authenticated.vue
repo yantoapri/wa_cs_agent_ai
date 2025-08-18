@@ -117,25 +117,23 @@ async function handleLogout() {
 
 // cek pembatasan akses
 onMounted(async () => {
+  console.log("cek pembatasan akses")
   try {
     if (!user?.value?.id) return
     const { data: userRow } = await supabase
       .from('users')
-      .select('role')
+      .select('*,role(*)')
       .eq('auth_id', user.value.id)
       .maybeSingle()
-    const { data: pkg } = await supabase
-      .from('user_package')
-      .select('end_at')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    const role = userRow?.role
-    const tmpIsSuperadmin = (typeof role === 'string' && role.toLowerCase() === 'superadmin') || role === 1
+    const role = userRow?.role.id
+    const tmpIsSuperadmin = role === 1
     isSuperadmin.value = tmpIsSuperadmin
-    const endAt = pkg?.end_at ? new Date(pkg.end_at) : null
-    const now = new Date()
-    restricted.value = !tmpIsSuperadmin && endAt !== null && endAt >= now
+    const endAt = data?.end_at ? new Date(data.end_at).getTime() : null
+    const now = new Date().getTime()
+    restricted.value = !tmpIsSuperadmin && endAt !== null && endAt > now
+    if(restricted.value) {
+      filteredTabs.value = displayedTabs.value.filter(t => t.value === 'dashboard' || t.value === 'payment')
+    }
   } catch {}
 })
 </script>

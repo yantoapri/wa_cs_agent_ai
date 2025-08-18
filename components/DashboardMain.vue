@@ -15,14 +15,13 @@
         <div class="text-sm text-gray-500">Paket Anda</div>
         <div class="mt-1 flex flex-wrap items-center gap-3">
           <div class="text-xl font-semibold capitalize">{{ userPackageValue?.name || 'Tidak diketahui' }}</div>
-          <div v-if="dashboard.startAt && dashboard.endAt" class="text-sm text-gray-600">
-            {{ new Date(dashboard.startAt).toLocaleDateString() }} - {{ new Date(dashboard.endAt).toLocaleDateString() }}
-          </div>
         </div>
         
         <div v-if="is_trial||new Date(dashboard.endAt)>=new Date()" class="mt-4 p-4 border rounded-lg bg-blue-50 text-blue-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <div class="font-medium" v-if="is_trial">Anda sedang dalam masa Trial 3 hari</div>
+            <div class="font-medium" >Masa aktif paket anda 
+            {{ new Date(dashboard.startAt).toLocaleDateString() }} - {{ new Date(dashboard.endAt).toLocaleDateString() }}</div>
+            <div class="font-medium" v-if="new Date().getTime()>=new Date(dashboard.endAt).getTime()">Peringatan masa aktif paket anda sudah habis</div>
             <div class="text-sm text-blue-700">Upgrade paket untuk membuka semua fitur tanpa batasan.</div>
           </div>
           <button @click="goUpgrade" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Upgrade Paket</button>
@@ -218,7 +217,6 @@ async function fetchUserPackage() {
       userPackageValue.value=data.package
       is_trial.value=data.is_trial;
     if (error) {
-      console.error('fetchUserPackage error', error)
       userPackageValue.value = null
       return
     }
@@ -252,6 +250,7 @@ async function fetchUserPackage() {
       .from('chanels')
       .select('*', { count: 'exact', head: true })
       .eq('created_by', user.value.id)
+      .eq("is_active.,true")
     dashboard.chanelCount = chanelCount || 0
 
     // Count Agent AI
@@ -329,9 +328,7 @@ async function fetchUserPackage() {
 }
 
 function goUpgrade() {
-  console.log("tes")
-  
-  router.push('/views/payment?plan=pro')
+  router.push('/views/payment?plan='+dashboard.plan)
 }
 
 onMounted(async () => {

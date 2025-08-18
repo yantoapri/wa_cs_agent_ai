@@ -162,9 +162,7 @@ export default defineEventHandler(async (event) => {
         // Log schedule details for debugging
         dueSchedules.forEach((schedule, index) => {
           console.log(
-            `[Auto Message Scheduler] Schedule ${index + 1}: ${schedule.date} ${
-              schedule.time
-            } (original: ${schedule.originalTime})`
+            `[Auto Message Scheduler] Schedule ${index + 1}: ${schedule.date} ${schedule.time} (original: ${schedule.originalTime})`
           );
         });
 
@@ -305,9 +303,7 @@ export default defineEventHandler(async (event) => {
             };
 
             console.log(
-              `[Auto Message Scheduler] Sending to ${
-                contact.name
-              } (${phoneNumber}) - ${i + 1}/${validContacts.length}`
+              `[Auto Message Scheduler] Sending to ${contact.name} (${phoneNumber}) - ${i + 1}/${validContacts.length}`
             );
 
             // Send message to WAHA
@@ -411,7 +407,7 @@ async function updateMessageStatus(
 
     if (error) {
       console.error(
-        `[Auto Message Scheduler] Error updating message status:`,
+        "[Auto Message Scheduler] Error updating message status:",
         error
       );
     }

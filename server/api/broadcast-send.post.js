@@ -73,9 +73,7 @@ export default defineEventHandler(async (event) => {
 
         try {
           console.log(
-            `[Broadcast] Sending to ${contact.name} (${phoneNumber}) - ${
-              i + 1
-            }/${contacts.length}`
+            `[Broadcast] Sending to ${contact.name} (${phoneNumber}) -`
           );
 
           // Validate phone number format

@@ -97,7 +97,7 @@
                     d="M13 10V3L4 14h7v7l9-11h-7z"
                   ></path>
                 </svg>
-                {{
+                {{ 
                   aiGenerating
                     ? "Generating..."
                     : !selectedProduct
@@ -136,8 +136,8 @@
               :disabled="channelsLoading"
               class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
             >
-              <option value="">
-                {{
+              <option value=""> 
+                {{ 
                   channelsLoading
                     ? "Memuat channel..."
                     : "Pilih channel untuk mengirim pesan"
@@ -485,7 +485,7 @@
             <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
               <div class="flex items-center justify-between mb-2">
                 <span class="text-sm font-medium text-blue-800">
-                  {{
+                  {{ 
                     sendingProgress.current >= sendingProgress.total
                       ? "Broadcast Selesai"
                       : "Mengirim Broadcast..."
@@ -499,7 +499,7 @@
                 <div
                   class="bg-blue-600 h-2 rounded-full transition-all duration-300"
                   :style="{
-                    width: `${
+                    width: `${ 
                       (sendingProgress.current / sendingProgress.total) * 100
                     }%`,
                   }"
@@ -534,18 +534,9 @@ import Swal from "sweetalert2";
 
 // Fallback for SweetAlert if not available
 const showAlert = (options) => {
-  console.log("[ChatForm] showAlert called with options:", options);
-  console.log("[ChatForm] Swal available:", typeof Swal !== "undefined");
-  console.log(
-    "[ChatForm] Swal.fire available:",
-    typeof Swal !== "undefined" && Swal.fire
-  );
-
   if (typeof Swal !== "undefined" && Swal.fire) {
-    console.log("[ChatForm] Using SweetAlert");
     return Swal.fire(options);
   } else {
-    console.log("[ChatForm] Using fallback alert");
     // Fallback to native alert
     alert(options.text || options.title || "Alert");
     return Promise.resolve({ isConfirmed: true });
@@ -617,7 +608,7 @@ const sendingProgress = ref({ current: 0, total: 0, message: "" });
 // Computed properties
 const isEditing = computed(() => !!props.editData);
 const today = computed(() => new Date().toISOString().split("T")[0]);
-
+const is_interval=ref(false)
 const selectedChannel = computed(() => {
   if (!form.value.channelId) return null;
   return availableChannels.value.find(
@@ -687,6 +678,7 @@ const loadContacts = async () => {
       .from("contacts")
       .select("id, name, phone_number")
       .eq("is_active", true)
+      .eq("created_by",user.value.id)
       .order("name");
 
     if (error) throw error;
@@ -757,15 +749,15 @@ const toggleSelectAll = () => {
 // Handle schedule type change
 const handleScheduleTypeChange = (type) => {
   scheduleType.value = type;
-  console.log(`[ChatForm] Schedule type changed to: ${type}`);
-
   // Reset schedules when switching types
   if (type === "custom") {
+    is_interval.value=false
     // Initialize with one empty schedule for custom
     if (form.value.schedules.length === 0) {
       form.value.schedules = [{ date: today.value, time: "00:00" }];
     }
   } else if (type === "interval") {
+    is_interval.value=true
     // Initialize interval schedule if not set
     if (!intervalSchedule.value.startDate) {
       intervalSchedule.value.startDate = today.value;
@@ -813,9 +805,6 @@ watch(
   ],
   () => {
     if (scheduleType.value === "interval") {
-      console.log(
-        `[ChatForm] Interval schedule changed, regenerating schedules`
-      );
       form.value.schedules = convertIntervalToSchedules();
     }
   },
@@ -941,7 +930,6 @@ const initializeForm = () => {
 // Add a new schedule
 const addSchedule = () => {
   form.value.schedules.push({ date: today.value, time: "00:00" });
-  console.log(`[ChatForm] Added new schedule with time: 00:00`);
 };
 
 // Remove a schedule
@@ -972,8 +960,6 @@ const formatTimeTo24Hour = (timeString) => {
   const result = `${hour24.toString().padStart(2, "0")}:${minutes
     .toString()
     .padStart(2, "0")}`;
-
-  console.log(`[ChatForm] formatTimeTo24Hour: ${timeString} -> ${result}`);
   return result;
 };
 
@@ -1129,11 +1115,11 @@ const handleSubmit = async () => {
 
     // Check if generated schedules are not too many
     const generatedSchedules = convertIntervalToSchedules();
-    if (generatedSchedules.length > 100) {
+    if (generatedSchedules.length > 10) {
       showAlert({
         icon: "warning",
         title: "Terlalu Banyak Jadwal",
-        text: `Interval yang dipilih akan menghasilkan ${generatedSchedules.length} jadwal. Maksimal 100 jadwal yang diizinkan. Silakan kurangi rentang waktu atau pilih hari yang lebih spesifik.`,
+        text: `Interval yang dipilih akan menghasilkan ${generatedSchedules.length} jadwal. Maksimal 10 jadwal yang diizinkan. Silakan kurangi rentang waktu atau pilih hari yang lebih spesifik.`,
         confirmButtonText: "OK",
       });
       return;
@@ -1157,12 +1143,12 @@ const handleSubmit = async () => {
       status:
         props.formType === "auto-message" ? "scheduled" : form.value.status,
       chanel_id: form.value.channelId,
+      is_interval: is_interval.value,
     };
 
     // Add product information for auto messages
     if (props.formType === "auto-message" && selectedProduct.value) {
       formData.product_id = selectedProduct.value.id;
-      formData.product_name = selectedProduct.value.name;
     }
 
     if (props.formType === "auto-message") {
@@ -1170,9 +1156,7 @@ const handleSubmit = async () => {
         // For custom schedules, use the existing schedules and ensure 24-hour format
         formData.schedules = form.value.schedules.map((schedule) => {
           const formattedTime = formatTimeTo24Hour(schedule.time);
-          console.log(
-            `[ChatForm] Custom schedule time: ${schedule.time} -> ${formattedTime}`
-          );
+     
           return {
             ...schedule,
             time: formattedTime,
@@ -1181,10 +1165,6 @@ const handleSubmit = async () => {
       } else if (scheduleType.value === "interval") {
         // For interval schedules, convert to custom schedules
         formData.schedules = convertIntervalToSchedules();
-        console.log(
-          `[ChatForm] Interval schedules generated:`,
-          formData.schedules
-        );
         // Also include interval configuration for future reference
         formData.interval_config = {
           startDate: intervalSchedule.value.startDate,
@@ -1207,15 +1187,7 @@ const handleSubmit = async () => {
           // Update the schedule with formatted time
           formData.schedules[0].time = formattedTime;
 
-          // Log for debugging
-          console.log(
-            `[ChatForm] Schedule time formatted: ${firstSchedule.time} -> ${formattedTime}`
-          );
-          console.log(`[ChatForm] Scheduled at: ${formData.scheduled_at}`);
-          console.log(
-            `[ChatForm] Final schedules to save:`,
-            formData.schedules
-          );
+        
         }
       }
     }
@@ -1303,10 +1275,6 @@ const sendBroadcastToWAHA = async (formData) => {
       );
     }
 
-    // Extract contact IDs from the contact objects for the API call
-    console.log("formData.contact_ids:", formData.contact_ids);
-    console.log("availableContacts.value:", availableContacts.value);
-
     const contactIds = formData.contact_ids
       .map((contact) => {
         // If contact is an object with name and phone, we need to find the original contact ID
@@ -1314,10 +1282,7 @@ const sendBroadcastToWAHA = async (formData) => {
           const foundContact = availableContacts.value.find(
             (c) => c.name === contact.name && c.phone_number === contact.phone
           );
-          console.log(
-            `Looking for contact: ${contact.name} (${contact.phone})`,
-            foundContact
-          );
+  
           return foundContact ? foundContact.id : null;
         }
         // If contact is already an ID, return it directly
@@ -1325,7 +1290,6 @@ const sendBroadcastToWAHA = async (formData) => {
       })
       .filter((id) => id !== null); // Remove any null values
 
-    console.log("Extracted contactIds:", contactIds);
 
     if (contactIds.length === 0) {
       throw new Error("Tidak ada kontak yang valid ditemukan");
@@ -1379,7 +1343,6 @@ const sendBroadcastToWAHA = async (formData) => {
       throw new Error(response.message || "Gagal memulai broadcast");
     }
 
-    console.log("Broadcast started successfully:", response);
     sendingProgress.value.message =
       response.message || "Broadcast berhasil dimulai!";
 

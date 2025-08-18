@@ -16,7 +16,6 @@ export function useUsers() {
         .select('*,role(*),package(*)');
       if (fetchError) throw fetchError;
       users.value = data || [];
-      console.log('Fetched users:', data);
     } catch (err) {
       error.value = `Error fetching users: ${err.message}`;
       console.error(err);
@@ -70,15 +69,10 @@ export function useUsers() {
     loading.value = true;
     error.value = null;
     try {
-      console.log('Updating user with ID:', userId);
-      console.log('Update data:', userData);
-
       const updateData = {
         username: userData.name,
         role: userData.role,
       };
-
-      console.log('Final update data:', updateData);
 
       const { data, error: updateError } = await supabase
         .from('users')
@@ -86,19 +80,13 @@ export function useUsers() {
         .eq('id', userId)
         .select();
 
-      console.log('Update response data:', data);
-      console.log('Update response error:', updateError);
-
       if (updateError) {
-        console.error('Supabase update error:', updateError);
         throw new Error(`Update failed: ${updateError.message}`);
       }
 
       if (!data || data.length === 0) {
         throw new Error('No rows were updated. Check if the user ID exists and you have permission to update.');
       }
-
-      console.log('User updated successfully:', data);
 
     } catch (err) {
       error.value = `Error updating user: ${err.message}`;
@@ -127,7 +115,6 @@ export function useUsers() {
         .eq('auth_id', authId);
 
       if (publicDeleteError) {
-        console.warn('Warning: Could not delete from public users table:', publicDeleteError.message);
       }
 
     } catch (err) {

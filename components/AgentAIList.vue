@@ -5,6 +5,7 @@
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-medium text-gray-800">Agent AI</h3>
         <button
+          v-if="!limitAgent"
           @click="showForm = !showForm"
           class="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700"
           :disabled="loading"
@@ -100,9 +101,15 @@
   </div>
 </template>
 <script setup>
-import { ref, defineProps, defineEmits, watch } from "vue";
+import { ref, defineProps, defineEmits, watch, onMounted } from "vue";
 import { useAgentStore } from "~/composables/useAgents";
 import ChanelModal from "~/components/ChanelModal.vue";
+import { useRouter } from "vue-router";
+import { useSupabaseUser, useSupabaseClient } from "#imports";
+
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
+const router = useRouter();
 
 const props = defineProps({
   aiList: { type: Array, default: () => [] },
@@ -114,7 +121,7 @@ const emit = defineEmits(["select"]);
 const showForm = ref(false);
 const newAI = ref({ name: "" });
 const loading = ref(false);
-
+const limitAgent = ref(false);
 const { addAgent, fetchAgentsByType } = useAgentStore();
 
 watch(
@@ -124,6 +131,25 @@ watch(
   }
 );
 
+async function getCountAgent() {
+  const { data: userData } = await supabase
+    .from("users")
+    .select("*,package('*')")
+    .eq("auth_id", user.value.id)
+    .single();
+  if (new Date().getTime() >= new Date(userData.end_at).getTime()) {
+    router.push("/views/dashboard");
+  }
+  const { count } = await supabase
+    .from("agent")
+    .select({ count: 'exact' })
+    .eq("crated_by", user.value.id)
+    .single();
+  limitAgent.value = count < userData.package.limit_broadcast;
+}
+onMounted(() => {
+  getCountAgent();
+});
 async function addAI() {
   loading.value = true;
   try {

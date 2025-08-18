@@ -208,7 +208,12 @@
 import { ref, onMounted, watch, computed } from "vue";
 import { useBroadcastMessages } from "~/composables/useBroadcastMessages";
 import { useAutoMessages } from "~/composables/useAutoMessages";
+import { useRouter } from 'vue-router'
+import { useSupabaseUser, useSupabaseClient } from "#imports";
 
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
+const router = useRouter();
 const props = defineProps({
   activeSubTab: {
     type: String,
@@ -231,7 +236,8 @@ const emit = defineEmits([
   "add-broadcast",
   "add-auto-message",
 ]);
-
+const limitBroadcast=ref(false);
+const limit_auto_message=ref(false);
 const chatSubTabs = [
   { value: "broadcast", label: "Broadcast" },
   { value: "auto-message", label: "Pesan Otomatis" },
@@ -277,8 +283,32 @@ const autoMessageList = computed(() => {
   }));
 });
 
+async function getCountChat() {
+  const {data:userData}=await supabase
+    .from("users")
+    .select("*,package(*)")
+    .eq("auth_id", user.value.id)
+    .single();
+  if(new Date().getTime()>=new Date(userData.end_at).getTime()){
+    router.push("/views/dashboard")
+  }
+  const { count:countMessage } = await supabase
+      .from("auto_messages")
+      .select({count})
+      .eq("crated_by", user.value.id)
+      .single();
+  const { count } = await supabase
+      .from("broadcast_messages")
+      .select({count})
+      .eq("crated_by", user.value.id)
+      .single();
+  limitBroadcast.value=count>=userData.package.limit_broadcast;
+  limit_auto_message.value=count>=userData.package.limit_schedule;
+  
+}
 // Load data on mount
 onMounted(async () => {
+  getCountChat();
   await Promise.all([fetchBroadcastMessages(), fetchAutoMessages()]);
 });
 

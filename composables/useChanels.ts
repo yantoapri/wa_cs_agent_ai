@@ -24,15 +24,12 @@ export const useChanelstore = () => {
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
-
-      console.log("[useChanels] Fetched chanels from database:", data);
       if (data && data.length > 0) {
-        console.log("[useChanels] First chanel data:", data[0]);
-        console.log("[useChanels] First chanel takeover_ai:", data[0].takeover_ai, "type:", typeof data[0].takeover_ai);
-        console.log("[useChanels] First chanel limit_balasan_ai:", data[0].limit_balasan_ai, "type:", typeof data[0].limit_balasan_ai);
+        chanels.value = data || [];
+    
       }
 
-      chanels.value = data || [];
+      
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to fetch chanels";
@@ -114,7 +111,7 @@ export const useChanelstore = () => {
     try {
       const { error: deleteError } = await supabase
         .from("chanels")
-        .update({ is_active: false })
+        .delete()
         .eq("id", id);
 
       if (deleteError) throw deleteError;

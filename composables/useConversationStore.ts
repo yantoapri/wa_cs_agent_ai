@@ -17,10 +17,6 @@ export const useConversationStore = () => {
     error.value = null;
 
     try {
-      console.log(
-        "[useConversationStore] Starting AI agent conversations fetch..."
-      );
-
       // Use a more efficient query with DISTINCT to get unique combinations
       const { data: rawData, error: queryError } = await supabase
         .from("messages")
@@ -60,34 +56,16 @@ export const useConversationStore = () => {
 
       if (queryError) throw queryError;
 
-      console.log("[useConversationStore] Raw data count:", rawData?.length);
-
       // Group by unique combinations using Map with strict deduplication
       const conversationMap = new Map();
       const processedKeys = new Set();
       const duplicateKeys = new Set();
 
-      console.log(
-        "[useConversationStore] Processing raw data for AI grouping..."
-      );
-
       rawData?.forEach((item, index) => {
         const key = `${item.agent_id}-${item.contact_id}-${item.chanel_id}`;
 
-        // Log every item being processed
-        console.log(`[useConversationStore] Processing AI item ${index}:`, {
-          key,
-          agent_id: item.agent_id,
-          contact_id: item.contact_id,
-          chanel_id: item.chanel_id,
-          agent_name: item.agents?.name,
-          contact_name: item.contacts?.name || item.contacts?.phone_number,
-          chanel_name: item.chanels?.name,
-        });
-
         if (processedKeys.has(key)) {
           duplicateKeys.add(key);
-          console.log(`[useConversationStore] Duplicate key found: ${key}`);
         }
         processedKeys.add(key);
 
@@ -103,9 +81,6 @@ export const useConversationStore = () => {
             lastActivity: 0,
             messages: [],
           });
-          console.log(
-            `[useConversationStore] Created new AI group for key: ${key}`
-          );
         }
 
         // Count messages for this group
@@ -124,14 +99,6 @@ export const useConversationStore = () => {
             created_at: item.created_at,
           });
         }
-      });
-
-      console.log("[useConversationStore] AI Grouping summary:", {
-        totalItems: rawData?.length,
-        processedKeys: processedKeys.size,
-        duplicateKeys: duplicateKeys.size,
-        uniqueGroups: conversationMap.size,
-        duplicateKeyList: Array.from(duplicateKeys),
       });
 
       // Convert map to array and format result
@@ -161,18 +128,6 @@ export const useConversationStore = () => {
       // Sort by last activity (newest first)
       result.sort((a, b) => b.lastActivity - a.lastActivity);
 
-      console.log("[useConversationStore] AI conversations grouped:", {
-        rawDataCount: rawData?.length,
-        uniqueGroups: result.length,
-        groups: result.map((r) => ({
-          agent_name: r.agent?.name,
-          contact_name: r.contact?.name || r.contact?.phone_number,
-          chanel_name: r.chanel?.name,
-          totalMessages: r.totalMessages,
-          lastActivity: new Date(r.lastActivity).toISOString(),
-        })),
-      });
-
       return result;
     } catch (err) {
       error.value =
@@ -192,10 +147,6 @@ export const useConversationStore = () => {
     error.value = null;
 
     try {
-      console.log(
-        "[useConversationStore] Starting Human agent conversations fetch..."
-      );
-
       // Use a more efficient query with DISTINCT to get unique combinations
       const { data: rawData, error: queryError } = await supabase
         .from("messages")
@@ -235,37 +186,16 @@ export const useConversationStore = () => {
 
       if (queryError) throw queryError;
 
-      console.log(
-        "[useConversationStore] Raw Human data count:",
-        rawData?.length
-      );
-
       // Group by unique combinations using Map with strict deduplication
       const conversationMap = new Map();
       const processedKeys = new Set();
       const duplicateKeys = new Set();
 
-      console.log(
-        "[useConversationStore] Processing raw data for Human grouping..."
-      );
-
       rawData?.forEach((item, index) => {
         const key = `${item.agent_id}-${item.contact_id}-${item.chanel_id}`;
 
-        // Log every item being processed
-        console.log(`[useConversationStore] Processing Human item ${index}:`, {
-          key,
-          agent_id: item.agent_id,
-          contact_id: item.contact_id,
-          chanel_id: item.chanel_id,
-          agent_name: item.agents?.name,
-          contact_name: item.contacts?.name || item.contacts?.phone_number,
-          chanel_name: item.chanels?.name,
-        });
-
         if (processedKeys.has(key)) {
           duplicateKeys.add(key);
-          console.log(`[useConversationStore] Duplicate key found: ${key}`);
         }
         processedKeys.add(key);
 
@@ -281,9 +211,6 @@ export const useConversationStore = () => {
             lastActivity: 0,
             messages: [],
           });
-          console.log(
-            `[useConversationStore] Created new Human group for key: ${key}`
-          );
         }
 
         // Count messages for this group
@@ -302,14 +229,6 @@ export const useConversationStore = () => {
             created_at: item.created_at,
           });
         }
-      });
-
-      console.log("[useConversationStore] Human Grouping summary:", {
-        totalItems: rawData?.length,
-        processedKeys: processedKeys.size,
-        duplicateKeys: duplicateKeys.size,
-        uniqueGroups: conversationMap.size,
-        duplicateKeyList: Array.from(duplicateKeys),
       });
 
       // Convert map to array and format result
@@ -338,18 +257,6 @@ export const useConversationStore = () => {
 
       // Sort by last activity (newest first)
       result.sort((a, b) => b.lastActivity - a.lastActivity);
-
-      console.log("[useConversationStore] Human conversations grouped:", {
-        rawDataCount: rawData?.length,
-        uniqueGroups: result.length,
-        groups: result.map((r) => ({
-          agent_name: r.agent?.name,
-          contact_name: r.contact?.name || r.contact?.phone_number,
-          chanel_name: r.chanel?.name,
-          totalMessages: r.totalMessages,
-          lastActivity: new Date(r.lastActivity).toISOString(),
-        })),
-      });
 
       return result;
     } catch (err) {
@@ -565,8 +472,6 @@ export const useConversationStore = () => {
             wahaMessageData.media = messageData.media_url;
           }
 
-          console.log("Sending message to Wa first:", wahaMessageData);
-
           // Send to WAHA API first
           const wahaResponse = await $fetch(`/api/waha-send-message`, {
             method: "POST",
@@ -574,13 +479,11 @@ export const useConversationStore = () => {
           });
 
           if (!wahaResponse || (wahaResponse as any).error) {
-            console.error("Wa API error:", wahaResponse);
             throw new Error(
               (wahaResponse as any)?.message || "Gagal mengirim pesan ke Wa"
             );
           }
 
-          console.log("Message sent to Wa successfully:", wahaResponse);
         } catch (wahaError) {
           console.error("Error sending message to Wa:", wahaError);
           throw new Error(

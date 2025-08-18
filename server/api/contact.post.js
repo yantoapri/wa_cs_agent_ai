@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
-    const { phone_number } = body;
+    const { phone_number,created_by } = body;
     if (!phone_number) {
       return {
         error: true,
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     );
     const { data, error } = await client
       .from("contacts")
-      .insert({ name: phone_number, phone_number })
+      .insert({ name: phone_number, phone_number,created_by })
       .select("id")
       .single();
     if (error) {

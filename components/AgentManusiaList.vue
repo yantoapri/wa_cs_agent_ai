@@ -126,12 +126,7 @@ function onAddAgent() {
 
 // Method to refresh the list - can be called from parent
 async function refreshList() {
-  console.log("AgentManusiaList: Refreshing list...");
   await fetchAgentsByType("manusia");
-  console.log(
-    "AgentManusiaList: List refreshed, current agents:",
-    humanAgents.value
-  );
 }
 
 onMounted(async () => {

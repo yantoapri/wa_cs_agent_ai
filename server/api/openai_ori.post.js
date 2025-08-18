@@ -4,7 +4,6 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { prompt, knowledge } = body;
   const apiKey = process.env.OPEN_AI_KEY;
-  console.log(apiKey);
   if (!apiKey) {
     return { error: "OPEN_AI_KEY not set in env" };
   }

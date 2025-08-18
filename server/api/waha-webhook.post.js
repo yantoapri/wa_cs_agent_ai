@@ -278,7 +278,10 @@ export default defineEventHandler(async (event) => {
   console.log("[WAHA Webhook] === START PROCESS ===");
   const body = await readBody(event);
   console.log("[WAHA Webhook] Received body:", JSON.stringify(body, null, 2));
-
+  const usersData= await $fetch("/api/user", {
+    method: "GET",
+    query: { id: body?.payload?.metadata?.i },
+  })
   // Check if this is a broadcast event
   if (checkBroadcastEvent(body)) {
     console.log(
@@ -591,7 +594,7 @@ export default defineEventHandler(async (event) => {
       console.log("[WAHA Webhook] Checking/creating contact for:", payloadFrom);
       const contactRes = await $fetch("/api/contact", {
         method: "GET",
-        query: { phone_number: payloadFrom },
+        query: { phone_number: payloadFrom,created_by: body?.payload?.metadata?.i },
       });
       if (
         contactRes &&
@@ -607,6 +610,7 @@ export default defineEventHandler(async (event) => {
           body: {
             name: payloadFrom,
             phone_number: payloadFrom,
+            created_by: body?.payload?.metadata?.i,
           },
         });
         if (createRes && createRes.data && createRes.data.id) {
@@ -713,6 +717,7 @@ export default defineEventHandler(async (event) => {
         to: meId,
         media_url: null,
         content: payloadBody,
+        created_by: body?.payload?.metadata?.i,
       };
       console.log(
         "[WAHA Webhook] Saving incoming message to database:",
@@ -780,7 +785,7 @@ export default defineEventHandler(async (event) => {
     console.log("[WAHA Webhook] Fetching session name for presence");
     const { data: chanelDataPresence } = await client
       .from("chanels")
-      .select("session_name")
+      .select("session_name,whatsapp_number,created_by")
       .eq("id", chanelIdToUse)
       .maybeSingle();
     const sessionNameForPresence = chanelDataPresence?.session_name;
@@ -788,6 +793,17 @@ export default defineEventHandler(async (event) => {
       "[WAHA Webhook] Session name for presence:",
       sessionNameForPresence
     );
+
+    const {count:countMessages} = await client.from("messages")
+      .select({count})
+      .eq("chanel_id", chanelIdToUse)
+      .eq("agent_type", "ai")
+      .eq("from", chanelDataPresence.whatsapp_number)
+      .maybeSingle();
+    if(usersData&&usersData.package.limit_ai>=countMessages){
+      console.log("[WAHA Webhook] Limit AI reached, not proceeding with AI reply");
+      return;
+    }
     // 4. Call AI (openrouter)
     let aiText, images;
     try {
@@ -833,6 +849,7 @@ export default defineEventHandler(async (event) => {
         to: meId,
         media_url: null,
         content: payloadBody,
+        created_by: body?.payload?.metadata?.i,
       };
       console.log(
         "[WAHA Webhook] Saving user prompt to database:",
@@ -950,6 +967,7 @@ export default defineEventHandler(async (event) => {
             to: payloadFrom,
             media_url: imgUrl,
             content: aiText, // caption dari AI
+            created_by: body?.payload?.metadata?.i,
           };
           console.log(
             "[WAHA Webhook] Saving AI image message to database:",
@@ -1017,6 +1035,7 @@ export default defineEventHandler(async (event) => {
           to: payloadFrom,
           media_url: null,
           content: aiText,
+          created_by: body?.payload?.metadata?.i,
         };
         console.log("[WAHA Webhook] Saving AI message to database:", saveData);
         const saveResult = await $fetch("/api/message", {

@@ -13,7 +13,6 @@
         ]"
         @click="
           () => {
-            console.log('emit update:activeTab ai');
             $emit('update:activeTab', 'ai');
           }
         "
@@ -29,7 +28,6 @@
         ]"
         @click="
           () => {
-            console.log('emit update:activeTab manusia');
             $emit('update:activeTab', 'manusia');
           }
         "
@@ -87,13 +85,8 @@
                 agentData.agent.name || "-"
               }}</span>
               <div class="flex flex-col items-end ml-2">
-                <span
-                  class="text-xs text-green-600 font-medium whitespace-nowrap"
-                  >{{ formatTimeOrDate(agentData.lastActivity) }}</span
-                >
-                <span class="text-xs text-gray-500 mt-1"
-                  >{{ agentData.totalMessages }} pesan</span
-                >
+                <span class="text-xs text-green-600 font-medium whitespace-nowrap">{{ formatTimeOrDate(agentData.lastActivity) }}</span>
+                <span class="text-xs text-gray-500 mt-1">{{ agentData.totalMessages }} pesan</span>
               </div>
             </div>
             <div class="text-xs text-gray-400 truncate">
@@ -123,7 +116,12 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useConversationStore } from "~/composables/useConversationStore";
-import { onClickOutside } from "@vueuse/core";
+import { useRouter } from 'vue-router'
+import { useSupabaseUser, useSupabaseClient } from "#imports";
+
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
+const router = useRouter();
 
 const emit = defineEmits(["select-conversation", "update:activeTab"]);
 const props = defineProps({
@@ -169,14 +167,10 @@ const currentAgentConversations = computed(() => {
             totalMessages: item.totalMessages,
           },
         });
-        console.warn(
-          `[InboxList] Duplicate found at index ${index}, skipping:`,
-          key
-        );
+
       } else {
         seen.add(key);
         deduplicatedResult.push(item);
-        console.log(`[InboxList] Added unique item at index ${index}:`, key);
       }
     });
 
@@ -228,16 +222,6 @@ const selectConversation = (conversation) => {
   emit("select-conversation", conversation);
 };
 
-const selectConversationWithContext = (conversation, agentData) => {
-  console.log("[InboxList] Clicked conversation:", conversation, agentData);
-  emit("select-conversation", {
-    ...conversation,
-    agent: agentData.agent,
-    contact: agentData.contact,
-    chanel: agentData.chanel,
-  });
-};
-
 const handleAgentHeaderClick = (agentData) => {
   emit("select-conversation", {
     agent: agentData.agent,
@@ -246,8 +230,20 @@ const handleAgentHeaderClick = (agentData) => {
   });
 };
 
+const checkExpired=async () => {
+  
+  const {data:userData}=await supabase
+    .from("users")
+    .select("end_at")
+    .eq("auth_id", user.value.id)
+    .single();
+  if(new Date().getTime()>=new Date(userData.end_at).getTime()){
+    router.push("/views/dashboard")
+  }
+};
 // Load agent conversations based on active tab
 onMounted(async () => {
+  checkExpired()
   await loadAgentConversations();
 });
 
@@ -261,21 +257,11 @@ watch(
 
 // Function to load appropriate agent conversations
 const loadAgentConversations = async () => {
-  console.log("[InboxList] Loading conversations for tab:", props.activeTab);
 
   if (props.activeTab === "ai") {
     try {
-      console.log("[InboxList] Fetching AI agent conversations...");
       const result = await fetchAIAgentConversations();
-      console.log("[InboxList] AI Agent conversations result:", result);
-      console.log("[InboxList] AI result length:", result?.length);
       if (result && result.length > 0) {
-        console.log("[InboxList] First AI conversation:", {
-          agent_name: result[0].agent?.name,
-          contact_name: result[0].contact?.name,
-          chanel_name: result[0].chanel?.name,
-          totalMessages: result[0].totalMessages,
-        });
       }
       aiAgentConversations.value = result;
     } catch (err) {
@@ -284,20 +270,8 @@ const loadAgentConversations = async () => {
   } else if (props.activeTab === "manusia") {
     // Perbaiki: ganti "human" menjadi "manusia"
     try {
-      console.log("[InboxList] [DEBUG] Fetching Human agent conversations...");
       const result = await fetchHumanAgentConversations();
-      console.log(
-        "[InboxList] [DEBUG] Human Agent conversations result:",
-        result
-      );
-      console.log("[InboxList] [DEBUG] Human result length:", result?.length);
       if (result && result.length > 0) {
-        console.log("[InboxList] [DEBUG] First Human conversation:", {
-          agent_name: result[0].agent?.name,
-          contact_name: result[0].contact?.name,
-          chanel_name: result[0].chanel?.name,
-          totalMessages: result[0].totalMessages,
-        });
       }
       humanAgentConversations.value = result;
     } catch (err) {

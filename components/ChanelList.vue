@@ -5,6 +5,7 @@
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-medium text-gray-800">Chanel</h3>
         <button
+          v-if="!limitChanel"
           @click="showForm = !showForm"
           class="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700"
           title="Tambah Chanel"
@@ -32,9 +33,14 @@
           type="text"
           placeholder="Nama chanel"
           required
-          :class="['px-3 mb-3 py-2 text-base border rounded w-full', nameError ? 'border-red-500' : 'border-gray-300']"
+          :class="[
+            'px-3 mb-3 py-2 text-base border rounded w-full',
+            nameError ? 'border-red-500' : 'border-gray-300',
+          ]"
         />
-        <p v-if="nameError" class="text-red-500 text-sm mb-3">{{ nameError }}</p>
+        <p v-if="nameError" class="text-red-500 text-sm mb-3">
+          {{ nameError }}
+        </p>
 
         <button
           type="submit"
@@ -78,6 +84,12 @@ import { ref, onMounted, watch } from "vue";
 import { useChanelstore } from "~/composables/useChanels";
 import ChanelModal from "~/components/ChanelModal.vue";
 import { useToast } from "~/composables/useToast";
+import { useRouter } from "vue-router";
+import { useSupabaseUser, useSupabaseClient } from "#imports";
+
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
+const router = useRouter();
 // HAPUS: import { useRuntimeConfig } from "#app";
 const { showToast } = useToast();
 
@@ -106,7 +118,8 @@ const props = defineProps({
 const validateName = () => {
   const regex = /^[a-zA-Z0-9_-]*$/;
   if (!regex.test(newchanel.value.name)) {
-    nameError.value = "Session name can only contain alphanumeric characters, hyphens, and underscores ( a-z, A-Z, 0-9, -, _ ).";
+    nameError.value =
+      "Session name can only contain alphanumeric characters, hyphens, and underscores ( a-z, A-Z, 0-9, -, _ ).";
     return false;
   }
   nameError.value = null;
@@ -119,7 +132,7 @@ const wahaPassword = import.meta.env.VITE_WAHA_PASSWORD || "";
 const wahaApiKey = import.meta.env.VITE_WAHA_API || "";
 const baseUrl = import.meta.env.VITE_BASE_URL_WAHA;
 const publicBaseUrl = import.meta.env.VITE_PUBLIC_BASE_URL;
-
+const limitChanel = ref(false);
 const wahaAuth =
   wahaUsername && wahaPassword
     ? "Basic " + btoa(`${wahaUsername}:${wahaPassword}`)
@@ -148,18 +161,12 @@ async function addchanel() {
         type: newchanel.value.type,
         icon_url: iconUrl,
         whatsapp_number: "",
-        takeover_ai: false,
+        takeover_ai: true,
         waktu_takeover: 0,
-        limit_balasan_ai: false,
-        maksimum_balasan_ai: 0,
       });
 
-      console.log("Result from addchanelToDB - createdchanel:", createdchanel);
-
       await fetchchanels(); // Refresh daftar chanel untuk mendapatkan chanel yang baru dibuat
-
       // Jika chanel WhatsApp, buat session baru di WAHA
-      console.log("Chanel type:", newchanel.value.type);
       if (newchanel.value.type === "whatsapp") {
         const webhookUrl = `${publicBaseUrl}/api/waha-webhook`;
 
@@ -187,7 +194,7 @@ async function addchanel() {
                       customHeaders: null,
                     },
                   ],
-                  metadata: { chanel_id: createdchanel.id },
+                  metadata: { chanel_id: createdchanel.id,i: user.value.id },
                   noweb: {
                     markOnline: true,
                     store: {
@@ -204,12 +211,18 @@ async function addchanel() {
               await updatechanel(createdchanel.id, {
                 session_name: sessionResp.name,
               });
-              showToast({ message: "Chanel berhasil ditambahkan dan sesi Wa dibuat!", type: "success" });
+              showToast({
+                message: "Chanel berhasil ditambahkan dan sesi Wa dibuat!",
+                type: "success",
+              });
             } else {
               // Jika pembuatan sesiwagagal, hapus chanel dari database
               await deletechanel(createdchanel.id);
               await fetchchanels(); // Refresh daftar chanel setelah penghapusan
-              showToast({ message: "Gagal membuat sesi Wa, chanel dihapus.", type: "error" });
+              showToast({
+                message: "Gagal membuat sesi Wa, chanel dihapus.",
+                type: "error",
+              });
             }
           } catch (e) {
             console.error("Gagal membuat session Wa:", e);
@@ -218,11 +231,13 @@ async function addchanel() {
               await deletechanel(createdchanel.id);
               await fetchchanels(); // Refresh daftar chanel setelah penghapusan
             }
-            showToast({ message: "Gagal membuat sesi Wa, chanel dihapus.", type: "error" });
+            showToast({
+              message: "Gagal membuat sesi Wa, chanel dihapus.",
+              type: "error",
+            });
           }
         }
-      }
-      else {
+      } else {
         // Jika bukan chanel WhatsApp, langsung sukses
         showToast({ message: "Chanel berhasil ditambahkan!", type: "success" });
       }
@@ -231,11 +246,18 @@ async function addchanel() {
       showForm.value = false;
     } catch (err) {
       console.error("Error adding chanel:", err);
-      showToast({ message: `Gagal menambahkan chanel: ${err.message}`, type: "error" });
+      showToast({
+        message: `Gagal menambahkan chanel: ${err.message}`,
+        type: "error",
+      });
     }
-  } catch (err) { // This is the new catch block for the outermost try
+  } catch (err) {
+    // This is the new catch block for the outermost try
     console.error("Error adding chanel (outer):", err);
-    showToast({ message: `Gagal menambahkan chanel: ${err.message}`, type: "error" });
+    showToast({
+      message: `Gagal menambahkan chanel: ${err.message}`,
+      type: "error",
+    });
   }
 }
 
@@ -264,20 +286,6 @@ async function removechanel(chanel) {
 }
 
 function selectchanel(chanel) {
-  console.log("[ChanelList] Selecting chanel:", chanel);
-  console.log(
-    "[ChanelList] takeover_ai:",
-    chanel.takeover_ai,
-    "type:",
-    typeof chanel.takeover_ai
-  );
-  console.log(
-    "[ChanelList] limit_balasan_ai:",
-    chanel.limit_balasan_ai,
-    "type:",
-    typeof chanel.limit_balasan_ai
-  );
-
   // Start session diwajika chanel bertipe WhatsApp
   if (chanel.type === "whatsapp") {
     fetch(`${baseUrl}/api/sessions/${chanel.session_name}/start`, {
@@ -307,8 +315,26 @@ async function updatechanelWhatsAppNumber(chanelId, whatsappNumber) {
 defineExpose({
   updatechanelWhatsAppNumber,
 });
+async function getCountChanel() {
+  const { data: userData } = await supabase
+    .from("users")
+    .select("*,package(*)")
+    .eq("auth_id", user.value.id)
+    .single();
+  if (new Date().getTime() >= new Date(userData.end_at).getTime()) {
+    router.push("/views/dashboard");
+  }
+  const { count:countChanel } = await supabase
+    .from("chanels")
+    .select('*', { count: 'exact' })
+    .eq("is_active",true)
+    .eq("created_by", user.value.id);
+    console.log(countChanel)
+  limitChanel.value = countChanel > userData.package.limit_chanel;
+}
 
 onMounted(async () => {
+  getCountChanel();
   await fetchchanels();
 });
 

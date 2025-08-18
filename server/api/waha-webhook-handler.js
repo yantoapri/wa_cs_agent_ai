@@ -273,6 +273,7 @@ export async function handleSentMessage({
         to: payloadFrom,
         media_url: null,
         content: messageContent,
+        created_by:body?.metadata.i
       })
       .select()
       .single();

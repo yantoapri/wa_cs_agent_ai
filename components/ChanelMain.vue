@@ -99,8 +99,8 @@
               class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-2"
             ></span>
             <span class="text-blue-600 font-medium">
-              {{
-                restartingWaha
+
+              {{ restartingWaha
                   ? "Sedang restart Wa..."
                   : restartingSession
                   ? "Sedang restart session..."
@@ -108,8 +108,7 @@
                   ? "Menunggu sesi WhatsApp..."
                   : status == "STARTING"
                   ? "Sedang menyiapkan sesi WhatsApp..."
-                  : "Memuat QR Code..."
-              }}
+                  : "Memuat QR Code..." }}
             </span>
           </div>
           <div v-if="status == 'SCAN_QR_CODE' && qrCode">
@@ -267,20 +266,6 @@ watch(
   () => props.chanel,
   async (val) => {
     if (val) {
-      console.log("[ChanelMain] Chanel data received:", val);
-      console.log(
-        "[ChanelMain] takeover_ai:",
-        val.takeover_ai,
-        "type:",
-        typeof val.takeover_ai
-      );
-      console.log(
-        "[ChanelMain] limit_balasan_ai:",
-        val.limit_balasan_ai,
-        "type:",
-        typeof val.limit_balasan_ai
-      );
-
       // Konversi boolean ke string dengan benar
       const takeoverAIValue = val.takeover_ai === true ? "1" : "0";
       const limitBalasanAIValue = val.limit_balasan_ai === true ? "1" : "0";
@@ -292,8 +277,6 @@ watch(
         limitBalasanAI: limitBalasanAIValue,
         maksimumBalasanAI: val.maksimum_balasan_ai?.toString() || "",
       };
-
-      console.log("[ChanelMain] editData set to:", editData.value);
 
       // Cek agent aktif
       if (val.id) {
@@ -415,6 +398,30 @@ async function fetchSessionStatus(sessionName) {
     // Update nomor WA jika ada
     if (data.me && data.me.id && props.chanel && props.chanel.id) {
       const whatsappNumber = data.me.id.replace("@c.us", "");
+      
+      // Check if whatsapp number exists in other channels
+      const { count:phoneExist } = await supabase
+        .from('chanels')
+        .select('*', { count: 'exact' })
+        .eq('whatsapp_number', whatsappNumber)
+        .eq("id", '!=', props.chanel.id)
+        .maybeSingle();
+      if (phoneExist > 0) {
+        showToast({ 
+          message: "Nomor telpon sedang digunakan di chanel lain", 
+          type: "error" 
+        });
+        // Force disconnect if number exists elsewhere
+        await fetch(`${baseUrl}/api/sessions/${sessionName}/logout`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": wahaApiKey,
+          },
+        });
+        return;
+      }
+      
       emit("update-whatsapp-number", props.chanel.id, whatsappNumber);
     }
     // Restart polling jika status berubah
@@ -478,9 +485,7 @@ async function onEditchanel() {
     await updatechanel(props.chanel.id, {
       name: editData.value.nama,
       takeover_ai: editData.value.takeoverAI === "1",
-      waktu_takeover: parseInt(editData.value.waktuTakeover) || 0,
-      limit_balasan_ai: editData.value.limitBalasanAI === "1",
-      maksimum_balasan_ai: parseInt(editData.value.maksimumBalasanAI) || 0,
+      waktu_takeover: parseInt(editData.value.waktuTakeover) || 0
     });
     showToast({ message: "chanel berhasil diupdate!", type: "success" });
   } catch (err) {
@@ -600,8 +605,6 @@ async function updateChannelActiveStatus(chanelId, isActive) {
       console.error("Error updating channel active status:", error);
       throw error;
     }
-    console.log("Channel active status updated successfully:", data);
-
     // Show toast notification
     if (isActive) {
       showToast({

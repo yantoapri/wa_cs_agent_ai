@@ -277,21 +277,14 @@ import { useAutoMessages } from "~/composables/useAutoMessages";
 import { useToast } from "~/composables/useToast";
 import ChatForm from "~/components/ChatForm.vue";
 import Swal from "sweetalert2";
+import { useSupabaseUser, useSupabaseClient } from "#imports";
 
-// Fallback for SweetAlert if not available
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
 const showAlert = (options) => {
-  console.log("[ChatMain] showAlert called with options:", options);
-  console.log("[ChatMain] Swal available:", typeof Swal !== "undefined");
-  console.log(
-    "[ChatMain] Swal.fire available:",
-    typeof Swal !== "undefined" && Swal.fire
-  );
-
   if (typeof Swal !== "undefined" && Swal.fire) {
-    console.log("[ChatMain] Using SweetAlert");
     return Swal.fire(options);
   } else {
-    console.log("[ChatMain] Using fallback alert");
     // Fallback to native alert
     alert(options.text || options.title || "Alert");
     return Promise.resolve({ isConfirmed: true });
@@ -347,12 +340,12 @@ const fetchBroadcastContacts = async (contactIds) => {
 
   loadingContacts.value = true;
   try {
-    const supabase = useSupabaseClient();
-
     const { data, error } = await supabase
       .from("contacts")
       .select("id, name, phone_number, email")
-      .in("id", contactIds);
+      .eq("is_active", true)
+      .eq("created_by",user.value.id)
+      .order("name");
 
     if (error) {
       console.error("Supabase error:", error);

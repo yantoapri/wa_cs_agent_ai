@@ -1,6 +1,7 @@
 <template>
   <div>
-    <div v-if="selectedContact">
+    <div v-if="viewMode === 'details' && selectedContact">
+      <!-- Contact Details View -->
       <div class="flex items-center mb-4">
         <!-- Tombol back hanya di mobile, di kiri avatar -->
         <button
@@ -43,7 +44,7 @@
         </div>
         <div class="flex gap-2">
           <button
-            @click="showEditModal = true"
+            @click="$emit('edit-contact', selectedContact)"
             class="p-2 text-gray-400 hover:text-blue-600 transition-colors"
             title="Edit kontak"
           >
@@ -182,114 +183,49 @@
           {{ sending ? "Mengirim..." : "Kirim" }}
         </button>
       </div>
-      <!-- Edit Contact Modal -->
-      <ChanelModal :show="showEditModal" @close="showEditModal = false">
-        <div class="p-6">
-          <h3 class="text-lg font-semibold mb-4">Edit Kontak</h3>
-          <form @submit.prevent="updateContactData">
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >Nama *</label
-                >
-                <input
-                  v-model="editForm.name"
-                  type="text"
-                  required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Masukkan nama kontak"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >Nomor Telepon *</label
-                >
-                <input
-                  v-model="editForm.phone_number"
-                  type="tel"
-                  required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="+62 812-3456-7890"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >Email</label
-                >
-                <input
-                  v-model="editForm.email"
-                  type="email"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="kontak@email.com"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >Avatar URL</label
-                >
-                <input
-                  v-model="editForm.avatar"
-                  type="url"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://example.com/avatar.jpg"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >chanel</label
-                >
-                <select
-                  v-model="editForm.chanel_id"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Pilih chanel</option>
-                  <option
-                    v-for="chanel in chanels"
-                    :key="chanel.id"
-                    :value="chanel.id"
-                  >
-                    {{ chanel.name }}
-                  </option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >Catatan</label
-                >
-                <textarea
-                  v-model="editForm.notes"
-                  rows="3"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Catatan tambahan tentang kontak ini..."
-                ></textarea>
-              </div>
+    </div>
+    <div v-else-if="viewMode === 'add' || viewMode === 'edit'">
+      <!-- Add/Edit Form View -->
+      <div class="p-6">
+        <h3 class="text-lg font-semibold mb-4">
+          {{ viewMode === 'edit' ? "Edit Kontak" : "Tambah Kontak Baru" }}
+        </h3>
+        <form @submit.prevent="saveContact">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Nama *</label>
+              <input v-model="contactForm.name" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Masukkan nama kontak" />
             </div>
-            <div class="flex gap-3 mt-6">
-              <button
-                type="submit"
-                :disabled="saving"
-                class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                {{ saving ? "Menyimpan..." : "Update" }}
-              </button>
-              <button
-                type="button"
-                @click="showEditModal = false"
-                :disabled="saving"
-                class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
-              >
-                Batal
-              </button>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Telepon *</label>
+              <input v-model="contactForm.phone_number" type="tel" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="+62 812-3456-7890" />
             </div>
-          </form>
-        </div>
-      </ChanelModal>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input v-model="contactForm.email" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="kontak@email.com" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Avatar URL</label>
+              <input v-model="contactForm.avatar_url" type="url" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="https://example.com/avatar.jpg" />
+            </div>
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button type="submit" :disabled="saving" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
+              {{ saving ? "Menyimpan..." : "Simpan" }}
+            </button>
+            <button type="button" @click="$emit('cancel')" :disabled="saving" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors">
+              Batal
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
     <div v-else class="p-8 text-gray-400 text-center">
-      Pilih kontak untuk melihat detail chat.
+      Pilih kontak untuk edit kontak.
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, watch, reactive, onMounted } from "vue";
 import { useConversationStore } from "~/composables/useConversationStore";
@@ -299,29 +235,80 @@ import ChanelModal from "~/components/ChanelModal.vue";
 
 const props = defineProps({
   selectedContact: Object,
+  viewMode: {
+    type: String,
+    default: 'details',
+  },
 });
 
-const { messages, loading, addMessage, fetchMessages, createConversation } =
-  useConversationStore();
-const { updateContact } = useContactStore();
+const emit = defineEmits(["save", "cancel", "edit-contact", "add-contact"]);
+
+// Handle add-contact event
+watch(() => props.viewMode, (newMode) => {
+  if (newMode === 'add') {
+    Object.assign(contactForm, {
+      id: null,
+      name: "",
+      phone_number: "",
+      email: "",
+      avatar_url: ""
+    });
+  }
+});
+
+
+const { addContact, updateContact } = useContactStore();
 const { chanels, fetchchanels } = useChanelstore();
 
 const newMessage = ref("");
 const sending = ref(false);
 const currentConversationId = ref(null);
-const showEditModal = ref(false);
 const showContactDetails = ref(false);
 const saving = ref(false);
 
-// Edit form
-const editForm = reactive({
+const contactForm = reactive({
+  id: null,
   name: "",
   phone_number: "",
   email: "",
-  avatar: "",
-  chanel_id: "",
-  notes: "",
+  avatar_url: "",
 });
+
+watch(
+  () => props.viewMode,
+  (newMode) => {
+    if (newMode === "edit" && props.selectedContact) {
+      Object.assign(contactForm, props.selectedContact);
+    } else if (newMode === "add") {
+      Object.assign(contactForm, {
+        id: null,
+        name: "",
+        phone_number: "",
+        email: "",
+        avatar_url: "",
+      });
+    }
+  },
+  { immediate: true }
+);
+
+const saveContact = async () => {
+  saving.value = true;
+  try {
+    if (props.viewMode === 'edit') {
+      await updateContact(contactForm.id, contactForm);
+      emit("save"); // Refresh after edit
+    } else {
+      const newContact = await addContact(contactForm);
+      emit("contact-added", newContact.contact);
+      emit("save"); // Refresh after add
+    }
+  } catch (error) {
+    console.error("Error saving contact:", error);
+  } finally {
+    saving.value = false;
+  }
+};
 
 const formatTime = (dateString) => {
   if (!dateString) return "";
@@ -408,41 +395,8 @@ const startConversation = async () => {
     });
 
     currentConversationId.value = conversation.id;
-    await fetchMessages(conversation.id);
   } catch (error) {
     console.error("Error creating conversation:", error);
-  }
-};
-
-const updateContactData = async () => {
-  if (!props.selectedContact) return;
-
-  saving.value = true;
-  try {
-    await updateContact(props.selectedContact.id, {
-      name: editForm.name,
-      phone_number: editForm.phone_number,
-      email: editForm.email || null,
-      avatar: editForm.avatar || null,
-      chanel_id: editForm.chanel_id || null,
-      notes: editForm.notes || null,
-    });
-
-    // Update the selected contact in parent component
-    Object.assign(props.selectedContact, {
-      name: editForm.name,
-      phone_number: editForm.phone_number,
-      email: editForm.email || null,
-      avatar: editForm.avatar || null,
-      chanel_id: editForm.chanel_id || null,
-      notes: editForm.notes || null,
-    });
-
-    showEditModal.value = false;
-  } catch (error) {
-    console.error("Error updating contact:", error);
-  } finally {
-    saving.value = false;
   }
 };
 
@@ -451,18 +405,9 @@ watch(
   () => props.selectedContact,
   async (newContact) => {
     if (newContact) {
-      // Populate edit form
-      editForm.name = newContact.name || "";
-      editForm.phone_number = newContact.phone_number || "";
-      editForm.email = newContact.email || "";
-      editForm.avatar = newContact.avatar || "";
-      editForm.chanel_id = newContact.chanel_id || "";
-      editForm.notes = newContact.notes || "";
-
       // For now, we'll create a simple conversation ID based on contact
       // In a real app, you'd want to get or create the actual conversation
       currentConversationId.value = `conv_${newContact.id}`;
-      await fetchMessages(currentConversationId.value);
     } else {
       currentConversationId.value = null;
     }

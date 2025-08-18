@@ -50,7 +50,7 @@
 
           <!-- Add Button -->
           <button
-            @click="showAddModal = true"
+            @click="$emit('add-contact')"
             class="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors flex items-center justify-center"
             title="Tambah Kontak"
           >
@@ -90,7 +90,7 @@
       >
         <div class="text-gray-500">Belum ada kontak</div>
         <button
-          @click="showAddModal = true"
+          @click="$emit('add-contact')"
           class="mt-2 text-blue-600 hover:text-blue-700"
         >
           Tambah kontak pertama
@@ -101,7 +101,7 @@
           class="flex items-center mb-4 cursor-pointer p-3 rounded-lg transition-all duration-200 border border-transparent hover:bg-blue-50 hover:border-blue-300 hover:shadow-md hover:scale-[1.02]"
           v-for="kontak in contacts"
           :key="kontak.id"
-          @click="selectContact(kontak)"
+          @click="$emit('edit-contact', kontak)"
         >
           <img
             :src="
@@ -119,25 +119,7 @@
             </div>
           </div>
           <div class="flex gap-1">
-            <button
-              @click.stop="editContact(kontak)"
-              class="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-              title="Edit kontak"
-            >
-              <svg
-                class="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                ></path>
-              </svg>
-            </button>
+         
             <button
               @click.stop="deleteContactModal(kontak)"
               class="p-1 text-gray-400 hover:text-red-600 transition-colors"
@@ -162,97 +144,7 @@
       </div>
     </div>
 
-    <!-- Add/Edit Contact Modal -->
-    <div
-      v-if="showAddModal || showEditModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-    >
-      <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div class="p-6">
-          <h3 class="text-lg font-semibold mb-4">
-            {{ showEditModal ? "Edit Kontak" : "Tambah Kontak Baru" }}
-          </h3>
-
-          <form
-            @submit.prevent="
-              showEditModal ? updateContactData() : addContactData()
-            "
-          >
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                  Nama *
-                </label>
-                <input
-                  v-model="contactForm.name"
-                  type="text"
-                  required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Masukkan nama kontak"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                  Nomor Telepon *
-                </label>
-                <input
-                  v-model="contactForm.phone_number"
-                  type="tel"
-                  required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="+62 812-3456-7890"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  v-model="contactForm.email"
-                  type="email"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="kontak@email.com"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                  Avatar URL
-                </label>
-                <input
-                  v-model="contactForm.avatar_url"
-                  type="url"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://example.com/avatar.jpg"
-                />
-              </div>
-            </div>
-
-            <div class="flex gap-3 mt-6">
-              <button
-                type="submit"
-                :disabled="saving"
-                class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                {{
-                  saving ? "Menyimpan..." : showEditModal ? "Update" : "Simpan"
-                }}
-              </button>
-              <button
-                type="button"
-                @click="closeModal"
-                :disabled="saving"
-                class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
-              >
-                Batal
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+    
 
     <!-- Delete Confirmation Modal -->
     <div
@@ -322,6 +214,7 @@ John Doe,+6281234567890,john@example.com
 Jane Smith,+6289876543210,jane@example.com</pre
               >
             </div>
+            <a href="assets/contacts_2025-08-15.csv" class="text-blue-600 hover:underline" download>Example Contacts</a>
           </div>
 
           <div class="space-y-4">
@@ -402,25 +295,23 @@ Jane Smith,+6289876543210,jane@example.com</pre
 import { ref, onMounted, reactive } from "vue";
 import { useContactStore } from "~/composables/useContacts";
 import Swal from "sweetalert2";
+import { useSupabaseUser, useSupabaseClient } from "#imports";
 
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
+const router = useRouter();
 // Fallback for SweetAlert if not available
 const showAlert = (options) => {
-  console.log('[KontakList] showAlert called with options:', options);
-  console.log('[KontakList] Swal available:', typeof Swal !== 'undefined');
-  console.log('[KontakList] Swal.fire available:', typeof Swal !== 'undefined' && Swal.fire);
-  
   if (typeof Swal !== "undefined" && Swal.fire) {
-    console.log('[KontakList] Using SweetAlert');
     return Swal.fire(options);
   } else {
-    console.log('[KontakList] Using fallback alert');
     // Fallback to native alert
     alert(options.text || options.title || "Alert");
     return Promise.resolve({ isConfirmed: true });
   }
 };
 
-const {
+const { 
   contacts,
   loading,
   error,
@@ -430,14 +321,11 @@ const {
   deleteContact,
 } = useContactStore();
 
-const emit = defineEmits(["select-contact"]);
+const emit = defineEmits(["add-contact", "edit-contact"]);
 
 // Modal states
-const showAddModal = ref(false);
-const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const showImportModal = ref(false);
-const saving = ref(false);
 const deleting = ref(false);
 const importing = ref(false);
 const contactToDelete = ref(null);
@@ -447,39 +335,9 @@ const vcfFileInput = ref(null);
 const importPreview = ref([]);
 const importErrors = ref([]);
 
-// Form data
-const contactForm = reactive({
-  name: "",
-  phone_number: "",
-  email: "",
-  avatar_url: "",
-});
-
-const selectContact = (contact) => {
-  emit("select-contact", contact);
-};
-
-const editContact = (contact) => {
-  // Populate form with contact data
-  contactForm.name = contact.name || "";
-  contactForm.phone_number = contact.phone_number || "";
-  contactForm.email = contact.email || "";
-  contactForm.avatar_url = contact.avatar_url || "";
-
-  // Store contact ID for update
-  contactForm.id = contact.id;
-  showEditModal.value = true;
-};
-
 const deleteContactModal = (contact) => {
   contactToDelete.value = contact;
   showDeleteModal.value = true;
-};
-
-const closeModal = () => {
-  showAddModal.value = false;
-  showEditModal.value = false;
-  resetForm();
 };
 
 const closeImportModal = () => {
@@ -491,83 +349,11 @@ const closeImportModal = () => {
   }
 };
 
-const resetForm = () => {
-  contactForm.name = "";
-  contactForm.phone_number = "";
-  contactForm.email = "";
-  contactForm.avatar_url = "";
-
-  delete contactForm.id;
-};
-
-const addContactData = async () => {
-  saving.value = true;
-  try {
-    await addContact({
-      name: contactForm.name,
-      phone_number: contactForm.phone_number,
-      email: contactForm.email || null,
-      avatar_url: contactForm.avatar_url || null,
-    });
-    await fetchContacts(); // Refresh kontak setelah tambah
-    console.log("[KontakList] Contacts after add:", contacts.value);
-    closeModal();
-    showAlert({
-      icon: "success",
-      title: "Berhasil!",
-      text: "Kontak berhasil ditambahkan",
-      confirmButtonText: "OK",
-    });
-  } catch (error) {
-    console.error("Error adding contact:", error);
-    showAlert({
-      icon: "error",
-      title: "Gagal Menambahkan Kontak",
-      text: `Gagal menambahkan kontak: ${error.message}`,
-      confirmButtonText: "OK",
-    });
-  } finally {
-    saving.value = false;
-  }
-};
-
-const updateContactData = async () => {
-  saving.value = true;
-  try {
-    await updateContact(contactForm.id, {
-      name: contactForm.name,
-      phone_number: contactForm.phone_number,
-      email: contactForm.email || null,
-      avatar_url: contactForm.avatar_url || null,
-    });
-    await fetchContacts(); // Refresh kontak setelah update
-    console.log("[KontakList] Contacts after update:", contacts.value);
-    closeModal();
-    showAlert({
-      icon: "success",
-      title: "Berhasil!",
-      text: "Kontak berhasil diupdate",
-      confirmButtonText: "OK",
-    });
-  } catch (error) {
-    console.error("Error updating contact:", error);
-    showAlert({
-      icon: "error",
-      title: "Gagal Mengupdate Kontak",
-      text: `Gagal mengupdate kontak: ${error.message}`,
-      confirmButtonText: "OK",
-    });
-  } finally {
-    saving.value = false;
-  }
-};
-
 const confirmDelete = async () => {
   deleting.value = true;
   try {
     await deleteContact(contactToDelete.value.id);
     await fetchContacts(); // Refresh kontak setelah hapus
-    console.log("[KontakList] Contacts after delete:", contacts.value);
     showDeleteModal.value = false;
     contactToDelete.value = null;
     showAlert({
@@ -834,7 +620,7 @@ const parseVCardBlock = (block) => {
 
 const normalizePhoneNumber = (phone) => {
   // Remove common separators and spaces
-  let normalized = phone.replace(/[\s\-\(\)\.]/g, "");
+  let normalized = phone.replace(/[\s\-\(\"\\]/g, "");
 
   // Handle Indonesian phone numbers
   if (normalized.startsWith("0")) {
@@ -879,11 +665,6 @@ const importContacts = async () => {
       text: `Berhasil mengimport ${importPreview.value.length} kontak`,
       confirmButtonText: "OK",
     });
-    console.log(
-      "[KontakList] Import successful:",
-      importPreview.value.length,
-      "contacts"
-    );
   } catch (error) {
     console.error("Error importing contacts:", error);
     importErrors.value.push(`Error importing: ${error.message}`);
@@ -956,8 +737,25 @@ const exportContacts = () => {
   }
 };
 
+const refreshContacts = async () => {
+  try {
+    await fetchContacts();
+  } catch (error) {
+    console.error('Error refreshing contacts:', error);
+    showAlert({
+      title: 'Error',
+      text: 'Failed to refresh contacts',
+      icon: 'error'
+    });
+  }
+};
+
 onMounted(async () => {
   await fetchContacts();
-  console.log("[KontakList] Contacts after initial fetch:", contacts.value);
+});
+
+defineExpose({
+  fetchContacts,
+  refreshContacts
 });
 </script>

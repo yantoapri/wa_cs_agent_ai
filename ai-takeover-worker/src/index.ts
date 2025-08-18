@@ -26,7 +26,6 @@ export default {
 		try {
 			const res = await fetch(url, { method: 'POST' });
 			const data = await res.text();
-			console.log('AI takeover cron result:', data);
 		} catch (err) {
 			console.error('Error running AI takeover cron:', err);
 		}

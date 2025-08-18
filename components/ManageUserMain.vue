@@ -221,7 +221,6 @@ const openAddModal = () => {
 };
 
 const openEditModal = (user) => {
-  console.log('Opening edit modal for user:', user);
   resetForm();
   isEditMode.value = true;
   form.id = user.id;

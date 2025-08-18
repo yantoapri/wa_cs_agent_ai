@@ -5,7 +5,7 @@ export const useContactStore = () => {
   const contacts = ref<Contact[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
-
+  const user = useSupabaseUser()
   const supabase = useSupabaseClient();
 
   // Get all contacts
@@ -18,7 +18,9 @@ export const useContactStore = () => {
         .from("contacts")
         .select("*")
         .eq("is_active", true)
+        .eq("created_by", user.value.id)
         .order("created_at", { ascending: false });
+
 
       if (fetchError) throw fetchError;
 
@@ -71,8 +73,12 @@ export const useContactStore = () => {
         .from("contacts")
         .insert([
           {
-            ...contactData,
+            name: contactData.name,
+            phone_number: contactData.phone_number,
+            email: contactData.email,
+            avatar_url: contactData.avatar_url,
             is_active: true,
+            created_by: user.value.id,
           },
         ])
         .select()
@@ -80,8 +86,9 @@ export const useContactStore = () => {
 
       if (insertError) throw insertError;
 
-      contacts.value.unshift(data);
-      return data;
+      // Force update by creating new array reference
+      contacts.value = [data, ...contacts.value];
+      return { contact: data, contacts: contacts.value };
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to add contact";

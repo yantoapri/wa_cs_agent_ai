@@ -5,6 +5,7 @@
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-medium text-gray-800">Daftar Produk</h3>
         <button
+          v-if="!limitProduk"
           @click="$emit('add-product')"
           class="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700"
           title="Tambah Produk Baru"
@@ -124,7 +125,12 @@
 <script setup>
 import { onMounted } from "vue";
 import { useProducts } from "~/composables/useProducts";
+import { useRouter } from "vue-router";
+import { useSupabaseUser, useSupabaseClient } from "#imports";
 
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
+const router = useRouter();
 const props = defineProps({
   selectedProduct: {
     type: Object,
@@ -135,9 +141,27 @@ const props = defineProps({
 const emit = defineEmits(["select-product", "add-product"]);
 
 const { products, loading, error, fetchProducts } = useProducts();
+const limitProduk = ref(false);
 
+async function getCountProduct() {
+  const { data: userData } = await supabase
+    .from("users")
+    .select("*,package(*)")
+    .eq("auth_id", user.value.id)
+    .single();
+  if (new Date().getTime() >= new Date(userData.end_at).getTime()) {
+    router.push("/views/dashboard");
+  }
+  const { count } = await supabase
+    .from("products")
+    .select({ count: 'exact' })
+    .eq("crated_by", user.value.id)
+    .single();
+  limitProduk.value = count >= userData.package.limit_produk;
+}
 // Load products on mount
 onMounted(async () => {
+  getCountProduct();
   await fetchProducts();
 });
 

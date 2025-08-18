@@ -43,7 +43,7 @@ export interface AgentAIConfig {
 }
 
 export interface Contact {
-  id: string;
+  id?: string;
   name: string;
   email?: string;
   phone_number?: string;

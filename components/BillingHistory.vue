@@ -56,7 +56,7 @@
               </span>
             </td>
             <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <button v-if="invoice.status === 'pending'" @click="openUploadModal(invoice)" class="text-blue-600 hover:text-blue-900 mr-4">Upload</button>
+              <button v-if="invoice?.status.name === 'Waiting Payment'" @click="openUploadModal(invoice)" class="text-blue-600 hover:text-blue-900 mr-4">Upload Bukti</button>
               <button @click="openDetailModal(invoice)" class="text-gray-600 hover:text-gray-900">Detail</button>
             </td>
           </tr>
@@ -87,13 +87,24 @@
     <div v-if="showDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
         <div class="p-6">
-          <h3 class="text-lg font-semibold mb-4">Transaction Details</h3>
+          <h3 class="text-lg font-semibold mb-4">Detail Transaksi</h3>
           <div v-if="selectedInvoice" class="space-y-2">
             <p><strong>Invoice Number:</strong> {{ selectedInvoice.invoice_number }}</p>
-            <p><strong>Plan:</strong> {{ selectedInvoice.plan }}</p>
-            <p><strong>Amount:</strong> Rp {{ toIDR(selectedInvoice.total) }}</p>
+            <p><strong>Plan:</strong> {{ selectedInvoice?.plan.name }}</p>
+            
             <p><strong>Date:</strong> {{ new Date(selectedInvoice.created_at).toLocaleString() }}</p>
-            <p><strong>Status:</strong> <span class="font-semibold capitalize">{{ selectedInvoice.status }}</span></p>
+            <p><strong>Status:</strong> <span class="font-semibold capitalize">{{ selectedInvoice?.status.name }}</span></p>
+            <p>
+                <strong>Bank Tujuan:</strong><br>
+                {{ selectedInvoice?.bank_name }} - {{ selectedInvoice?.bank_account_name }}<br>
+                {{ selectedInvoice?.bank_account_number }}({{ selectedInvoice?.bank_code }})
+            </p>
+            <p><strong>Lama Paket:</strong> {{ selectedInvoice?.billing_cycle }}</p>
+            <p><strong>Harga</strong> Rp. {{ toIDR(selectedInvoice?.plan.harga) }}</p>
+            <p><strong>Subtotal:</strong>Rp. {{ toIDR(selectedInvoice.subtotal) }}</p>
+            
+            <p><strong>Discount:</strong>Rp. {{ toIDR(selectedInvoice?.discount) }}</p>
+            <p><strong>Amount:</strong> Rp {{ toIDR(selectedInvoice.total) }}</p>
             <div v-if="selectedInvoice.payment_receipt">
               <strong>Proof of Payment:</strong> <a :href="selectedInvoice.payment_receipt" target="_blank" class="text-blue-600 hover:underline">View Image</a>
             </div>
@@ -215,9 +226,9 @@ async function submitProofOfPayment() {
 
     const { error: updateError } = await supabase
       .from('invoices')
-      .update({ 
-        status: 'waiting approve', 
-        payment_receipt: url 
+      .update({
+        status: 2,
+        payment_receipt: url
       })
       .eq('id', selectedInvoice.value.id);
 

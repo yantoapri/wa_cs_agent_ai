@@ -2,24 +2,17 @@ import { createClient } from "@supabase/supabase-js";
 
 export default defineEventHandler(async (event) => {
   try {
-    const phone_number = getQuery(event).phone_number;
-    const created_by = getQuery(event).created_by;
-    if (!phone_number) {
-      return {
-        error: true,
-        message: "phone_number wajib diisi pada query",
-      };
-    }
+    const id= getQuery(event).id;
+
     const runtimeConfig = useRuntimeConfig();
     const client = createClient(
       runtimeConfig.public.supabaseUrl,
       runtimeConfig.supabaseServiceRoleKey
     );
     const { data, error } = await client
-      .from("contacts")
-      .select("*")
-      .eq("phone_number", phone_number)
-      .eq("created_by", created_by)
+      .from("users")
+      .select("package(*)")
+      .eq("id", id)
       .single();
     if (error && error.code === "PGRST116") {
       // Not found

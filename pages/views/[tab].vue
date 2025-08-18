@@ -95,7 +95,7 @@
               :alt="userName"
               class="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
             />
-            <span class="text-sm font-medium text-gray-700">{{
+            <span class="text-sm font-medium text-gray-700">{{ 
               userName
             }}</span>
             <svg
@@ -199,7 +199,7 @@
                   :alt="userName"
                   class="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
                 />
-                <span class="text-base font-medium text-gray-700">{{
+                <span class="text-base font-medium text-gray-700">{{ 
                   userName
                 }}</span>
                 <svg
@@ -288,7 +288,6 @@
                 v-model:activeTab="agentTab"
                 @update:activeTab="
                   (val) => {
-                    console.log('parent menerima update:activeTab', val);
                     agentTab = val;
                   }
                 "
@@ -311,10 +310,6 @@
                   v-model:activeTab="agentTab"
                   @update:activeTab="
                     (val) => {
-                      console.log(
-                        'parent (desktop) menerima update:activeTab',
-                        val
-                      );
                       agentTab = val;
                     }
                   "
@@ -545,15 +540,19 @@
           <!-- MOBILE: hanya salah satu yang tampil -->
           <template v-if="!isDesktop">
             <div
-              v-if="!selectedContact"
+              v-if="contactViewMode === 'list' && !selectedContact"
               class="w-full h-full bg-white flex flex-col"
             >
-              <KontakList @select-contact="onSelectContact" />
+              <KontakList ref="kontakListRef" @add-contact="onAddContact" @edit-contact="onEditContact" @select-contact="onSelectContact" />
             </div>
             <div v-else class="w-full h-full flex flex-col bg-gray-100">
               <KontakMain
                 :selected-contact="selectedContact"
-                @back="selectedContact = null"
+                :view-mode="contactViewMode"
+                @save="onSaveContact"
+                @cancel="onCancelEdit"
+                @back="onCancelEdit"
+                @edit-contact="onEditContact"
               />
             </div>
           </template>
@@ -561,10 +560,16 @@
           <template v-else>
             <div class="flex h-full">
               <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
-                <KontakList @select-contact="onSelectContact" />
+                <KontakList ref="kontakListRef" @add-contact="onAddContact" @edit-contact="onEditContact" @select-contact="onSelectContact" />
               </div>
               <div class="flex-1 flex flex-col bg-gray-100 h-full">
-                <KontakMain :selected-contact="selectedContact" />
+                <KontakMain
+                  :selected-contact="selectedContact"
+                  :view-mode="contactViewMode"
+                  @save="onSaveContact"
+                  @cancel="onCancelEdit"
+                  @edit-contact="onEditContact"
+                />
               </div>
             </div>
           </template>
@@ -636,7 +641,6 @@ import AgentManusiaMain from "~/components/AgentManusiaMain.vue";
 import MyProfile from "~/components/MyProfile.vue";
 import ChatList from "~/components/ChatList.vue";
 import ChatMain from "~/components/ChatMain.vue";
-import ChatForm from "~/components/ChatForm.vue";
 import ProductList from "~/components/ProductList.vue";
 import ProductMain from "~/components/ProductMain.vue";
 import DashboardMain from "~/components/DashboardMain.vue";
@@ -684,7 +688,7 @@ const baseTabs = [
     value: "produk",
     label: "Produk",
     icon: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8-4-8 4m0 0v6l8 4 8-4v-6M4 7v10l8 4 8-4"/>
     </svg>`,
   },
   {
@@ -742,11 +746,15 @@ const adminTabs = [
 // Role-based displayed tabs with restriction handling
 const isSuperadmin = ref(false);
 const restricted = ref(false);
+const countAgent=ref(0);
+const countChanel=ref(0);
+const countProduct=ref(0);
+const countBroadcast=ref(0);
 const displayedTabs = computed(() => (isSuperadmin.value ? adminTabs : baseTabs));
 const filteredTabs = computed(() => {
   const list = displayedTabs.value;
   if (!restricted.value) return list;
-  return list.filter((t) => t.value === "dashboard");
+  return list.filter((t) => t.value === "dashboard"||t.value ==="billing-payment"||t.value=="my-profile"||t.value=="kontak");
 });
 
 const route = useRoute();
@@ -760,9 +768,23 @@ const agentTab = ref("ai");
   const selectedAgent = ref(null);
   const selectedchanel = ref(null);
   const selectedContact = ref(null);
+  const contactViewMode = ref('list'); // list, add, edit
 const chanelListRef = ref(null);
 const agentAIListRef = ref(null);
 const agentManusiaListRef = ref(null);
+const kontakListRef = ref(null);
+
+async function onSaveContact() {
+  contactViewMode.value = 'list';
+  selectedContact.value = null;
+  try {
+    if (kontakListRef.value?.refreshContacts) {
+      await kontakListRef.value.refreshContacts();
+    }
+  } catch (error) {
+    console.error('Error refreshing contacts:', error);
+  }
+}
 
 // Chat sub tabs
 const chatSubTabs = [
@@ -811,7 +833,6 @@ const handleLogout = async () => {
   try {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error("Logout error:", error);
     } else {
       await router.push("/login");
     }
@@ -840,7 +861,26 @@ function onSelectchanel(chanel) {
 
 function onSelectContact(contact) {
   selectedContact.value = contact;
+  contactViewMode.value = 'details';
 }
+
+function onAddContact() {
+  selectedContact.value = null;
+  contactViewMode.value = 'add';
+}
+
+function onEditContact(contact) {
+  selectedContact.value = contact;
+  contactViewMode.value = 'edit';
+}
+
+
+
+function onCancelEdit() {
+  contactViewMode.value = 'list';
+  selectedContact.value = null;
+}
+
 
 function onUpdateWhatsAppNumber(chanelId, whatsappNumber) {
   if (chanelListRef.value) {
@@ -849,17 +889,17 @@ function onUpdateWhatsAppNumber(chanelId, whatsappNumber) {
 }
 
 function onRefreshAgentManusiaList() {
-  console.log("Parent: Refreshing agent manusia list...");
   if (agentManusiaListRef.value) {
     agentManusiaListRef.value.refreshList();
   } else {
-    console.error("Parent: agentManusiaListRef is null");
   }
 }
 
 function onClearSelectedAgent() {
   selectedAgent.value = null;
 }
+
+
 
 // Chat functions
 function onSelectBroadcast(broadcast) {
@@ -911,12 +951,10 @@ function onEditChatItem(item) {
 const chatListRef = ref(null);
 
 function onRefreshChatList() {
-  console.log("Parent: Refreshing chat list...");
   if (chatListRef.value) {
     chatListRef.value.fetchBroadcastMessages();
     chatListRef.value.fetchAutoMessages();
   } else {
-    console.error("Parent: chatListRef is null");
   }
 }
 
@@ -949,11 +987,9 @@ function onProductFormSaved() {
 }
 
 function onRefreshProductList() {
-  console.log("Parent: Refreshing product list...");
   if (productListRef.value) {
     productListRef.value.fetchProducts();
   } else {
-    console.error("Parent: productListRef is null");
   }
 }
 
@@ -1008,7 +1044,7 @@ onMounted(async () => {
     if (!user?.value?.id) return;
     const { data: userRow } = await supabase
       .from("users")
-      .select("role")
+      .select("role,end_at")
       .eq("auth_id", user.value.id)
       .maybeSingle();
 
@@ -1017,27 +1053,14 @@ onMounted(async () => {
       (typeof role === "string" && role.toLowerCase() === "superadmin") ||
       role === 1;
     isSuperadmin.value = tmpIsSuperadmin;
-  
-    const now = new Date();
-    restricted.value = !tmpIsSuperadmin && endAt !== null && endAt >= now;
+    const endAt = new Date(userRow?.end_at).getTime();
+    const now = new Date().getTime();
+    restricted.value = !tmpIsSuperadmin && endAt !== null &&  now>endAt;
   } catch {}
 });
 
 watch(agentTab, (val) => {
-  console.log("agentTab berubah:", val);
 });
 
 // Hapus seluruh state dan pemanggilan API Dashboard dari file views.
 </script>
-
-<style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

@@ -1623,7 +1623,6 @@ const loadAgentConnections = async () => {
 
 async function onSelectAI(ai) {
   selectedAI.value = { ...ai };
-  console.log(ai);
 
   // Load AI config from database
   try {
