@@ -272,7 +272,7 @@ export default defineEventHandler(async (event) => {
         console.log(
           `[Auto Message Scheduler] Sending message to ${validContacts.length} contacts`
         );
-
+        await updateMessageStatus(client, message.id, "scheduled",null,"in_progress");
         // Send messages with delay
         let sentCount = 0;
         for (let i = 0; i < validContacts.length; i++) {
@@ -388,11 +388,13 @@ async function updateMessageStatus(
   client,
   messageId,
   status,
-  sentCount = null
+  sentCount = null,
+  status_send="pending",
 ) {
   try {
     const updateData = {
       status: status,
+      status_send:status_send,
       sent_at: status === "sent" ? new Date().toISOString() : null,
     };
 
