@@ -282,6 +282,8 @@ export default defineEventHandler(async (event) => {
     method: "GET",
     query: { id: body?.payload?.metadata?.i },
   })
+  console.log("[WAHA Webhook] User data:", usersData);
+  return;
   // Check if this is a broadcast event
   if (checkBroadcastEvent(body)) {
     console.log(
