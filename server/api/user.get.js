@@ -9,9 +9,10 @@ export default defineEventHandler(async (event) => {
       runtimeConfig.public.supabaseUrl,
       runtimeConfig.supabaseServiceRoleKey
     );
+    console.log(id)
     const { data, error } = await client
       .from("users")
-      .select("package(*)")
+      .select("*,package(*)")
       .eq("auth_id", id)
       .single();
     if (error && error.code === "PGRST116") {

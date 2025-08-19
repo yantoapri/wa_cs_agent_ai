@@ -278,12 +278,21 @@ export default defineEventHandler(async (event) => {
   console.log("[WAHA Webhook] === START PROCESS ===");
   const body = await readBody(event);
   console.log("[WAHA Webhook] Received body:", JSON.stringify(body, null, 2));
-  const usersData= await $fetch("/api/user", {
-    method: "GET",
-    query: { id: body?.payload?.metadata?.i },
-  })
+  let usersData = null;
+  const userId = body?.payload?.metadata?.i;
+  if (userId && typeof userId === 'string' && userId.length > 0) {
+    try {
+      usersData = await $fetch("/api/user", {
+        method: "GET",
+        query: { id: userId },
+      });
+    } catch (err) {
+      console.log("[WAHA Webhook] Error fetching user data:", err);
+    }
+  } else {
+    console.log("[WAHA Webhook] No valid user ID found, skipping user data fetch");
+  }
   console.log("[WAHA Webhook] User data:", usersData);
-  return;
   // Check if this is a broadcast event
   if (checkBroadcastEvent(body)) {
     console.log(
