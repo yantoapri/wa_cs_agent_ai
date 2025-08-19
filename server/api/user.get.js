@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
     const { data, error } = await client
       .from("users")
       .select("package(*)")
-      .eq("id", id)
+      .eq("auth_id", id)
       .single();
     if (error && error.code === "PGRST116") {
       // Not found
