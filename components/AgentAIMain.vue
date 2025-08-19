@@ -2261,6 +2261,18 @@ const saveProduct = async () => {
 const deleteProduct = async (productId) => {
   const product = selectedAI.value.products.find((p) => p.id === productId);
 
+  // Define showAlert function at the component level
+  const showAlert = async ({title, message = ''}) => {
+    return await Swal.fire({
+      title,
+      text: message,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ya',
+      cancelButtonText: 'Batal'
+    });
+  };
+
   const result = await showAlert({
     title: "Hapus Produk dari Agent",
     text: `Apakah Anda yakin ingin menghapus produk "${product?.name}" dari agent ini?`,

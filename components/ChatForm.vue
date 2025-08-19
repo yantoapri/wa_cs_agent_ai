@@ -939,28 +939,27 @@ const removeSchedule = (index) => {
 
 // Format time to 24-hour format
 const formatTimeTo24Hour = (timeString) => {
-  if (!timeString) return "00:00";
+  if (typeof timeString !== 'string' || !timeString) {
+    return "00:00";
+  }
 
   // If already in 24-hour format, return as is
   if (/^\d{2}:\d{2}$/.test(timeString)) {
     return timeString;
   }
 
-  // Convert from 12-hour to 24-hour format
-  const [time, period] = timeString.split(" ");
-  const [hours, minutes] = time.split(":").map(Number);
-
-  let hour24 = hours;
-  if (period === "PM" && hours !== 12) {
-    hour24 = hours + 12;
-  } else if (period === "AM" && hours === 12) {
-    hour24 = 0;
+  // Attempt to parse with Date object for robustness
+  const date = new Date(`2000-01-01 ${timeString}`);
+  if (isNaN(date.getTime())) {
+    // Fallback if Date parsing fails
+    console.warn(`Could not parse timeString: ${timeString}. Returning 00:00.`);
+    return "00:00";
   }
 
-  const result = `${hour24.toString().padStart(2, "0")}:${minutes
-    .toString()
-    .padStart(2, "0")}`;
-  return result;
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 };
 
 // Convert interval schedule to custom schedules
@@ -1143,7 +1142,6 @@ const handleSubmit = async () => {
       status:
         props.formType === "auto-message" ? "scheduled" : form.value.status,
       chanel_id: form.value.channelId,
-      is_interval: is_interval.value,
     };
 
     // Add product information for auto messages
@@ -1152,6 +1150,7 @@ const handleSubmit = async () => {
     }
 
     if (props.formType === "auto-message") {
+      form.is_interval=is_interval.value
       if (scheduleType.value === "custom") {
         // For custom schedules, use the existing schedules and ensure 24-hour format
         formData.schedules = form.value.schedules.map((schedule) => {

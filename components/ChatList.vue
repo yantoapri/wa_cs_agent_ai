@@ -284,27 +284,89 @@ const autoMessageList = computed(() => {
 });
 
 async function getCountChat() {
-  const {data:userData}=await supabase
-    .from("users")
-    .select("*,package(*)")
-    .eq("auth_id", user.value.id)
-    .single();
-  if(new Date().getTime()>=new Date(userData.end_at).getTime()){
-    router.push("/views/dashboard")
+  try {
+    // Validate user exists
+    if (!user?.value?.id) {
+      throw new Error('User not authenticated');
+    }
+
+    // Get user data with package info
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("*,package(*)")
+      .eq("auth_id", user.value.id)
+      .single();
+
+    if (userError || !userData) {
+      throw userError || new Error('Failed to fetch user data');
+    }
+
+    // Check subscription expiry
+    if (userData?.end_at) {
+      const now = new Date().getTime();
+      const endDate = new Date(userData.end_at).getTime();
+      if (now >= endDate) {
+        router.push("/views/dashboard");
+        return;
+      }
+    }
+
+    // Get auto message count with robust error handling
+    let autoMessageCount = 0;
+    try {
+      const { count, error } = await supabase
+        .from("auto_messages")
+        .select('*', { count: 'exact' })
+        .eq("created_by", user.value.id); // Fixed typo in column name (crated_by -> created_by)
+      
+      if (error) {
+        throw error;
+      }
+      autoMessageCount = count || 0;
+    } catch (error) {
+      console.error('Auto message count error:', {
+        message: error.message || 'Unknown error',
+        code: error.code,
+        details: error.details
+      });
+    }
+
+    // Get broadcast message count with robust error handling  
+    let broadcastCount = 0;
+    try {
+      const { count, error } = await supabase
+        .from("broadcast_messages")
+        .select('*', { count: 'exact', head: true })
+        .eq("created_by", user.value.id); // Fixed typo in column name (crated_by -> created_by)
+      
+      if (error) {
+        throw error;
+      }
+      broadcastCount = count || 0;
+    } catch (error) {
+      console.error('Broadcast count error:', {
+        message: error.message || 'Unknown error',
+        code: error.code,
+        details: error.details
+      });
+    }
+
+    // Safely handle package limits with defaults
+    const broadcastLimit = userData?.package?.limit_broadcast || 1;
+    const scheduleLimit = userData?.package?.limit_schedule || 1;
+
+    limitBroadcast.value = (broadcastCount || 0) >= broadcastLimit;
+    limit_auto_message.value = (autoMessageCount || 0) >= scheduleLimit;
+  } catch (error) {
+    console.error("Error in getCountChat:", {
+      message: error.message,
+      stack: error.stack,
+      originalError: error
+    });
+    // Set safe defaults on error
+    limitBroadcast.value = false;
+    limit_auto_message.value = false;
   }
-  const { count:countMessage } = await supabase
-      .from("auto_messages")
-      .select({count})
-      .eq("crated_by", user.value.id)
-      .single();
-  const { count } = await supabase
-      .from("broadcast_messages")
-      .select({count})
-      .eq("crated_by", user.value.id)
-      .single();
-  limitBroadcast.value=count>=userData.package.limit_broadcast;
-  limit_auto_message.value=count>=userData.package.limit_schedule;
-  
 }
 // Load data on mount
 onMounted(async () => {

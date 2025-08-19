@@ -132,20 +132,45 @@ watch(
 );
 
 async function getCountAgent() {
-  const { data: userData } = await supabase
-    .from("users")
-    .select("*,package('*')")
-    .eq("auth_id", user.value.id)
-    .single();
-  if (new Date().getTime() >= new Date(userData.end_at).getTime()) {
-    router.push("/views/dashboard");
+  try {
+    // Get user data with package info
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("*, package(*)")
+      .eq("auth_id", user.value.id)
+      .single();
+
+    if (userError) throw userError;
+    if (!userData) throw new Error('User data not found');
+
+    // Check subscription expiry
+    if (userData?.end_at && new Date().getTime() >= new Date(userData.end_at).getTime()) {
+      router.push("/views/dashboard");
+      return;
+    }
+
+    // Get agent count with proper error handling
+    let agentCount = 0;
+    try {
+      const { count, error } = await supabase
+        .from("agents")
+        .select('*', { count: 'exact', head: true })
+        .eq("created_by", user.value.id);
+
+      if (error) throw error;
+      agentCount = count || 0;
+    } catch (countError) {
+      console.error('Error getting agent count:', countError);
+    }
+
+    // Safely handle package limits with defaults
+    const packageLimit = userData?.package?.limit_broadcast || 1;
+    limitAgent.value = agentCount >= packageLimit;
+  } catch (error) {
+    console.error('Error in getCountAgent:', error);
+    // Set safe defaults on error
+    limitAgent.value = false;
   }
-  const { count } = await supabase
-    .from("agent")
-    .select({ count: 'exact' })
-    .eq("crated_by", user.value.id)
-    .single();
-  limitAgent.value = count < userData.package.limit_broadcast;
 }
 onMounted(() => {
   getCountAgent();
