@@ -184,6 +184,21 @@ async function registerAndPay() {
   paymentError.value = '';
 
   try {
+    // Check if email already exists
+    const { data: existingUsers, error: existingUserError } = await supabase
+      .from('users')
+      .select('email')
+      .eq('email', email.value);
+
+    if (existingUserError) {
+      throw new Error(`Error checking for existing user: ${existingUserError.message}`);
+    }
+
+    if (existingUsers && existingUsers.length > 0) {
+      paymentError.value = 'Email sudah terdaftar, gunakan email lain.';
+      return;
+    }
+
     // 1. Sign up the user
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: email.value,

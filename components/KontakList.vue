@@ -214,7 +214,7 @@ John Doe,+6281234567890,john@example.com
 Jane Smith,+6289876543210,jane@example.com</pre
               >
             </div>
-            <a href="assets/contacts_2025-08-15.csv" class="text-blue-600 hover:underline" download>Example Contacts</a>
+            <a href="https://gsjemxdabcjfyqeeetuo.supabase.co/storage/v1/object/public/other/contacts_2025-08-15.csv" class="text-blue-600 hover:underline" download>Example File Contacts</a>
           </div>
 
           <div class="space-y-4">
