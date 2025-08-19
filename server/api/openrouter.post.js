@@ -1,6 +1,6 @@
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const { prompt, knowledge, media } = body;
+  const { prompt, knowledge, media, conversationHistory = [] } = body;
   const apiKey = useRuntimeConfig().openAiKey;
   if (!apiKey) {
     return { error: "OPEN_AI_KEY not set in env" };
@@ -71,9 +71,11 @@ Selalu gunakan gaya bicara, pengetahuan, dan patuhi semua aturan di atas saat me
 Berikut knowledge agent:
 `;
   systemPrompt += knowledge || "";
+  // Build message history with context
   const messages = [
     { role: "system", content: systemPrompt },
-    { role: "user", content: prompt },
+    ...conversationHistory.slice(-4), // Keep last 4 messages for context
+    { role: "user", content: prompt }
   ];
   try {
     const response = await fetch(
@@ -88,7 +90,7 @@ Berikut knowledge agent:
         },
         body: JSON.stringify({
           model: "openai/gpt-4o", // atau model lain yang tersedia di akun OpenRouter Anda
-          messages,
+          messages: messages.filter(m => m.content), // Filter out empty messages
           max_tokens: 512,
           temperature: 0.7,
         }),

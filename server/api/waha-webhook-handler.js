@@ -231,6 +231,7 @@ export async function handleSentMessage({
     .eq("type", "manusia")
     .eq("phone", meId)
     .maybeSingle();
+    console.log("[WAHA Handler] Agent data:", agentData, agentErr);
   if (agentErr || !agentData) {
     return {
       status: "error",
