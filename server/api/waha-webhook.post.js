@@ -59,10 +59,10 @@ function checkBroadcastEvent(body) {
     );
 
   // Check for broadcast-specific chatId patterns
-  const isBroadcastChatId =
+  const isBroadcastChatId = chatId ?
     /^(status|broadcast|system|announcement|newsletter|bulletin|update|maintenance)/i.test(
       chatId.replace("@c.us", "").replace("@g.us", "")
-    );
+    ) : false;
 
   // Check for empty or system-like content
   const isSystemContent =
@@ -346,8 +346,8 @@ export default defineEventHandler(async (event) => {
   }
   const rawMeId = body?.me?.id || "";
   const rawPayloadFrom = body?.payload?.from || "";
-  const meId = normalizePhone(rawMeId.replace("@c.us", ""));
-  const payloadFrom = normalizePhone(rawPayloadFrom.replace("@c.us", ""));
+  const meId = rawMeId ? normalizePhone(rawMeId.replace("@c.us", "")) : "";
+  const payloadFrom = rawPayloadFrom ? normalizePhone(rawPayloadFrom.replace("@c.us", "")) : "";
   const payloadBody = body?.payload?.body || null;
   const fromMe = body?.payload?.fromMe || false;
 
@@ -376,12 +376,9 @@ export default defineEventHandler(async (event) => {
   if (isOutgoing) {
     // Cek apakah pesan outgoing ini baru saja dikirim oleh AI
     const outgoingContent = body?.payload?.body || body?.payload?.text || null;
-    const outgoingTo = normalizePhone(
-      body?.payload?.to.replace(
-        "@c.us",
-        ""
-      )
-    );
+    const outgoingTo = body?.payload?.to ? 
+      normalizePhone(body.payload.to.replace("@c.us", "")) : 
+      "";
     // Cek metadata sender_type: ai
     const metaSenderType =
       body?.payload?.metadata?.sender_type || body?.metadata?.sender_type;
