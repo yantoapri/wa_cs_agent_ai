@@ -791,12 +791,12 @@ export default defineEventHandler(async (event) => {
       sessionNameForPresence
     );
 
-    const {count:countMessages} = await client.from("messages")
-      .select({count})
+    const { data: countData, error: countError } = await client.from("messages")
+      .select('*', { count: 'exact', head: true })
       .eq("chanel_id", chanelIdToUse)
       .eq("agent_type", "ai")
-      .eq("from", chanelDataPresence.whatsapp_number)
-      .maybeSingle();
+      .eq("from", chanelDataPresence.whatsapp_number);
+    const countMessages = countData?.length || 0;
     if(usersData&&usersData.package.limit_ai>=countMessages){
       console.log("[WAHA Webhook] Limit AI reached, not proceeding with AI reply");
       return;
