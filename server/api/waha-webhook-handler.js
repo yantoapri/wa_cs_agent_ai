@@ -52,16 +52,6 @@ export async function handleReceivedMessage({
       .limit(1)
       .maybeSingle();
     lastMessage = res.data;
-  } else {
-    // fallback lama: hanya berdasarkan chanel
-    const res = await client
-      .from("messages")
-      .select("created_at, agent_type, from")
-      .eq("chanel_id", chanelId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    lastMessage = res.data;
   }
 
   console.log("[WAHA Handler] Last message analysis:", {
