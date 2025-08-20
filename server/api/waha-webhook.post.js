@@ -277,9 +277,10 @@ export default defineEventHandler(async (event) => {
   cleanupAICache();
   console.log("[WAHA Webhook] === START PROCESS ===");
   const body = await readBody(event);
-  console.log("[WAHA Webhook] Received body:", JSON.stringify(body, null, 2));
+  console.log("[WAHA Webhook] Received body:", body);
   let usersData = null;
-  const userId = body?.payload?.metadata?.i;
+  const userId = body?.metadata?.i;
+  return;
   if (userId && typeof userId === 'string' && userId.length > 0) {
     try {
       usersData = await $fetch("/api/user", {
