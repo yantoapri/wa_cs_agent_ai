@@ -280,7 +280,8 @@ export default defineEventHandler(async (event) => {
   console.log("[WAHA Webhook] Received body:", body);
   let usersData = null;
   const userId = body?.metadata?.i;
-  return;
+  console.log("[WAHA Webhook] User ID from metadata:", userId);
+  
   if (userId && typeof userId === 'string' && userId.length > 0) {
     try {
       usersData = await $fetch("/api/user", {
@@ -664,7 +665,7 @@ export default defineEventHandler(async (event) => {
       contactId: contact_id,
     });
     console.log("[WAHA Webhook] Takeover handler result:", takeoverResult);
-
+    return;
     // === Tentukan agent_type dan agent_id yang sesuai berdasarkan sessionType ===
     let saveAgentType = "manusia";
     let saveAgentId = agentManusiaId; // default ke agent manusia
