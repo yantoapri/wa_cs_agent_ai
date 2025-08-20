@@ -284,10 +284,11 @@ export default defineEventHandler(async (event) => {
   
   if (userId && typeof userId === 'string' && userId.length > 0) {
     try {
-      usersData = await $fetch("/api/user", {
+      const res= await $fetch("/api/user", {
         method: "GET",
         query: { id: userId },
       });
+      usersData =res.data
     } catch (err) {
       console.log("[WAHA Webhook] Error fetching user data:", err);
     }
