@@ -810,7 +810,7 @@ export default defineEventHandler(async (event) => {
       .eq("agent_type", "ai")
       .eq("from", chanelDataPresence.whatsapp_number);
     const countMessages = countData?.length || 0;
-    if(usersData&&usersData.package.limit_ai>=countMessages){
+    if(usersData&&usersData.package.limit_ai<=countMessages){
       console.log("[WAHA Webhook] Limit AI reached, not proceeding with AI reply");
       return;
     }
