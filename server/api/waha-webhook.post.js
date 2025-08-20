@@ -278,6 +278,13 @@ export default defineEventHandler(async (event) => {
   console.log("[WAHA Webhook] === START PROCESS ===");
   const body = await readBody(event);
   console.log("[WAHA Webhook] Received body:", body);
+
+  // Skip processing if not a message event
+  if (!isMessageEvent(body)) {
+    console.log("[WAHA Webhook] Skipping non-message event");
+    return { status: "skipped", message: "Non-message event" };
+  }
+
   let usersData = null;
   const userId = body?.metadata?.i;
   console.log("[WAHA Webhook] User ID from metadata:", userId);
@@ -297,6 +304,7 @@ export default defineEventHandler(async (event) => {
   }
   console.log("[WAHA Webhook] User data:", usersData);
   // Check if this is a broadcast event
+  // Check broadcast events after confirming it's a message event
   if (checkBroadcastEvent(body)) {
     console.log(
       "[WAHA Webhook] Ignoring broadcast event:",

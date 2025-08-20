@@ -368,10 +368,35 @@ async function getCountChat() {
     limit_auto_message.value = false;
   }
 }
+// Setup refresh intervals
+const refreshInterval = ref(null);
+
 // Load data on mount
 onMounted(async () => {
   getCountChat();
   await Promise.all([fetchBroadcastMessages(), fetchAutoMessages()]);
+  
+  // Setup auto refresh every 2 minutes (120000ms)
+  refreshInterval.value = setInterval(async () => {
+    console.log('Auto-refreshing message lists...');
+    try {
+      if (props.activeSubTab === 'broadcast') {
+        await fetchBroadcastMessages();
+      } else if (props.activeSubTab === 'auto-message') {
+        await fetchAutoMessages();
+      }
+    } catch (error) {
+      console.error('Auto-refresh error:', error);
+    }
+  }, 120000);
+});
+
+// Cleanup interval on unmount
+onBeforeUnmount(() => {
+  if (refreshInterval.value) {
+    clearInterval(refreshInterval.value);
+    refreshInterval.value = null;
+  }
 });
 
 // Watch for sub tab changes to refresh data
