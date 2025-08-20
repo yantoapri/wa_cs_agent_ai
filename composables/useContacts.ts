@@ -1,7 +1,9 @@
 import { ref, readonly } from "vue";
 import type { Contact } from "../types/supabase";
+import { useToast } from './useToast';
 
 export const useContactStore = () => {
+  const { showToast } = useToast();
   const contacts = ref<Contact[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
@@ -69,6 +71,23 @@ export const useContactStore = () => {
     error.value = null;
 
     try {
+      // Check if contact with the same phone number already exists for this user
+      const { data: existingContact, error: checkError } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('phone_number', contactData.phone_number)
+        .eq('created_by', user.value.id)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingContact) {
+        const message = `Kontak dengan nomor ${contactData.phone_number} sudah ada.`;
+        showToast({ message, type: 'error' });
+        error.value = message;
+        throw new Error(message);
+      }
+
       const { data, error: insertError } = await supabase
         .from("contacts")
         .insert([
@@ -88,11 +107,17 @@ export const useContactStore = () => {
 
       // Force update by creating new array reference
       contacts.value = [data, ...contacts.value];
+      showToast({ message: 'Kontak berhasil ditambahkan.', type: 'success' });
       return { contact: data, contacts: contacts.value };
     } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to add contact";
+      const errorMessage = err instanceof Error ? err.message : "Gagal, kontak sudah ada";
+      // Avoid showing duplicate toasts if we already showed one
+      if (!error.value) {
+          showToast({ message: errorMessage, type: 'error' });
+      }
+      error.value = errorMessage;
       console.error("Error adding contact:", err);
+      // Re-throw the error to be caught by the caller
       throw err;
     } finally {
       loading.value = false;

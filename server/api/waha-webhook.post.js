@@ -725,7 +725,7 @@ export default defineEventHandler(async (event) => {
         chat_type: saveAgentType, // biar konsisten
         from: payloadFrom,
         to: meId,
-        media_url: null,
+        media_url:body?.payload?.mediaUrl || null,
         content: payloadBody,
         created_by: body?.metadata?.i,
       };

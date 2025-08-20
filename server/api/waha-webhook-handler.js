@@ -146,7 +146,14 @@ export async function handleSentMessage({
     return { status: "ok", message: "AI reply detected, not saved as manual" };
   }
 
-  // Cek apakah pesan ini sudah disimpan sebagai AI di database
+  // First check in-memory cache for duplicates
+  const cacheKey = `${messageTo}|${messageContent}`;
+  if (globalThis.__aiOutgoingCache?.has(cacheKey)) {
+    console.log("[WAHA Handler] Duplicate AI message detected in cache");
+    return { status: "ok", message: "Duplicate AI message detected in cache" };
+  }
+
+  // Cek apakah pesan ini sudah disimpan sebagai AI di database (1 minute window)
   try {
     const { data: existingMessage } = await client
       .from("messages")
@@ -155,7 +162,7 @@ export async function handleSentMessage({
       .eq("to", messageTo)
       .eq("content", messageContent)
       .eq("agent_type", "ai")
-      .gte("created_at", new Date(Date.now() - 5 * 60 * 1000).toISOString()) // 5 menit terakhir
+      .gte("created_at", new Date(Date.now() - 1 * 60 * 1000).toISOString())
       .maybeSingle();
 
     if (existingMessage) {

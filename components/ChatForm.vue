@@ -1321,29 +1321,28 @@ const sendBroadcastToWAHA = async (formData) => {
     sendingProgress.value.message = "Memulai broadcast...";
 
     // Use the new broadcast-send API endpoint
-    const response = await $fetch("/api/broadcast-send", {
-      method: "POST",
-      body: {
-        message: formData.message,
-        contactIds: contactIds, // Use the extracted contact IDs
-        channelId: formData.chanel_id,
-        sessionName: selectedChannelData.session_name,
-        metadata: {
-          sender_type: "broadcast",
-          is_broadcast: true,
-          message_type: "broadcast",
-          is_manual_broadcast: true, // Additional flag to identify manual broadcasts
-        },
-      },
-    });
+    // const response = await $fetch("/api/broadcast-send", {
+    //   method: "POST",
+    //   body: {
+    //     message: formData.message,
+    //     contactIds: contactIds, // Use the extracted contact IDs
+    //     channelId: formData.chanel_id,
+    //     sessionName: selectedChannelData.session_name,
+    //     metadata: {
+    //       sender_type: "broadcast",
+    //       is_broadcast: true,
+    //       message_type: "broadcast",
+    //       is_manual_broadcast: true, // Additional flag to identify manual broadcasts
+    //     },
+    //   },
+    // });
 
     // Check if the API response indicates an error
-    if (response.error) {
-      throw new Error(response.message || "Gagal memulai broadcast");
-    }
+    // if (response.error) {
+    //   throw new Error(response.message || "Gagal memulai broadcast");
+    // }
 
-    sendingProgress.value.message =
-      response.message || "Broadcast berhasil dimulai!";
+    sendingProgress.value.message ="Broadcast berhasil dimulai!";
 
     // Update progress to show completion
     sendingProgress.value.current = contacts.length;
@@ -1354,7 +1353,7 @@ const sendBroadcastToWAHA = async (formData) => {
     const { createBroadcastMessage } = useBroadcastMessages();
     await createBroadcastMessage({
       ...formData,
-      status: "sent", // Mark as sent since we've started the broadcast
+      status: "on proccess", 
     });
 
     sendingProgress.value.message =

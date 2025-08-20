@@ -101,7 +101,7 @@
                                         </div>
                                         <div
                                           class="text-xs text-gray-200 mt-1"
-                                          v-if="(selectedConversation.contact?.phone_number!=message.from && selectedConversation.contact?.phone_number!=message.to)"
+                                          v-if="selectedConversation.contact?.phone_number!=message.from "
                                         >
                                           {{ formatTime(message.created_at) }}
                                         </div>
