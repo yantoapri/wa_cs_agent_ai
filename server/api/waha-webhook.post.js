@@ -394,7 +394,7 @@ export default defineEventHandler(async (event) => {
       "";
     // Cek metadata sender_type: ai
     const metaSenderType =
-      body?.payload?.metadata?.sender_type || body?.metadata?.sender_type;
+      body?.metadata?.sender_type || body?.metadata?.sender_type;
 
     console.log("[WAHA Webhook] Outgoing AI detection:", {
       outgoingTo,
@@ -523,7 +523,7 @@ export default defineEventHandler(async (event) => {
 
     // Cek metadata untuk sender_type: ai
     const metaSenderType =
-      body?.payload?.metadata?.sender_type || body?.metadata?.sender_type;
+      body?.metadata?.sender_type || body?.metadata?.sender_type;
 
     console.log("[WAHA Webhook] AI detection check:", {
       incomingFrom,
@@ -604,7 +604,7 @@ export default defineEventHandler(async (event) => {
       console.log("[WAHA Webhook] Checking/creating contact for:", payloadFrom);
       const contactRes = await $fetch("/api/contact", {
         method: "GET",
-        query: { phone_number: payloadFrom,created_by: body?.payload?.metadata?.i },
+        query: { phone_number: payloadFrom,created_by: body?.metadata?.i },
       });
       if (
         contactRes &&
@@ -620,7 +620,7 @@ export default defineEventHandler(async (event) => {
           body: {
             name: payloadFrom,
             phone_number: payloadFrom,
-            created_by: body?.payload?.metadata?.i,
+            created_by: body?.metadata?.i,
           },
         });
         if (createRes && createRes.data && createRes.data.id) {
@@ -665,7 +665,6 @@ export default defineEventHandler(async (event) => {
       contactId: contact_id,
     });
     console.log("[WAHA Webhook] Takeover handler result:", takeoverResult);
-    return;
     // === Tentukan agent_type dan agent_id yang sesuai berdasarkan sessionType ===
     let saveAgentType = "manusia";
     let saveAgentId = agentManusiaId; // default ke agent manusia
@@ -727,7 +726,7 @@ export default defineEventHandler(async (event) => {
         to: meId,
         media_url: null,
         content: payloadBody,
-        created_by: body?.payload?.metadata?.i,
+        created_by: body?.metadata?.i,
       };
       console.log(
         "[WAHA Webhook] Saving incoming message to database:",
@@ -861,7 +860,7 @@ export default defineEventHandler(async (event) => {
         to: meId,
         media_url: null,
         content: payloadBody,
-        created_by: body?.payload?.metadata?.i,
+        created_by: body?.metadata?.i,
       };
       console.log(
         "[WAHA Webhook] Saving user prompt to database:",
@@ -979,7 +978,7 @@ export default defineEventHandler(async (event) => {
             to: payloadFrom,
             media_url: imgUrl,
             content: aiText, // caption dari AI
-            created_by: body?.payload?.metadata?.i,
+            created_by: body?.metadata?.i,
           };
           console.log(
             "[WAHA Webhook] Saving AI image message to database:",
@@ -1047,7 +1046,7 @@ export default defineEventHandler(async (event) => {
           to: payloadFrom,
           media_url: null,
           content: aiText,
-          created_by: body?.payload?.metadata?.i,
+          created_by: body?.metadata?.i,
         };
         console.log("[WAHA Webhook] Saving AI message to database:", saveData);
         const saveResult = await $fetch("/api/message", {
