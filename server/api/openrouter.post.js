@@ -1,13 +1,45 @@
+import { serverSupabaseClient } from '#supabase/server';
+
 export default defineEventHandler(async (event) => {
+  const supabase = await serverSupabaseClient(event);
   const body = await readBody(event);
-  const { prompt, knowledge, media, conversationHistory = [] } = body;
+  const { prompt, knowledge, media, from, to } = body;
   const apiKey = useRuntimeConfig().openAiKey;
+
   if (!apiKey) {
     return { error: "OPEN_AI_KEY not set in env" };
   }
   if (!prompt) {
     return { error: "Prompt is required" };
   }
+
+  // Fetch conversation history from DB
+  let conversationHistory = [];
+  if (from && to) {
+    const { data: dbMessages, error } = await supabase
+      .from('messages')
+      .select('content, from') // Select 'from' to determine role
+      .or(`and(from.eq.${from},to.eq.${to}),and(from.eq.${to},to.eq.${from})`)
+      .order('created_at', { ascending: false })
+      .limit(4);
+
+    if (error) {
+      console.error('Error fetching conversation history:', error.message);
+      return { error: 'Failed to fetch conversation history.' };
+    }
+
+    if (dbMessages) {
+      // 'from' in the request body is the user's ID.
+      // We map db messages to the {role, content} format.
+      conversationHistory = dbMessages
+        .reverse() // Chronological order
+        .map(msg => ({
+          role: msg.from === from ? 'user' : 'assistant',
+          content: msg.content
+        }));
+    }
+  }
+
   // Jika ada media dari user, hanya proses jika image
   if (media) {
     if (media.mimetype && media.mimetype.includes("image")) {
@@ -74,7 +106,7 @@ Berikut knowledge agent:
   // Build message history with context
   const messages = [
     { role: "system", content: systemPrompt },
-    ...conversationHistory.slice(-4), // Keep last 4 messages for context
+    ...conversationHistory, // Use the fetched and formatted history
     { role: "user", content: prompt }
   ];
   try {

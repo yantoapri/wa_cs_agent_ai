@@ -81,6 +81,21 @@ export const useAgentStore = () => {
     error.value = null;
 
     try {
+      // Check for duplicate phone number for human agents
+      if (agentData.type === "manusia" && agentData.phone) {
+        const { data: existingAgent, error: checkError } = await supabase
+          .from("agents")
+          .select("*")
+          .eq("phone", agentData.phone)
+          .eq("type", "manusia")
+          .maybeSingle();
+
+        if (checkError) throw checkError;
+        if (existingAgent) {
+          throw new Error("Nomor telepon sudah digunakan di agent manusia lain");
+        }
+      }
+
       const { data, error: insertError } = await supabase
         .from("agents")
         .insert([

@@ -56,21 +56,28 @@ export const useConversationStore = () => {
 
       if (queryError) throw queryError;
 
-      // Group by unique combinations using Map with strict deduplication
-      const conversationMap = new Map();
-      const processedKeys = new Set();
-      const duplicateKeys = new Set();
+      // Group by unique combinations using an array to avoid duplicates
+      const conversationGroups: Array<{
+        key: string;
+        agent_id: string;
+        contact_id: string;
+        chanel_id: string;
+        agent: any;
+        contact: any;
+        chanel: any;
+        messageCount: number;
+        lastActivity: number;
+        messages: Array<{ content: string; created_at: string }>;
+      }> = [];
 
-      rawData?.forEach((item, index) => {
+      rawData?.forEach(item => {
         const key = `${item.agent_id}-${item.contact_id}-${item.chanel_id}`;
 
-        if (processedKeys.has(key)) {
-          duplicateKeys.add(key);
-        }
-        processedKeys.add(key);
+        let group = conversationGroups.find(g => g.key === key);
 
-        if (!conversationMap.has(key)) {
-          conversationMap.set(key, {
+        if (!group) {
+          group = {
+            key: key,
             agent_id: item.agent_id,
             contact_id: item.contact_id,
             chanel_id: item.chanel_id,
@@ -80,11 +87,11 @@ export const useConversationStore = () => {
             messageCount: 0,
             lastActivity: 0,
             messages: [],
-          });
+          };
+          conversationGroups.push(group);
         }
 
         // Count messages for this group
-        const group = conversationMap.get(key);
         group.messageCount++;
 
         // Update last activity
@@ -101,8 +108,8 @@ export const useConversationStore = () => {
         }
       });
 
-      // Convert map to array and format result
-      const result = Array.from(conversationMap.values()).map((group) => {
+      // Convert groups to array and format result
+      const result = conversationGroups.map((group) => {
         // Ambil pesan terakhir (created_at terbaru)
         let lastMessage = "";
         if (group.messages && group.messages.length > 0) {
@@ -186,21 +193,28 @@ export const useConversationStore = () => {
 
       if (queryError) throw queryError;
 
-      // Group by unique combinations using Map with strict deduplication
-      const conversationMap = new Map();
-      const processedKeys = new Set();
-      const duplicateKeys = new Set();
+      // Group by unique combinations using an array to avoid duplicates
+      const conversationGroups: Array<{
+        key: string;
+        agent_id: string;
+        contact_id: string;
+        chanel_id: string;
+        agent: any;
+        contact: any;
+        chanel: any;
+        messageCount: number;
+        lastActivity: number;
+        messages: Array<{ content: string; created_at: string }>;
+      }> = [];
 
-      rawData?.forEach((item, index) => {
+      rawData?.forEach(item => {
         const key = `${item.agent_id}-${item.contact_id}-${item.chanel_id}`;
 
-        if (processedKeys.has(key)) {
-          duplicateKeys.add(key);
-        }
-        processedKeys.add(key);
+        let group = conversationGroups.find(g => g.key === key);
 
-        if (!conversationMap.has(key)) {
-          conversationMap.set(key, {
+        if (!group) {
+          group = {
+            key: key,
             agent_id: item.agent_id,
             contact_id: item.contact_id,
             chanel_id: item.chanel_id,
@@ -210,11 +224,11 @@ export const useConversationStore = () => {
             messageCount: 0,
             lastActivity: 0,
             messages: [],
-          });
+          };
+          conversationGroups.push(group);
         }
 
         // Count messages for this group
-        const group = conversationMap.get(key);
         group.messageCount++;
 
         // Update last activity
@@ -231,8 +245,8 @@ export const useConversationStore = () => {
         }
       });
 
-      // Convert map to array and format result
-      const result = Array.from(conversationMap.values()).map((group) => {
+      // Convert groups to array and format result
+      const result = conversationGroups.map((group) => {
         // Ambil pesan terakhir (created_at terbaru)
         let lastMessage = "";
         if (group.messages && group.messages.length > 0) {

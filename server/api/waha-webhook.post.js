@@ -824,6 +824,8 @@ export default defineEventHandler(async (event) => {
         body: {
           prompt: payloadBody,
           knowledge: JSON.stringify(config),
+          from:payloadFrom,
+          to:meId
         },
       });
       aiText = aiRes?.result;
