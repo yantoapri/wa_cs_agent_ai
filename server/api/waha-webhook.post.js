@@ -122,9 +122,9 @@ function isFromBroadcastSystem(body) {
   const isBroadcast = metadata.is_broadcast === true;
   const senderType = metadata.sender_type;
   const messageType = metadata.message_type;
-  const isManualBroadcast = metadata.is_manual_broadcast === true;
-  const isAutoMessage = metadata.is_auto_message === true;
-  const isScheduledMessage = metadata.is_scheduled_message === true;
+  const isManualBroadcast = metadata.is_manual_broadcast === "1";
+  const isAutoMessage = metadata.is_auto_message === "1";
+  const isScheduledMessage = metadata.is_scheduled_message === "1";
 
   const result =
     isBroadcast ||

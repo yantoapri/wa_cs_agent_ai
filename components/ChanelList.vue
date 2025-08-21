@@ -197,9 +197,9 @@ async function addchanel() {
                   metadata: { 
                     chanel_id: createdchanel.id,
                     i: user.value.id,
-                    is_manual_broadcast:false,
-                    is_auto_message: false,
-                    is_scheduled_message: false,
+                    is_manual_broadcast:"0",
+                    is_auto_message: "0",
+                    is_scheduled_message: "0",
                   },
                   noweb: {
                     markOnline: true,
