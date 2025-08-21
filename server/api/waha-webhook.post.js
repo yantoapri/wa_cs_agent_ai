@@ -722,8 +722,23 @@ export default defineEventHandler(async (event) => {
       proceed: takeoverResult?.proceed,
     });
 
-    // Simpan pesan masuk ke database
+    // Simpan pesan masuk ke database, CEGAH DUPLIKASI BERDASARKAN wa_message_id
     try {
+      const waMessageId = body?.payload?.id || body?.payload?.key?.id || null;
+      if (!waMessageId) {
+        console.warn("[WAHA Webhook] Tidak ada wa_message_id pada payload, tetap lanjut simpan.");
+      } else {
+        // Cek duplikasi
+        const { data: existingMsg } = await client
+          .from("messages")
+          .select("id, wa_message_id")
+          .eq("wa_message_id", waMessageId)
+          .maybeSingle();
+        if (existingMsg && existingMsg.id) {
+          console.log("[WAHA Webhook] Pesan sudah ada di database, skip simpan.", existingMsg);
+          return { status: "ok", message: "Pesan sudah ada di database, skip simpan." };
+        }
+      }
       const saveData = {
         agent_id: saveAgentId,
         chanel_id: body?.metadata?.chanel_id || null,
@@ -736,6 +751,7 @@ export default defineEventHandler(async (event) => {
         media_url:body?.payload?.mediaUrl || null,
         content: payloadBody,
         created_by: body?.metadata?.i,
+        wa_message_id: body?.payload?.id || body?.payload?.key?.id || null,
       };
       console.log(
         "[WAHA Webhook] Saving incoming message to database:",

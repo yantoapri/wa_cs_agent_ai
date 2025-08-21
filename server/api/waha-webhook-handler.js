@@ -257,8 +257,23 @@ export async function handleSentMessage({
     console.log("[WAHA Webhook] Error mencari contact:", e.message);
   }
 
-  // Simpan ke tabel messages
+  // Simpan ke tabel messages, CEGAH DUPLIKASI BERDASARKAN wa_message_id
   try {
+    const waMessageId = body?.payload?.id || body?.payload?.key?.id || null;
+    if (!waMessageId) {
+      console.warn("[WAHA Handler] Tidak ada wa_message_id pada payload, tetap lanjut simpan.");
+    } else {
+      // Cek duplikasi
+      const { data: existingMsg } = await client
+        .from("messages")
+        .select("id, wa_message_id")
+        .eq("wa_message_id", waMessageId)
+        .maybeSingle();
+      if (existingMsg && existingMsg.id) {
+        console.log("[WAHA Handler] Pesan sudah ada di database, skip simpan.", existingMsg);
+        return { status: "ok", message: "Pesan sudah ada di database, skip simpan." };
+      }
+    }
     const { data, error } = await client
       .from("messages")
       .insert({
@@ -271,7 +286,8 @@ export async function handleSentMessage({
         to: payloadFrom,
         media_url: null,
         content: messageContent,
-        created_by:body?.metadata.i
+  created_by: body?.metadata?.i || body?.payload?.metadata?.i,
+        wa_message_id: body?.payload?.id || body?.payload?.key?.id || null,
       })
       .select()
       .single();
