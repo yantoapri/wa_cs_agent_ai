@@ -620,37 +620,37 @@ const parseVCardBlock = (block) => {
 
 const normalizePhoneNumber = (phone) => {
   // Remove common separators and spaces
-  let normalized = phone.replace(/[\s\-\(\"\\]/g, "");
+  let normalized = phone.replace(/[\s\-\("\\]/g, "");
 
-  // Handle Indonesian phone numbers
-  if (normalized.startsWith("0")) {
-    normalized = "+62" + normalized.substring(1);
+  // Convert to format starting with '62' (no plus sign)
+  if (normalized.startsWith("+62")) {
+    normalized = normalized.substring(1); // remove '+'
   } else if (normalized.startsWith("62")) {
-    normalized = "+" + normalized;
-  } else if (normalized.startsWith("+62")) {
-    // Already in correct format
+    // already correct
+  } else if (normalized.startsWith("0")) {
+    normalized = "62" + normalized.substring(1);
   } else if (normalized.startsWith("8")) {
-    // Assume it's a local number starting with 8
-    normalized = "+62" + normalized;
+    normalized = "62" + normalized;
   } else if (normalized.startsWith("+")) {
-    // Already has country code
+    // other country code, remove plus
+    normalized = normalized.substring(1);
   } else {
-    // For other formats, try to add +62 if it looks like an Indonesian number
+    // fallback: if looks like Indo number, add 62
     if (normalized.length >= 9 && normalized.length <= 13) {
-      normalized = "+62" + normalized;
+      normalized = "62" + normalized;
     }
   }
-
   return normalized;
 };
 
 const importContacts = async () => {
   importing.value = true;
   try {
+
     const importPromises = importPreview.value.map((contact) =>
       addContact({
         name: contact.name,
-        phone_number: contact.phone_number,
+        phone_number: normalizePhoneNumber(contact.phone_number),
         email: contact.email,
         avatar_url: null,
       })

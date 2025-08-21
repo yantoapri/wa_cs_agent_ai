@@ -683,7 +683,14 @@ const loadContacts = async () => {
 
     if (error) throw error;
 
-    availableContacts.value = data || [];
+    if (data) {
+      availableContacts.value = data.map(contact => ({
+        ...contact,
+        phone_number: contact.phone_number.trim().replace(/^\+/, '')
+      }));
+    } else {
+      availableContacts.value = [];
+    }
   } catch (err) {
     console.error("Error loading contacts:", err);
   } finally {
@@ -895,7 +902,7 @@ const initializeForm = () => {
               contactObjects.some(
                 (obj) =>
                   obj.name === contact.name &&
-                  obj.phone === contact.phone_number
+                  obj.phone.trim().replace(/^\+/, '') === contact.phone_number
               )
             )
             .map((contact) => contact.id);
@@ -1073,7 +1080,7 @@ const handleSubmit = async () => {
             )
             .join("")}
         </ul>
-        <p class="mt-3 text-sm text-gray-600">Format yang benar: +6281234567890 atau 6281234567890</p>
+        <p class="mt-3 text-sm text-gray-600">Format yang benar adalah 6281234567890. Silakan perbaiki kontak tersebut.</p>
       `,
       confirmButtonText: "OK",
     });
@@ -1353,7 +1360,7 @@ const sendBroadcastToWAHA = async (formData) => {
     const { createBroadcastMessage } = useBroadcastMessages();
     await createBroadcastMessage({
       ...formData,
-      status: "on proccess", 
+      status: "pending", 
     });
 
     sendingProgress.value.message =

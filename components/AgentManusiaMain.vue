@@ -586,9 +586,31 @@ function parsePhoneNumber(phone) {
   return { countryCode: "62", number: phone };
 }
 
-// Function to combine country code and phone number
+
+// Normalisasi nomor telepon ke format 62 (tanpa plus)
+function normalizePhoneNumber(phone) {
+  let normalized = (phone || '').replace(/[\s\-\("\\]/g, "");
+  if (normalized.startsWith("+62")) {
+    normalized = normalized.substring(1);
+  } else if (normalized.startsWith("62")) {
+    // sudah benar
+  } else if (normalized.startsWith("0")) {
+    normalized = "62" + normalized.substring(1);
+  } else if (normalized.startsWith("8")) {
+    normalized = "62" + normalized;
+  } else if (normalized.startsWith("+")) {
+    normalized = normalized.substring(1);
+  } else {
+    if (normalized.length >= 9 && normalized.length <= 13) {
+      normalized = "62" + normalized;
+    }
+  }
+  return normalized;
+}
+
+// Gabungkan kode negara dan nomor, lalu normalisasi
 function getFullPhoneNumber() {
-  return selectedCountryCode.value + phoneNumber.value;
+  return normalizePhoneNumber(selectedCountryCode.value + phoneNumber.value);
 }
 
 function getAgentAvatar(agent) {

@@ -397,8 +397,8 @@ async function fetchSessionStatus(sessionName) {
     }
     // Update nomor WA jika ada
     if (data.me && data.me.id && props.chanel && props.chanel.id) {
-      const whatsappNumber = data.me.id.replace("@c.us", "");
-      
+      let whatsappNumber = data.me.id.replace("@c.us", "");
+      whatsappNumber = normalizePhoneNumber(whatsappNumber);
       // Check if whatsapp number exists in other channels
       const { count:phoneExist } = await supabase
         .from('chanels')
@@ -421,9 +421,28 @@ async function fetchSessionStatus(sessionName) {
         });
         return;
       }
-      
       emit("update-whatsapp-number", props.chanel.id, whatsappNumber);
     }
+// Normalisasi nomor telepon ke format 62 (tanpa plus)
+function normalizePhoneNumber(phone) {
+  let normalized = (phone || '').replace(/[\s\-\("\\]/g, "");
+  if (normalized.startsWith("+62")) {
+    normalized = normalized.substring(1);
+  } else if (normalized.startsWith("62")) {
+    // sudah benar
+  } else if (normalized.startsWith("0")) {
+    normalized = "62" + normalized.substring(1);
+  } else if (normalized.startsWith("8")) {
+    normalized = "62" + normalized;
+  } else if (normalized.startsWith("+")) {
+    normalized = normalized.substring(1);
+  } else {
+    if (normalized.length >= 9 && normalized.length <= 13) {
+      normalized = "62" + normalized;
+    }
+  }
+  return normalized;
+}
     // Restart polling jika status berubah
     if (pollingInterval.value) {
       stopPolling();

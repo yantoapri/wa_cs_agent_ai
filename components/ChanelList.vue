@@ -194,7 +194,13 @@ async function addchanel() {
                       customHeaders: null,
                     },
                   ],
-                  metadata: { chanel_id: createdchanel.id,i: user.value.id },
+                  metadata: { 
+                    chanel_id: createdchanel.id,
+                    i: user.value.id,
+                    is_manual_broadcast:false,
+                    is_auto_message: false,
+                    is_scheduled_message: false,
+                  },
                   noweb: {
                     markOnline: true,
                     store: {

@@ -250,7 +250,7 @@ async function fetchUserPackage() {
       .from('chanels')
       .select('*', { count: 'exact', head: true })
       .eq('created_by', user.value.id)
-      .eq("is_active.,true")
+      .eq('is_active', true)
     dashboard.chanelCount = chanelCount || 0
 
     // Count Agent AI
