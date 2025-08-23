@@ -20,7 +20,8 @@ export default defineEventHandler(async (event) => {
       .select("*")
       .eq("phone_number", phone_number)
       .eq("created_by", created_by)
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .maybeSingle();
     if (error && error.code === "PGRST116") {
       // Not found
       return {

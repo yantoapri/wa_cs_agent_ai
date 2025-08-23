@@ -616,12 +616,7 @@ export default defineEventHandler(async (event) => {
         query: { phone_number: payloadFrom,created_by: body?.metadata?.i },
       });
       console.log("[WAHA Webhook] Contact search result:", contactRes);
-      if (
-        contactRes &&
-        contactRes.found &&
-        contactRes.data &&
-        contactRes.data.id
-      ) {
+      if (contactRes.found) {
         contact_id = contactRes.data.id;
         console.log("[WAHA Webhook] Existing contact found, ID:", contact_id);
       } else {
