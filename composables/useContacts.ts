@@ -10,6 +10,32 @@ export const useContactStore = () => {
   const user = useSupabaseUser()
   const supabase = useSupabaseClient();
 
+  const normalizePhoneNumber = (phone: string) => {
+    if (!phone) return '';
+    // Remove common separators and spaces
+    let normalized = phone.replace(/[\s\-\(\"\\]/g, "");
+
+    // Convert to format starting with '62' (no plus sign)
+    if (normalized.startsWith("+62")) {
+      normalized = normalized.substring(1); // remove '+'
+    } else if (normalized.startsWith("62")) {
+      // already correct
+    } else if (normalized.startsWith("0")) {
+      normalized = "62" + normalized.substring(1);
+    } else if (normalized.startsWith("8")) {
+      normalized = "62" + normalized;
+    } else if (normalized.startsWith("+")) {
+      // other country code, remove plus
+      normalized = normalized.substring(1);
+    } else {
+      // fallback: if looks like Indo number, add 62
+      if (normalized.length >= 9 && normalized.length <= 13) {
+        normalized = "62" + normalized;
+      }
+    }
+    return normalized;
+  };
+
   // Get all contacts
   const fetchContacts = async () => {
     loading.value = true;
@@ -45,8 +71,8 @@ export const useContactStore = () => {
       const { data, error: fetchError } = await supabase
         .from("contacts")
         .select("*")
-        .eq("chanel_id", chanelId)
         .eq("is_active", true)
+        .eq("created_by", user.value.id)
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -71,19 +97,24 @@ export const useContactStore = () => {
     error.value = null;
 
     try {
+      const normalizedPhone = normalizePhoneNumber(contactData.phone_number);
+      if (!normalizedPhone) {
+        throw new Error("Nomor telepon tidak valid.");
+      }
+
       // Check if contact with the same phone number already exists for this user
       const { data: existingContact, error: checkError } = await supabase
         .from('contacts')
         .select('id')
-        .eq('phone_number', contactData.phone_number)
+        .eq('phone_number', normalizedPhone) // Use normalized phone
         .eq('created_by', user.value.id)
+        .eq("is_active", true)
         .maybeSingle();
 
       if (checkError) throw checkError;
 
       if (existingContact) {
         const message = `Kontak dengan nomor ${contactData.phone_number} sudah ada.`;
-        showToast({ message, type: 'error' });
         error.value = message;
         throw new Error(message);
       }
@@ -93,7 +124,7 @@ export const useContactStore = () => {
         .insert([
           {
             name: contactData.name,
-            phone_number: contactData.phone_number,
+            phone_number: normalizedPhone, // Use normalized phone
             email: contactData.email,
             avatar_url: contactData.avatar_url,
             is_active: true,
@@ -113,7 +144,10 @@ export const useContactStore = () => {
       const errorMessage = err instanceof Error ? err.message : "Gagal, kontak sudah ada";
       // Avoid showing duplicate toasts if we already showed one
       if (!error.value) {
+        // Only show toast if it's not a duplicate error
+        if (!errorMessage.includes("sudah ada")) {
           showToast({ message: errorMessage, type: 'error' });
+        }
       }
       error.value = errorMessage;
       console.error("Error adding contact:", err);
@@ -202,10 +236,11 @@ export const useContactStore = () => {
   // Get contact by phone number
   const getContactByPhone = async (phoneNumber: string) => {
     try {
+      const normalizedPhone = normalizePhoneNumber(phoneNumber);
       const { data, error: fetchError } = await supabase
         .from("contacts")
         .select("*")
-        .eq("phone_number", phoneNumber)
+        .eq("phone_number", normalizedPhone)
         .eq("is_active", true)
         .single();
 

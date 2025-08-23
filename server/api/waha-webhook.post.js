@@ -615,6 +615,7 @@ export default defineEventHandler(async (event) => {
         method: "GET",
         query: { phone_number: payloadFrom,created_by: body?.metadata?.i },
       });
+      console.log("[WAHA Webhook] Contact search result:", contactRes);
       if (
         contactRes &&
         contactRes.found &&

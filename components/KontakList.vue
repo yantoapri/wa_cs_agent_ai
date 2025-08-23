@@ -645,33 +645,76 @@ const normalizePhoneNumber = (phone) => {
 
 const importContacts = async () => {
   importing.value = true;
-  try {
+  importErrors.value = []; // Clear previous errors
+  let successfulCount = 0;
+  let duplicateCount = 0;
 
-    const importPromises = importPreview.value.map((contact) =>
-      addContact({
+  console.log("Starting contact import...");
+
+  try {
+    const importPromises = importPreview.value.map((contact) => {
+      console.log(`Processing contact: ${contact.name} (${contact.phone_number})`);
+      return addContact({
         name: contact.name,
-        phone_number: normalizePhoneNumber(contact.phone_number),
+        phone_number: contact.phone_number, // Normalization is now in the composable
         email: contact.email,
         avatar_url: null,
       })
-    );
+        .then((result) => {
+          if (result) {
+            successfulCount++;
+            console.log(`Successfully imported: ${contact.name}`);
+          }
+          return result;
+        })
+        .catch((err) => {
+          if (err.message.includes("sudah ada")) {
+            duplicateCount++;
+            console.warn(`Duplicate contact skipped: ${contact.name} (${contact.phone_number})`);
+          } else {
+            importErrors.value.push(
+              `Gagal import ${contact.name} (${contact.phone_number}): ${err.message}`
+            );
+            console.error(`Failed to import ${contact.name}: ${err.message}`);
+          }
+          // Return null so Promise.all doesn't reject
+          return null;
+        });
+    });
 
     await Promise.all(importPromises);
+
+    console.log("Import process finished.");
+    console.log(`Successful: ${successfulCount}, Duplicates: ${duplicateCount}, Errors: ${importErrors.value.length}`);
+
     await fetchContacts();
     closeImportModal();
+
+    let title = "Import Selesai";
+    let text = `Berhasil mengimport ${successfulCount} kontak.`;
+    let icon = "success";
+
+    if (duplicateCount > 0) {
+      text += `\n${duplicateCount} kontak dilewati karena sudah ada.`;
+    }
+    if (importErrors.value.length > 0) {
+      title = "Import Selesai dengan Error";
+      text += `\n${importErrors.value.length} kontak gagal diimport karena error lain.`;
+      icon = "warning";
+    }
+
     showAlert({
-      icon: "success",
-      title: "Berhasil!",
-      text: `Berhasil mengimport ${importPreview.value.length} kontak`,
+      icon: icon,
+      title: title,
+      text: text,
       confirmButtonText: "OK",
     });
   } catch (error) {
-    console.error("Error importing contacts:", error);
-    importErrors.value.push(`Error importing: ${error.message}`);
+    console.error("An unexpected error occurred during contact import:", error);
     showAlert({
       icon: "error",
-      title: "Gagal Mengimport Kontak",
-      text: `Gagal mengimport kontak: ${error.message}`,
+      title: "Gagal Total",
+      text: `Terjadi error yang tidak terduga: ${error.message}`,
       confirmButtonText: "OK",
     });
   } finally {
