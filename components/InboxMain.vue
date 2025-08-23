@@ -2,9 +2,9 @@
   <div>
     <div
       v-if="selectedConversation"
-      class="bg-white rounded-lg shadow p-6 h-[90vh] flex flex-col"
+      class="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 h-[90vh] flex flex-col"
     >
-      <div class="flex items-center mb-4">
+      <div class="flex items-center mb-3 sm:mb-4">
         <!-- Tombol back hanya di mobile -->
         <button
           class="md:hidden mr-2 p-1 text-gray-700 hover:bg-gray-200 rounded-full"
@@ -16,7 +16,7 @@
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
-            class="w-7 h-7"
+            class="w-6 h-6 sm:w-7 sm:h-7"
           >
             <path
               stroke-linecap="round"
@@ -27,37 +27,37 @@
           </svg>
         </button>
         <img
-          class="w-12 h-12 rounded-full mr-4"
+          class="w-10 h-10 sm:w-12 sm:h-12 rounded-full mr-3 sm:mr-4 flex-shrink-0"
           :src="getConversationAvatar(selectedConversation)"
           :alt="getConversationName(selectedConversation)"
         />
-        <div>
-          <span class="block font-semibold text-lg">{{
+        <div class="flex-1 min-w-0">
+          <span class="block font-semibold text-base sm:text-lg text-gray-900 truncate">{{
             getConversationName(selectedConversation)
           }}</span>
-          <span class="text-gray-500 text-sm">{{ 
+          <span class="text-gray-500 text-xs sm:text-sm">{{ 
             getConversationStatus(selectedConversation)
           }}</span>
         </div>
       </div>
 
-      <div v-if="loading" class="text-center py-8 flex-1">
-        <div class="text-gray-500">Loading pesan...</div>
+      <div v-if="loading" class="text-center py-4 sm:py-8 flex-1">
+        <div class="text-gray-500 text-sm sm:text-base">Loading pesan...</div>
       </div>
 
-      <div v-else class="space-y-2 mb-4 flex-1 overflow-y-auto">
+      <div v-else class="space-y-1 sm:space-y-2 mb-3 sm:mb-4 flex-1 overflow-y-auto px-1 sm:px-0">
         <div
           v-if="displayMessages.length === 0"
-          class="text-center py-8 text-gray-400"
+          class="text-center py-4 sm:py-8 text-gray-400 text-sm sm:text-base"
         >
           Belum ada pesan dalam percakapan ini
         </div>
         <template v-else>
           <template v-for="(message, idx) in sortedMessages" :key="message.id">
             <template v-if="shouldShowDate(displayMessages, idx)">
-              <div class="flex justify-center my-4">
+              <div class="flex justify-center my-2 sm:my-4">
                 <span
-                  class="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full shadow"
+                  class="bg-gray-200 text-gray-600 text-xs px-2 sm:px-3 py-1 rounded-full shadow"
                   >{{ formatDate(message.created_at) }}</span
                 >
               </div>
@@ -70,7 +70,7 @@
                                    
                                       <div
                                         :class="[
-                                          'max-w-[70%] px-4 py-2 rounded-lg mb-2 align-top',
+                                          'max-w-[80%] sm:max-w-[70%] px-3 sm:px-4 py-2 rounded-lg mb-1 sm:mb-2 align-top',
                                           selectedConversation.contact?.phone_number!=message.from
                                             ? 'bg-blue-500 text-white ml-auto' // bubble kanan (user)
                                             : 'bg-gray-100 text-gray-900 mr-auto', // bubble kiri (agent)
@@ -92,11 +92,11 @@
                                           <img
                                             :src="message.media_url"
                                             alt="media"
-                                            class="max-w-full max-h-60 rounded-lg border"
+                                            class="max-w-full max-h-40 sm:max-h-60 rounded-lg border"
                                             :class="(selectedConversation.contact?.phone_number!=message.from && selectedConversation.contact?.phone_number!=message.to) ? 'ml-auto' : 'mr-auto'"
                                           />
                                         </div>
-                                        <div class="text-sm whitespace-pre-line">
+                                        <div class="text-xs sm:text-sm whitespace-pre-line">
                                           {{ message.content }}
                                         </div>
                                         <div
@@ -117,17 +117,17 @@
       <!-- Chat Input untuk Agent Manusia -->
       <div
         v-if="selectedConversation?.agent?.type === 'manusia'"
-        class="border-t border-gray-200 pt-4 relative"
+        class="border-t border-gray-200 pt-2 sm:pt-4 relative"
       >
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1 sm:space-x-2">
           <!-- Emoji Picker -->
           <button
             @click="showEmojiPicker = !showEmojiPicker"
-            class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full"
+            class="p-1 sm:p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full"
             title="Emoji"
           >
             <svg
-              class="w-5 h-5"
+              class="w-4 h-4 sm:w-5 sm:h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -143,7 +143,7 @@
 
           <!-- Image Attachment -->
           <label
-            class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full cursor-pointer"
+            class="p-1 sm:p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full cursor-pointer"
             title="Attach Image"
           >
             <input
@@ -154,7 +154,7 @@
               class="hidden"
             />
             <svg
-              class="w-5 h-5"
+              class="w-4 h-4 sm:w-5 sm:h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -175,7 +175,7 @@
               @keydown.enter.prevent="sendMessage"
               @keydown.enter.shift.exact="newMessage += '\n'"
               placeholder="Ketik pesan..."
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              class="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               rows="1"
               ref="messageInput"
             ></textarea>
@@ -185,11 +185,11 @@
           <button
             @click="sendMessage"
             :disabled="!newMessage.trim() && !selectedImage"
-            class="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="p-1.5 sm:p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Kirim"
           >
             <svg
-              class="w-5 h-5"
+              class="w-4 h-4 sm:w-5 sm:h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -207,20 +207,20 @@
         <!-- Image Preview -->
         <div
           v-if="selectedImage && !showCaptionPopup"
-          class="mt-2 p-3 bg-gray-50 rounded-lg"
+          class="mt-2 p-2 sm:p-3 bg-gray-50 rounded-lg"
         >
           <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
+            <div class="flex items-center space-x-2 sm:space-x-3">
               <!-- Image Preview -->
               <img
                 :src="imagePreview"
                 alt="Preview"
-                class="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                class="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg border border-gray-200"
               />
 
               <!-- File Info -->
-              <div>
-                <span class="text-sm font-medium text-gray-700">
+              <div class="flex-1 min-w-0">
+                <span class="text-xs sm:text-sm font-medium text-gray-700 truncate block">
                   {{ selectedImage.name }}
                 </span>
                 <div class="flex items-center space-x-2 mt-1">
@@ -257,16 +257,16 @@
         <!-- Caption Popup Modal -->
         <div
           v-if="showCaptionPopup"
-          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
           @click="showCaptionPopup = false"
         >
           <div
-            class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+            class="bg-white rounded-lg shadow-xl max-w-md w-full"
             @click.stop
           >
             <!-- Header -->
             <div
-              class="flex items-center justify-between p-4 border-b border-gray-200"
+              class="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200"
             >
               <h3 class="text-lg font-medium text-gray-900">Add Caption</h3>
               <button
@@ -376,13 +376,13 @@
         <!-- Emoji Picker Popover -->
         <div
           v-if="showEmojiPicker"
-          class="absolute bottom-full mb-2 left-0 bg-white border border-gray-200 rounded-lg shadow-xl z-50 w-80"
+          class="absolute bottom-full mb-2 left-0 sm:left-auto sm:right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-50 w-72 sm:w-80 max-w-[90vw]"
         >
           <!-- Search bar -->
-          <div class="border-b border-gray-200 p-3">
+          <div class="border-b border-gray-200 p-2 sm:p-3">
             <div class="relative">
               <svg
-                class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                class="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -398,16 +398,16 @@
                 v-model="searchQuery"
                 type="text"
                 placeholder="search emojis"
-                class="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                class="w-full pl-8 sm:pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 @input="handleSearch"
               />
             </div>
           </div>
 
           <!-- Emoji content -->
-          <div class="p-3 max-h-64 overflow-y-auto">
-            <div class="mb-3">
-              <h3 class="text-sm font-medium text-gray-700 mb-2">
+          <div class="p-2 sm:p-3 max-h-64 overflow-y-auto">
+            <div class="mb-2 sm:mb-3">
+              <h3 class="text-xs sm:text-sm font-medium text-gray-700 mb-2">
                 Smileys & people
               </h3>
               <div class="grid grid-cols-10 gap-0">
@@ -508,8 +508,8 @@
         </div>
       </div>
     </div>
-    <div v-else class="p-8 text-gray-400 text-center">
-      Pilih percakapan untuk melihat detail chat.
+    <div v-else class="p-4 sm:p-6 md:p-8 text-gray-400 text-center">
+      <div class="text-sm sm:text-base">Pilih percakapan untuk melihat detail chat.</div>
     </div>
   </div>
 </template>

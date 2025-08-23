@@ -12,6 +12,10 @@ export default defineEventHandler(async (event) => {
       content,
       from,
       to,
+      created_by,
+      wa_message_id,
+      agent_type: providedAgentType,
+      chat_type,
     } = body;
     if (
       !agent_id ||
@@ -33,19 +37,22 @@ export default defineEventHandler(async (event) => {
       runtimeConfig.public.supabaseUrl,
       runtimeConfig.supabaseServiceRoleKey
     );
-    // Ambil tipe agent dari tabel agents
-    let agent_type = null;
-    try {
-      const { data: agentData, error: agentErr } = await client
-        .from("agents")
-        .select("type")
-        .eq("id", agent_id)
-        .maybeSingle();
-      if (agentData && agentData.type) {
-        agent_type = agentData.type; // 'ai' atau 'manusia'
+    // Ambil tipe agent dari tabel agents atau gunakan yang diberikan
+    let agent_type = providedAgentType || null;
+    
+    if (!agent_type) {
+      try {
+        const { data: agentData, error: agentErr } = await client
+          .from("agents")
+          .select("type")
+          .eq("id", agent_id)
+          .maybeSingle();
+        if (agentData && agentData.type) {
+          agent_type = agentData.type; // 'ai' atau 'manusia'
+        }
+      } catch (e) {
+        // Biarkan agent_type null jika gagal
       }
-    } catch (e) {
-      // Biarkan agent_type null jika gagal
     }
     if (!agent_type) {
       return {
@@ -65,6 +72,9 @@ export default defineEventHandler(async (event) => {
         from,
         to,
         agent_type, // gunakan agent_type untuk filter/grouping
+        chat_type: chat_type || agent_type, // gunakan chat_type jika ada, atau fallback ke agent_type
+        created_by: created_by || null,
+        wa_message_id: wa_message_id || null,
       })
       .select()
       .single();

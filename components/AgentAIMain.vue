@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col md:flex-row h-full">
+  <div class="flex flex-col md:flex-row h-full min-w-0 overflow-hidden">
     <!-- Mobile: Show list full screen when no agent selected -->
     <div
       v-if="!selectedAI || !selectedAI.id"
@@ -35,17 +35,17 @@
     <!-- Main Content - Hidden on mobile when no agent selected -->
     <div
       v-if="selectedAI && selectedAI.id"
-      class="flex-1 flex flex-col bg-gray-100 px-2 md:px-8 h-full"
+      class="flex-1 flex flex-col bg-gray-100 min-w-0 h-full overflow-hidden"
     >
       <template v-if="selectedAI && selectedAI.id">
         <div
-          class="px-4 md:px-8 pt-4 md:pt-6 flex flex-col md:flex-row items-start md:items-center justify-between"
+          class="px-2 md:px-8 pt-4 md:pt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
         >
-          <div class="flex items-center gap-3 mb-2 md:mb-0">
+          <div class="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
             <!-- Mobile back button -->
             <button
               @click="selectedAI = {}"
-              class="md:hidden bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-lg transition-colors"
+              class="md:hidden bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-lg transition-colors flex-shrink-0"
               title="Kembali ke daftar"
             >
               <svg
@@ -64,9 +64,9 @@
               </svg>
             </button>
             <!-- Agent Name Display with Avatar -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
               <div
-                class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-sm"
+                class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-sm md:text-lg shadow-sm flex-shrink-0"
               >
                 {{
                   selectedAI.name
@@ -74,26 +74,26 @@
                     : "A"
                 }}
               </div>
-              <div>
-                <h1 class="text-xl md:text-2xl font-bold text-gray-800">
+              <div class="min-w-0 flex-1">
+                <h1 class="text-lg md:text-2xl font-bold text-gray-800 truncate">
                   {{ selectedAI.name }}
                 </h1>
-                <p class="text-gray-500 text-sm">
+                <p class="text-gray-500 text-xs md:text-sm truncate">
                   {{ selectedAI.description || "Tidak ada deskripsi" }}
                 </p>
               </div>
             </div>
           </div>
-          <div class="flex gap-3 items-center">
+          <div class="flex gap-2 md:gap-3 items-center flex-shrink-0">
             <button
-              class="bg-green-600 hover:bg-green-700 text-white rounded-lg px-4 md:px-6 py-2 text-base cursor-pointer flex items-center gap-2"
+              class="bg-green-600 hover:bg-green-700 text-white rounded-lg px-3 md:px-6 py-2 text-sm md:text-base cursor-pointer flex items-center gap-1 md:gap-2"
               @click="onSaveAll"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="lucide"
-                width="20"
-                height="20"
+                width="16"
+                height="16"
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2"
@@ -107,9 +107,10 @@
                 <polyline points="17 21 17 13 7 13 7 21" />
                 <polyline points="7 3 7 8 15 8" />
               </svg>
-              Simpan Semua
+              <span class="hidden sm:inline">Simpan Semua</span>
+              <span class="sm:hidden">Simpan</span>
             </button>
-            <button
+            <!-- <button
               class="bg-blue-700 text-white rounded-lg px-4 md:px-6 py-2 text-base cursor-pointer flex items-center gap-2 ml-2 md:ml-4"
               @click="showChatModal = true"
             >
@@ -133,7 +134,7 @@
                 <path d="M16 12h.01" />
               </svg>
               Chat Agent
-            </button>
+            </button> -->
           </div>
         </div>
         <!-- Modal responsif -->
@@ -205,19 +206,16 @@
                 <!-- Bubble gambar (jika ada) -->
                 <div
                   v-if="msg.images && msg.images.length"
-                  class="flex flex-wrap gap-2 mt-1"
-                  style="max-width: 70%"
+                  class="flex flex-wrap gap-2 mt-1 max-w-xs md:max-w-md min-w-0"
                 >
                   <div
                     v-for="(img, i) in msg.images"
                     :key="i"
-                    class="bg-blue-50 rounded-lg p-2 shadow border max-w-[180px] max-h-[220px] flex items-center justify-center"
-                    style="margin-top: 2px"
+                    class="bg-blue-50 rounded-lg p-2 shadow border max-w-[180px] max-h-[220px] flex items-center justify-center mt-0.5"
                   >
                     <img
                       :src="img"
-                      class="max-w-[160px] max-h-[180px] rounded"
-                      style="display: block; margin: 0 auto"
+                      class="max-w-[160px] max-h-[180px] rounded block mx-auto"
                       :alt="'Gambar AI ' + (i + 1)"
                     />
                   </div>
@@ -259,13 +257,13 @@
         </div>
 
         <div
-          class="px-4 md:px-8 pt-2 flex gap-4 md:gap-6 mb-4 md:mb-6 border-b border-gray-200 overflow-x-auto"
+          class="px-2 md:px-8 pt-2 flex gap-2 md:gap-6 mb-4 md:mb-6 border-b border-gray-200 overflow-x-auto"
         >
           <button
             v-for="t in ['gaya', 'pengetahuan', 'edit']"
             :key="t"
             :class="[
-              'px-3 md:px-5 py-2 font-medium border-b-2 whitespace-nowrap',
+              'px-2 md:px-5 py-2 font-medium border-b-2 whitespace-nowrap text-sm md:text-base',
               tab === t
                 ? 'text-blue-600 border-blue-600'
                 : 'text-gray-700 border-transparent',
@@ -276,33 +274,33 @@
             {{ t.charAt(0).toUpperCase() + t.slice(1) }}
           </button>
         </div>
-        <div class="flex-1 overflow-y-auto px-4 md:px-8 py-4 h-full">
-          <div v-if="tab === 'gaya'">
+        <div class="flex-1 overflow-y-auto px-2 md:px-8 py-4 h-full min-w-0">
+          <div v-if="tab === 'gaya'" class="min-w-0">
             <div class="agentai-subtabs overflow-x-auto">
-              <div class="flex gap-2 md:gap-6 min-w-max">
+              <div class="flex gap-1 md:gap-6 min-w-max">
                 <button
-                  class="agentai-subtab-btn whitespace-nowrap"
+                  class="agentai-subtab-btn whitespace-nowrap text-xs md:text-sm"
                   :class="{ active: subtab === 'gaya' }"
                   @click="subtab = 'gaya'"
                 >
                   Gaya Bicara
                 </button>
                 <button
-                  class="agentai-subtab-btn whitespace-nowrap"
+                  class="agentai-subtab-btn whitespace-nowrap text-xs md:text-sm"
                   :class="{ active: subtab === 'handover' }"
                   @click="subtab = 'handover'"
                 >
                   Kondisi Handover
                 </button>
                 <button
-                  class="agentai-subtab-btn whitespace-nowrap"
+                  class="agentai-subtab-btn whitespace-nowrap text-xs md:text-sm"
                   :class="{ active: subtab === 'followup' }"
                   @click="subtab = 'followup'"
                 >
                   Followup
                 </button>
                 <button
-                  class="agentai-subtab-btn whitespace-nowrap"
+                  class="agentai-subtab-btn whitespace-nowrap text-xs md:text-sm"
                   :class="{ active: subtab === 'kirim' }"
                   @click="subtab = 'kirim'"
                 >
@@ -310,34 +308,34 @@
                 </button>
               </div>
             </div>
-            <div v-if="subtab === 'gaya'" class="h-full flex flex-col">
-              <h3 class="font-semibold text-lg mb-2">Gaya bicara Agent</h3>
-              <div class="mb-2 text-gray-500">Maximum 28/15000 karakter</div>
+            <div v-if="subtab === 'gaya'" class="h-full flex flex-col min-w-0">
+              <h3 class="font-semibold text-base md:text-lg mb-2">Gaya bicara Agent</h3>
+              <div class="mb-2 text-gray-500 text-sm">Maximum 28/15000 karakter</div>
               <textarea
                 v-model="selectedAI.gayaBicara"
-                class="w-full flex-1 min-h-0 p-3 text-base border border-gray-300 rounded-lg resize-none"
+                class="w-full flex-1 min-h-0 p-2 md:p-3 text-sm md:text-base border border-gray-300 rounded-lg resize-none"
                 placeholder="Masukkan gaya bicara agent..."
               ></textarea>
               <div class="mt-2">
-                <a href="#" class="text-blue-600 no-underline"
+                <a href="#" class="text-blue-600 no-underline text-sm md:text-base"
                   >Lihat template gaya bicara agent</a
                 >
               </div>
             </div>
-            <div v-else-if="subtab === 'handover'" class="h-full flex flex-col">
-              <h3 class="font-semibold text-lg mb-2">Buat Kondisi Handover</h3>
-              <div class="mb-2">
+            <div v-else-if="subtab === 'handover'" class="h-full flex flex-col min-w-0">
+              <h3 class="font-semibold text-base md:text-lg mb-2">Buat Kondisi Handover</h3>
+              <div class="mb-2 text-sm md:text-base">
                 Agen AI akan berhenti saat pelanggan mengirim pesan dengan kata
                 kunci
               </div>
               <textarea
                 v-model="handoverInput"
                 placeholder="e.g. saya ingin bicara dengan atasan anda"
-                class="w-full h-20 md:h-18 p-3 text-base border border-gray-300 rounded-lg resize-y mb-4"
+                class="w-full h-16 md:h-20 p-2 md:p-3 text-sm md:text-base border border-gray-300 rounded-lg resize-y mb-4"
               ></textarea>
               <button
                 @click="addHandover"
-                class="bg-blue-700 text-white border-none rounded-xl px-7 py-2.5 text-base cursor-pointer mb-6"
+                class="bg-blue-700 text-white border-none rounded-xl px-4 md:px-7 py-2 md:py-2.5 text-sm md:text-base cursor-pointer mb-6"
               >
                 Tambahkan Kondisi Handover
               </button>
@@ -399,17 +397,17 @@
                 </div>
               </div>
             </div>
-            <div v-else-if="subtab === 'followup'" class="h-full flex flex-col">
-              <h3 class="font-semibold text-lg mb-2">Buat Kondisi Followup</h3>
-              <div class="mb-2">
+            <div v-else-if="subtab === 'followup'" class="h-full flex flex-col min-w-0">
+              <h3 class="font-semibold text-base md:text-lg mb-2">Buat Kondisi Followup</h3>
+              <div class="mb-2 text-sm md:text-base">
                 Saat pelanggan mengirim pesan dengan kata kunci
               </div>
               <textarea
                 v-model="selectedAI.followupKeyword"
                 placeholder="cth: saya ingin booking"
-                class="w-full h-16 md:h-15 p-3 text-base border border-gray-300 rounded-lg resize-y mb-4"
+                class="w-full h-16 md:h-20 p-2 md:p-3 text-sm md:text-base border border-gray-300 rounded-lg resize-y mb-4"
               ></textarea>
-              <div class="mb-2">
+              <div class="mb-2 text-sm md:text-base">
                 Agen AI akan
                 <button
                   type="button"
@@ -531,17 +529,17 @@
                 </div>
               </div>
             </div>
-            <div v-else-if="subtab === 'kirim'" class="h-full flex flex-col">
-              <h3 class="font-semibold text-lg mb-2">
+            <div v-else-if="subtab === 'kirim'" class="h-full flex flex-col min-w-0">
+              <h3 class="font-semibold text-base md:text-lg mb-2">
                 Buat Kondisi Kirim Gambar
               </h3>
-              <div class="mb-2">
+              <div class="mb-2 text-sm md:text-base">
                 Saat pelanggan mengirim pesan dengan kata kunci
               </div>
               <input
                 v-model="kirimGambarKeyword"
                 placeholder="e.g. boleh minta gambar produknya"
-                class="w-full mb-2 px-3 py-2 border rounded"
+                class="w-full mb-2 px-2 md:px-3 py-2 text-sm md:text-base border rounded min-w-0"
               />
 
               <!-- Image Upload Section -->
@@ -780,8 +778,8 @@
             </div>
 
             <!-- Produk Subtab -->
-            <div v-else-if="pengetahuanSubtab === 'produk'">
-              <div class="flex justify-between items-center mb-4">
+            <div v-else-if="pengetahuanSubtab === 'produk'" class="overflow-y-scroll xs:h-[320px]">
+              <div class="flex justify-between items-center mb-4  ">
                 <h3 class="font-semibold text-lg">Produk</h3>
                 <button
                   @click="openProductSelectionModal"
@@ -806,7 +804,7 @@
               </div>
 
               <!-- Product Cards Grid -->
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ">
                 <div
                   v-for="(product, index) in selectedAI.products || []"
                   :key="product.id"
@@ -1038,53 +1036,32 @@
             </div>
           </div>
 
-          <div v-else-if="tab === 'edit'" class="h-full flex flex-col">
-            <h3 class="font-semibold text-lg mb-4">Edit Agen</h3>
-            <form @submit.prevent style="max-width: 900px">
-              <div style="margin-bottom: 18px">
-                <label style="font-weight: 600">Nama</label>
+          <div v-else-if="tab === 'edit'" class="h-full flex flex-col min-w-0">
+            <h3 class="font-semibold text-base md:text-lg mb-4">Edit Agen</h3>
+            <form @submit.prevent class="w-full max-w-2xl min-w-0">
+              <div class="mb-4">
+                <label class="block font-semibold text-sm md:text-base mb-1">Nama</label>
                 <input
                   v-model="selectedAI.name"
                   type="text"
-                  style="
-                    width: 100%;
-                    padding: 10px;
-                    font-size: 1em;
-                    border: 1px solid #ccc;
-                    border-radius: 6px;
-                    margin-top: 4px;
-                  "
+                  class="w-full p-2 md:p-3 text-sm md:text-base border border-gray-300 rounded-lg min-w-0"
                   placeholder="Nama Agent"
                 />
               </div>
-              <div style="margin-bottom: 18px">
-                <label style="font-weight: 600">Description</label>
+              <div class="mb-4">
+                <label class="block font-semibold text-sm md:text-base mb-1">Description</label>
                 <input
                   v-model="selectedAI.description"
                   type="text"
-                  style="
-                    width: 100%;
-                    padding: 10px;
-                    font-size: 1em;
-                    border: 1px solid #ccc;
-                    border-radius: 6px;
-                    margin-top: 4px;
-                  "
+                  class="w-full p-2 md:p-3 text-sm md:text-base border border-gray-300 rounded-lg min-w-0"
                   placeholder="Deskripsi Agent"
                 />
               </div>
-              <div style="margin-bottom: 18px">
-                <label style="font-weight: 600">Kepintaran AI</label>
+              <div class="mb-4">
+                <label class="block font-semibold text-sm md:text-base mb-1">Kepintaran AI</label>
                 <select
                   v-model="selectedAI.kepintaran"
-                  style="
-                    width: 100%;
-                    padding: 10px;
-                    font-size: 1em;
-                    border: 1px solid #ccc;
-                    border-radius: 6px;
-                    margin-top: 4px;
-                  "
+                  class="w-full p-2 md:p-3 text-sm md:text-base border border-gray-300 rounded-lg min-w-0"
                 >
                   <option value="Basic">Basic</option>
                   <option value="Intermediate">Intermediate</option>

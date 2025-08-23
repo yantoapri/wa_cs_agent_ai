@@ -16,6 +16,24 @@ export async function handleReceivedMessage({
   contactId, // Tambah contactId
   ...rest
 }) {
+  // Check if this is a group message and ignore it
+  const isGroup = body?.payload?.isGroup || false;
+  const chatId = body?.payload?.chatId || "";
+  const isGroupMessage = isGroup || chatId.includes("@g.us");
+  
+  if (isGroupMessage) {
+    console.log("[Handler] Ignoring group message in handleReceivedMessage:", {
+      chatId,
+      isGroup,
+      from: body?.payload?.from
+    });
+    return { 
+      status: "ignored", 
+      message: "Group message ignored",
+      chat_id: chatId 
+    };
+  }
+
   // Ambil chanel_id dari metadata/body
   const chanelId = body?.metadata?.chanel_id || body?.chanel_id || null;
   if (!chanelId) {
@@ -125,6 +143,24 @@ export async function handleSentMessage({
   payloadFrom,
   ...rest
 }) {
+  // Check if this is a group message and ignore it
+  const isGroup = body?.payload?.isGroup || false;
+  const chatId = body?.payload?.chatId || "";
+  const isGroupMessage = isGroup || chatId.includes("@g.us");
+  
+  if (isGroupMessage) {
+    console.log("[Handler] Ignoring group message in handleSentMessage:", {
+      chatId,
+      isGroup,
+      to: body?.payload?.to
+    });
+    return { 
+      status: "ignored", 
+      message: "Group message ignored",
+      chat_id: chatId 
+    };
+  }
+
   // Ambil metadata dari WAHA payload
   const metadata = body?.payload?.metadata || {};
   const messageContent = body?.payload?.body || body?.payload?.text || null;
@@ -257,49 +293,12 @@ export async function handleSentMessage({
     console.log("[WAHA Webhook] Error mencari contact:", e.message);
   }
 
-  // Simpan ke tabel messages, CEGAH DUPLIKASI BERDASARKAN wa_message_id
-  try {
-    const waMessageId = body?.payload?.id || body?.payload?.key?.id || null;
-    if (!waMessageId) {
-      console.warn("[WAHA Handler] Tidak ada wa_message_id pada payload, tetap lanjut simpan.");
-    } else {
-      // Cek duplikasi
-      const { data: existingMsg } = await client
-        .from("messages")
-        .select("id, wa_message_id")
-        .eq("wa_message_id", waMessageId)
-        .maybeSingle();
-      if (existingMsg && existingMsg.id) {
-        console.log("[WAHA Handler] Pesan sudah ada di database, skip simpan.", existingMsg);
-        return { status: "ok", message: "Pesan sudah ada di database, skip simpan." };
-      }
-    }
-    const { data, error } = await client
-      .from("messages")
-      .insert({
-        agent_id: agentId,
-        chanel_id: chanelId,
-        contact_id: contactId,
-        message_type: "text",
-        agent_type: "manusia",
-        from: meId,
-        to: payloadFrom,
-        media_url: null,
-        content: messageContent,
-  created_by: body?.metadata?.i || body?.payload?.metadata?.i,
-        wa_message_id: body?.payload?.id || body?.payload?.key?.id || null,
-      })
-      .select()
-      .single();
-    if (error) {
-      return { status: "error", message: error.message };
-    }
-    return { status: "ok", message: "Manual reply saved to database", data };
-  } catch (err) {
-    return {
-      status: "error",
-      message: "Gagal simpan manual reply",
-      detail: err.message,
-    };
-  }
+  // Return takeover decision without saving message
+  // Message will be saved by the main webhook handler
+  return { 
+    status: "ok", 
+    takeover: takeoverActive, 
+    proceed: !takeoverActive,
+    contact_id: contactId 
+  };
 }

@@ -15,12 +15,27 @@
         <div class="text-sm text-gray-500">Paket Anda</div>
         <div class="mt-1 flex flex-wrap items-center gap-3">
           <div class="text-xl font-semibold capitalize">{{ userPackageValue?.name || 'Tidak diketahui' }}</div>
+          
+        </div>
+        <div class="font-medium" >Masa aktif paket anda 
+            {{ formatDate(dashboard.startAt) }} - {{ formatDate(dashboard.endAt) }}</div>
+        <!-- Pending Payment Notification -->
+        <div v-if="hasPendingInvoice" class="mt-4 p-4 border rounded-lg bg-yellow-50 text-yellow-800 flex flex-col gap-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 15.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <div class="font-medium">Pembayaran Sedang Diverifikasi</div>
+          </div>
+          <div class="text-sm text-yellow-700">
+            Pembayaran Anda sudah diterima dan sedang dalam proses verifikasi admin. Jika sudah diverifikasi, kami akan mengirim pemberitahuan ke email Anda.
+          </div>
         </div>
         
-        <div v-if="is_trial||new Date(dashboard.endAt)>=new Date()" class="mt-4 p-4 border rounded-lg bg-blue-50 text-blue-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <!-- Package Expiry Info (hidden when pending invoice exists) -->
+        <div v-else-if="is_trial||new Date(dashboard.endAt)>=new Date()" class="mt-4 p-4 border rounded-lg bg-blue-50 text-blue-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <div class="font-medium" >Masa aktif paket anda 
-            {{ formatDate(dashboard.startAt) }} - {{ formatDate(dashboard.endAt) }}</div>
+            
             <div class="font-medium" v-if="new Date().getTime()>=new Date(dashboard.endAt).getTime()">Peringatan masa aktif paket anda sudah habis</div>
             <div class="text-sm text-blue-700">Upgrade paket untuk membuka semua fitur tanpa batasan.</div>
           </div>
@@ -214,9 +229,33 @@ function formatDate(dateString, includeTime = false) {
   return formatted;
 }
 
+async function checkPendingInvoices(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('invoices')
+      .select('id, status')
+      .eq('user_id', userId)
+      .eq('status', 2) // status 2 = waiting approve
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (error) {
+      console.error('Error checking pending invoices:', error)
+      hasPendingInvoice.value = false
+      return
+    }
+
+    hasPendingInvoice.value = data && data.length > 0
+  } catch (error) {
+    console.error('Error checking pending invoices:', error)
+    hasPendingInvoice.value = false
+  }
+}
+
 // nilai fallback jika relasi package tidak ditemukan
 const planLimits = { pro: 10000, business: 50000, corporate: 200000 }
 const is_trial=ref(false)
+const hasPendingInvoice = ref(false)
 const userPackageValue = ref(null)
 
 async function fetchUserPackage() {
@@ -239,6 +278,9 @@ async function fetchUserPackage() {
       userPackageValue.value = null
       return
     }
+
+    // Check for pending invoices
+    await checkPendingInvoices(data.id)
 
     // Deteksi superadmin
     const role = data?.role

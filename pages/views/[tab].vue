@@ -53,7 +53,7 @@
           <!-- User Dropdown -->
           <div
             v-if="dropdownOpen"
-            class="absolute left-full ml-2 top-0 w-40 border border-gray-200 rounded-lg shadow-lg z-50 bg-white"
+            class="absolute left-full ml-2 top-[-30px] w-40 border border-gray-200 rounded-lg shadow-lg z-50 bg-white"
           >
             <button
               class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50"
@@ -219,7 +219,7 @@
       </transition>
 
       <!-- Content Area -->
-      <div class="flex-1 min-h-0">
+      <div class="flex-1 min-h-0 overflow-hidden max-w-full w-full">
         <!-- DASHBOARD -->
         <template v-if="currentTab === 'dashboard'">
           <DashboardMain />
@@ -243,7 +243,7 @@
           <template v-if="!isDesktop">
             <div
               v-if="!selectedConversation"
-              class="w-full h-full bg-white flex flex-col"
+              class="w-full h-full bg-white flex flex-col overflow-hidden max-w-full"
             >
               <InboxList
                 v-model:activeTab="agentTab"
@@ -256,7 +256,7 @@
                 @select-conversation="onSelectConversation"
               />
             </div>
-            <div v-else class="w-full h-full flex flex-col bg-gray-100">
+            <div v-else class="w-full h-full flex flex-col bg-gray-100 overflow-hidden max-w-full">
               <InboxMain
                 :selected-conversation="selectedConversation"
                 @back="selectedConversation = null"
@@ -266,7 +266,7 @@
           <!-- DESKTOP: tampil berdampingan -->
           <template v-else>
             <div class="flex h-full">
-              <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
+              <div class="w-80 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
                 <InboxList
                   v-model:activeTab="agentTab"
                   @update:activeTab="
@@ -278,7 +278,7 @@
                   @select-conversation="onSelectConversation"
                 />
               </div>
-              <div class="flex-1 flex flex-col bg-gray-100 h-full">
+              <div class="flex-1 flex flex-col bg-gray-100 h-full overflow-hidden">
                 <InboxMain :selected-conversation="selectedConversation" />
               </div>
             </div>
@@ -449,7 +449,7 @@
           <!-- MOBILE: hanya salah satu yang tampil -->
           <template v-if="!isDesktop">
             <div
-              v-if="!selectedProduct"
+              v-if="!selectedProduct && !productFormInMain"
               class="w-full h-full bg-white flex flex-col"
             >
               <ProductList
@@ -922,6 +922,9 @@ function onRefreshChatList() {
 // Product functions
 function onSelectProduct(product) {
   selectedProduct.value = product;
+  // Reset form state when selecting a product
+  productFormInMain.value = false;
+  productFormEditData.value = null;
 }
 
 function onAddProduct() {
@@ -933,18 +936,28 @@ function onAddProduct() {
 function onEditProduct(product) {
   productFormInMain.value = true;
   productFormEditData.value = product;
-  selectedProduct.value = null;
+  // Keep selectedProduct for mobile view navigation
+  selectedProduct.value = product;
 }
 
 function onBackFromProduct() {
-  selectedProduct.value = null;
-  productFormInMain.value = false;
-  productFormEditData.value = null;
+  // If we're in form mode, go back to product list
+  if (productFormInMain.value) {
+    productFormInMain.value = false;
+    productFormEditData.value = null;
+    selectedProduct.value = null; // Go back to list view
+  } else {
+    // If we're in detail view, go back to list
+    selectedProduct.value = null;
+    productFormInMain.value = false;
+    productFormEditData.value = null;
+  }
 }
 
 function onProductFormSaved() {
   productFormInMain.value = false;
   productFormEditData.value = null;
+  selectedProduct.value = null; // Go back to list view after saving
 }
 
 function onRefreshProductList() {

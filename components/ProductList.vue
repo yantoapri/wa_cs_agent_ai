@@ -123,7 +123,7 @@
 </template>
 
 <script setup>
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { useProducts } from "~/composables/useProducts";
 import { useRouter } from "vue-router";
 import { useSupabaseUser, useSupabaseClient } from "#imports";
@@ -144,20 +144,52 @@ const { products, loading, error, fetchProducts } = useProducts();
 const limitProduk = ref(false);
 
 async function getCountProduct() {
-  const { data: userData } = await supabase
-    .from("users")
-    .select("*,package(*)")
-    .eq("auth_id", user.value.id)
-    .single();
-  if (new Date().getTime() >= new Date(userData.end_at).getTime()) {
-    router.push("/views/dashboard");
+  try {
+    // Ensure user is available and has an id
+    if (!user.value?.id) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("*,package(*)")
+      .eq("auth_id", user.value.id)
+      .single();
+    
+    if (userError) {
+      console.error('Error fetching user data:', userError);
+      return;
+    }
+
+    if (!userData) {
+      console.error('User data not found');
+      return;
+    }
+
+    // Check if user subscription has expired
+    if (userData.end_at && new Date().getTime() >= new Date(userData.end_at).getTime()) {
+      router.push("/views/dashboard");
+      return;
+    }
+
+    const { count, error: countError } = await supabase
+      .from("products")
+      .select('*', { count: 'exact', head: true })
+      .eq("created_by", user.value.id);
+    
+    if (countError) {
+      console.error('Error fetching product count:', countError);
+      return;
+    }
+
+    // Set limit based on package limits
+    if (userData.package && typeof count === 'number') {
+      limitProduk.value = count >= userData.package.limit_produk;
+    }
+  } catch (error) {
+    console.error('Error in getCountProduct:', error);
   }
-  const { count } = await supabase
-    .from("products")
-    .select({ count: 'exact' })
-    .eq("crated_by", user.value.id)
-    .single();
-  limitProduk.value = count >= userData.package.limit_produk;
 }
 // Load products on mount
 onMounted(async () => {

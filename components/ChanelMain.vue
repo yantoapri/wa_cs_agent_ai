@@ -1,38 +1,39 @@
 <template>
-  <div class="p-2">
-    <div v-if="chanel">
-      <div class="flex items-center mb-4">
-        <!-- Tombol back hanya di mobile, di kiri avatar -->
-        <button
-          class="md:hidden mr-2 p-1 text-gray-700 hover:bg-gray-200 rounded-full"
-          @click="$emit('back')"
-          aria-label="Kembali ke daftar chanel"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            class="w-7 h-7"
+  <div class="h-full flex flex-col overflow-hidden">
+    <div class="flex-1 overflow-y-auto p-2 pb-4">
+      <div v-if="chanel" class="space-y-4">
+        <div class="flex items-center mb-4">
+          <!-- Tombol back hanya di mobile, di kiri avatar -->
+          <button
+            class="md:hidden mr-2 p-1 text-gray-700 hover:bg-gray-200 rounded-full"
+            @click="$emit('back')"
+            aria-label="Kembali ke daftar chanel"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-        <img
-          class="w-12 h-12 rounded-full mr-4"
-          :src="getChanelAvatar(chanel)"
-          :alt="chanel?.name"
-        />
-        <div>
-          <span class="block font-semibold text-lg">{{ chanel?.name }}</span>
-          <!-- ...status/info lain... -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              class="w-7 h-7"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          <img
+            class="w-12 h-12 rounded-full mr-4"
+            :src="getChanelAvatar(chanel)"
+            :alt="chanel?.name"
+          />
+          <div>
+            <span class="block font-semibold text-lg">{{ chanel?.name }}</span>
+            <!-- ...status/info lain... -->
+          </div>
         </div>
-      </div>
       <div class="flex gap-2 mb-4">
         <button
           class="px-5 py-2 font-medium border-b-2"
@@ -157,7 +158,7 @@
           </div>
         </div>
       </div>
-      <div v-else-if="activeTab === 'edit'">
+      <div v-else-if="activeTab === 'edit'" class="space-y-6">
         <form class="edit-chanel-form" @submit.prevent="onEditchanel">
           <div class="form-group">
             <label>Nama</label>
@@ -184,19 +185,20 @@
       
           <button class="edit-btn" type="submit">Edit chanel</button>
         </form>
-        <div style="margin-top: 32px">
-          <div style="color: #888; font-size: 1em; margin-bottom: 8px">
+        <div class="mt-8 mb-8 p-4 bg-red-50 rounded-lg border border-red-200">
+          <div class="text-gray-700 text-base font-medium mb-2">
             Hapus chanel
           </div>
-          <div style="color: #aaa; font-size: 0.95em; margin-bottom: 8px">
+          <div class="text-gray-500 text-sm mb-4">
             Bila dilakukan, tindakan ini tidak bisa dikembalikan
           </div>
           <button class="delete-btn" @click="onDeletechanel">Hapus</button>
         </div>
       </div>
     </div>
-    <div v-else style="padding: 32px; color: #888; text-align: center">
+    <div v-else class="p-8 text-gray-500 text-center">
       Pilih chanel untuk melihat detail.
+    </div>
     </div>
   </div>
 </template>
@@ -287,6 +289,27 @@ watch(
   },
   { immediate: true }
 );
+
+// Normalisasi nomor telepon ke format 62 (tanpa plus)
+function normalizePhoneNumber(phone) {
+  let normalized = (phone || '').replace(/[\s\-\("\\]/g, "");
+  if (normalized.startsWith("+62")) {
+    normalized = normalized.substring(1);
+  } else if (normalized.startsWith("62")) {
+    // sudah benar
+  } else if (normalized.startsWith("0")) {
+    normalized = "62" + normalized.substring(1);
+  } else if (normalized.startsWith("8")) {
+    normalized = "62" + normalized;
+  } else if (normalized.startsWith("+")) {
+    normalized = normalized.substring(1);
+  } else {
+    if (normalized.length >= 9 && normalized.length <= 13) {
+      normalized = "62" + normalized;
+    }
+  }
+  return normalized;
+}
 
 function startPolling(sessionName) {
   stopPolling();
@@ -423,26 +446,7 @@ async function fetchSessionStatus(sessionName) {
       }
       emit("update-whatsapp-number", props.chanel.id, whatsappNumber);
     }
-// Normalisasi nomor telepon ke format 62 (tanpa plus)
-function normalizePhoneNumber(phone) {
-  let normalized = (phone || '').replace(/[\s\-\("\\]/g, "");
-  if (normalized.startsWith("+62")) {
-    normalized = normalized.substring(1);
-  } else if (normalized.startsWith("62")) {
-    // sudah benar
-  } else if (normalized.startsWith("0")) {
-    normalized = "62" + normalized.substring(1);
-  } else if (normalized.startsWith("8")) {
-    normalized = "62" + normalized;
-  } else if (normalized.startsWith("+")) {
-    normalized = normalized.substring(1);
-  } else {
-    if (normalized.length >= 9 && normalized.length <= 13) {
-      normalized = "62" + normalized;
-    }
-  }
-  return normalized;
-}
+    
     // Restart polling jika status berubah
     if (pollingInterval.value) {
       stopPolling();
@@ -657,6 +661,7 @@ async function updateChannelActiveStatus(chanelId, isActive) {
   padding: 18px 12px 12px 12px;
   box-shadow: 0 1px 4px #0001;
   max-width: 900px;
+  margin-bottom: 24px; /* Add bottom margin for mobile scrolling */
 }
 .form-group {
   margin-bottom: 18px;

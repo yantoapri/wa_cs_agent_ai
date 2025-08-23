@@ -303,6 +303,30 @@ export default defineEventHandler(async (event) => {
     console.log("[WAHA Webhook] No valid user ID found, skipping user data fetch");
   }
   console.log("[WAHA Webhook] User data:", usersData);
+  
+  // Check if this is a group message and ignore it
+  const isGroup = body?.payload?.isGroup || false;
+  const chatId = body?.payload?.chatId || "";
+  const isGroupMessage = isGroup || chatId.includes("@g.us");
+  
+  if (isGroupMessage) {
+    console.log(
+      "[WAHA Webhook] Ignoring group message:",
+      {
+        chatId,
+        isGroup,
+        from: body?.payload?.from,
+        body: body?.payload?.body?.substring(0, 50) + "..."
+      }
+    );
+    return {
+      status: "ok",
+      message: "Event ignored - group message",
+      event_type: body?.event || "unknown",
+      chat_id: chatId
+    };
+  }
+  
   // Check if this is a broadcast event
   // Check broadcast events after confirming it's a message event
   if (checkBroadcastEvent(body)) {
@@ -670,6 +694,12 @@ export default defineEventHandler(async (event) => {
       contactId: contact_id,
     });
     console.log("[WAHA Webhook] Takeover handler result:", takeoverResult);
+    
+    // Use contact_id from takeover result if available
+    if (takeoverResult && takeoverResult.contact_id) {
+      contact_id = takeoverResult.contact_id;
+    }
+    
     // === Tentukan agent_type dan agent_id yang sesuai berdasarkan sessionType ===
     let saveAgentType = "manusia";
     let saveAgentId = agentManusiaId; // default ke agent manusia

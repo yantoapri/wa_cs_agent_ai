@@ -50,9 +50,32 @@
         <div v-else class="p-6">
           <div class="bg-white rounded-lg border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-medium text-gray-800">
-                {{ selectedProduct.name }}
-              </h3>
+              <!-- Mobile back button -->
+              <div class="flex items-center gap-3">
+                <button
+                  class="md:hidden p-2 text-gray-700 hover:bg-gray-200 rounded-full"
+                  @click="$emit('back')"
+                  aria-label="Kembali ke daftar produk"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    class="w-6 h-6"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+                <h3 class="text-lg font-medium text-gray-800">
+                  {{ selectedProduct.name }}
+                </h3>
+              </div>
             </div>
 
             <div class="space-y-4">
