@@ -1,70 +1,139 @@
 <template>
-  <div class="p-8">
-    <h2 class="text-2xl font-bold mb-6">Billing & Payment History</h2>
-
-    <div v-if="loading" class="text-center">Loading...</div>
-    <div v-else-if="error" class="text-red-500">{{ error }}</div>
-
-    <div v-else class="bg-white shadow-md rounded-lg overflow-hidden overflow-x-auto">
-      <table class="min-w-full leading-normal">
-        <thead>
-          <tr>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Invoice Number
-            </th>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Plan
-            </th>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Amount
-            </th>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Date
-            </th>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Status
-            </th>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Action
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="invoice in invoices" :key="invoice.id">
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ invoice.invoice_number }}</p>
-            </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ invoice?.plan.name }}</p>
-            </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">Rp {{ toIDR(invoice.total) }}</p>
-            </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ new Date(invoice.created_at).toLocaleDateString() }}</p>
-            </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <span
-                :class="{
-                  'bg-yellow-200 text-yellow-800': invoice.status.id===1,
-                  'bg-green-200 text-green-800': invoice.status.id === 2,
-                  'bg-blue-200 text-blue-800': invoice.status.id === 3,
-                }"
-                class="px-2 py-1 rounded-full text-xs font-semibold"
-              >
-                {{ invoice?.status.name }}
-              </span>
-            </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <button v-if="invoice?.status.name === 'Waiting Payment'" @click="openUploadModal(invoice)" class="text-blue-600 hover:text-blue-900 mr-4">Upload Bukti</button>
-              <button @click="openDetailModal(invoice)" class="text-gray-600 hover:text-gray-900">Detail</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <div class="flex flex-col h-full bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200 px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Billing & Payment History</h1>
+          <p class="text-sm text-gray-600 mt-1">View your billing history and payment status</p>
+        </div>
+      </div>
     </div>
 
-    <!-- Upload Modal -->
+    <!-- Content -->
+    <div class="flex-1 p-6">
+      <!-- Filters -->
+      <div class="bg-white shadow-sm rounded-lg p-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Search by Invoice Number -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Search Invoice</label>
+            <input
+              v-model="searchInvoice"
+              type="text"
+              placeholder="Search by invoice number..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <!-- Filter by Status -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              v-model="filterStatus"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Status</option>
+              <option value="1">Waiting Payment</option>
+              <option value="2">Paid</option>
+              <option value="3">Verified</option>
+            </select>
+          </div>
+
+          <!-- Date Range -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+            <div class="flex gap-2">
+              <input
+                v-model="dateFrom"
+                type="date"
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <input
+                v-model="dateTo"
+                type="date"
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Actions -->
+        <div class="flex justify-between items-center mt-4">
+          <div class="text-sm text-gray-600">
+            Showing {{ filteredInvoices.length }} of {{ invoices.length }} invoices
+          </div>
+          <div class="flex gap-2">
+            <button
+              @click="clearFilters"
+              class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="loading" class="text-center py-8">Loading...</div>
+      <div v-else-if="error" class="text-red-500 text-center py-8">{{ error }}</div>
+
+      <div v-else class="bg-white shadow-md rounded-lg overflow-hidden overflow-x-auto">
+        <table class="min-w-full leading-normal">
+          <thead>
+            <tr>
+              <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Invoice Number
+              </th>
+              <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Plan
+              </th>
+              <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Amount
+              </th>
+              <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Date
+              </th>
+              <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Status
+              </th>
+              <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="invoice in filteredInvoices" :key="invoice.id">
+              <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                <p class="text-gray-900 whitespace-no-wrap">{{ invoice.invoice_number }}</p>
+              </td>
+              <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                <p class="text-gray-900 whitespace-no-wrap">{{ invoice?.plan.name }}</p>
+              </td>
+              <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                <p class="text-gray-900 whitespace-no-wrap">Rp {{ toIDR(invoice.total) }}</p>
+              </td>
+              <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                <p class="text-gray-900 whitespace-no-wrap">{{ formatDate(invoice.created_at) }}</p>
+              </td>
+              <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                <span
+                  :class="{
+                    'bg-yellow-200 text-yellow-800': invoice.status.id===1,
+                    'bg-green-200 text-green-800': invoice.status.id === 2,
+                    'bg-blue-200 text-blue-800': invoice.status.id === 3,
+                  }"
+                  class="px-2 py-1 rounded-full text-xs font-semibold"
+                >
+                  {{ invoice?.status.name }}
+                </span>
+              </td>
+              <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm text-right">
+                <button v-if="invoice?.status.name === 'Waiting Payment'" @click="openUploadModal(invoice)" class="text-blue-600 hover:text-blue-900 mr-4">Upload Bukti</button>
+                <button @click="openDetailModal(invoice)" class="text-gray-600 hover:text-gray-900">Detail</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>    <!-- Upload Modal -->
     <div v-if="showUploadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div class="p-6">
@@ -92,7 +161,7 @@
             <p><strong>Invoice Number:</strong> {{ selectedInvoice.invoice_number }}</p>
             <p><strong>Plan:</strong> {{ selectedInvoice?.plan.name }}</p>
             
-            <p><strong>Date:</strong> {{ new Date(selectedInvoice.created_at).toLocaleString() }}</p>
+            <p><strong>Date:</strong> {{ formatDate(selectedInvoice.created_at, true) }}</p>
             <p><strong>Status:</strong> <span class="font-semibold capitalize">{{ selectedInvoice?.status.name }}</span></p>
             <p>
                 <strong>Bank Tujuan:</strong><br>
@@ -114,13 +183,11 @@
           </div>
         </div>
       </div>
-    </div>
+      </div>
 
   </div>
-</template>
-
-<script setup>
-import { ref, onMounted } from 'vue';
+</template><script setup>
+import { ref, onMounted, computed } from 'vue';
 import { useSupabaseClient, useSupabaseUser } from '#imports';
 import { useToast } from '~/composables/useToast';
 
@@ -131,6 +198,52 @@ const { showToast } = useToast();
 const invoices = ref([]);
 const loading = ref(true);
 const error = ref(null);
+
+// Filter variables
+const searchInvoice = ref('');
+const filterStatus = ref('');
+const dateFrom = ref('');
+const dateTo = ref('');
+
+// Computed filtered invoices
+const filteredInvoices = computed(() => {
+  let filtered = [...invoices.value];
+
+  // Filter by invoice number
+  if (searchInvoice.value) {
+    filtered = filtered.filter(invoice => 
+      invoice.invoice_number.toLowerCase().includes(searchInvoice.value.toLowerCase())
+    );
+  }
+
+  // Filter by status
+  if (filterStatus.value) {
+    filtered = filtered.filter(invoice => invoice.status.id === parseInt(filterStatus.value));
+  }
+
+  // Filter by date range
+  if (dateFrom.value) {
+    filtered = filtered.filter(invoice => 
+      new Date(invoice.created_at) >= new Date(dateFrom.value)
+    );
+  }
+
+  if (dateTo.value) {
+    filtered = filtered.filter(invoice => 
+      new Date(invoice.created_at) <= new Date(dateTo.value + ' 23:59:59')
+    );
+  }
+
+  return filtered;
+});
+
+// Clear filters function
+function clearFilters() {
+  searchInvoice.value = '';
+  filterStatus.value = '';
+  dateFrom.value = '';
+  dateTo.value = '';
+}
 
 const showUploadModal = ref(false);
 const showDetailModal = ref(false);
@@ -178,6 +291,25 @@ async function fetchInvoices() {
 
 function toIDR(n) {
   return (n || 0).toLocaleString('id-ID');
+}
+
+function formatDate(dateString, includeTime = false) {
+  const date = new Date(dateString);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  
+  let formatted = `${day} ${month} ${year}`;
+  
+  if (includeTime) {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    formatted += ` ${hours}:${minutes}`;
+  }
+  
+  return formatted;
 }
 
 function openUploadModal(invoice) {

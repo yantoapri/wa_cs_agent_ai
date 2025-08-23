@@ -1,93 +1,225 @@
 <template>
   <div class="flex flex-col h-full bg-gray-50">
     <!-- Header -->
-    <div class="bg-white border-b border-gray-200 px-6 py-4">
-      <div class="flex items-center justify-between">
+    <div class="bg-white border-b border-gray-200 px-4 md:px-6 py-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">User Management</h1>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-900">User Management</h1>
           <p class="text-sm text-gray-600 mt-1">Manage users and their roles</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <button
-            @click="openAddModal"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            Add User
-          </button>
         </div>
       </div>
     </div>
 
-    <div v-if="loading" class="text-center">Loading...</div>
-    <div v-else-if="error" class="text-red-500">{{ error }}</div>
+    <!-- Content -->
+    <div class="flex-1 p-4 md:p-6 overflow-y-auto">
+      <!-- Filters -->
+      <div class="bg-white shadow-sm rounded-lg p-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Search by Name/Email -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Search User</label>
+            <input
+              v-model="searchUser"
+              type="text"
+              placeholder="Search by name or email..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <!-- Filter by Package -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Package</label>
+            <select
+              v-model="filterPackage"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Packages</option>
+              <option value="no-package">No Package</option>
+              <option v-for="pkg in packages" :key="pkg.id" :value="pkg.id">
+                {{ pkg.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Filter by Role -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <select
+              v-model="filterRole"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Roles</option>
+              <option value="1">Superadmin</option>
+              <option value="2">Client</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filter Actions -->
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 gap-4">
+          <div class="text-sm text-gray-600">
+            Showing {{ filteredUsers.length }} of {{ users.length }} users
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <button
+              @click="clearFilters"
+              class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+            >
+              Clear Filters
+            </button>
+            <button
+              @click="openAddModal"
+              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Add User
+            </button>
+          </div>
+        </div>
+      </div>
+
+    <div v-if="loading" class="text-center py-8">Loading...</div>
+    <div v-else-if="error" class="text-red-500 text-center py-8">{{ error }}</div>
+    <div v-else-if="filteredUsers.length === 0 && users.length > 0" class="bg-white shadow-md rounded-lg p-12 text-center">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">No users found</h3>
+      <p class="mt-1 text-sm text-gray-500">No users match your current filters. Try adjusting your search criteria.</p>
+      <div class="mt-6">
+        <button
+          @click="clearFilters"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Clear all filters
+        </button>
+      </div>
+    </div>
+    <div v-else-if="users.length === 0" class="bg-white shadow-md rounded-lg p-12 text-center">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">No users</h3>
+      <p class="mt-1 text-sm text-gray-500">There are no users in the system yet.</p>
+    </div>
     
     <div v-else class="bg-white shadow-md rounded-lg overflow-hidden">
-      <table class="min-w-full leading-normal">
-        <thead>
-          <tr>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Name
-            </th>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Email
-            </th>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Package
-            </th>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Start At
-            </th>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              End At
-            </th>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Role
-            </th>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="user in users" :key="user.id">
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ user.username }}</p>
-            </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ user.email }}</p>
-            </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <div v-if="user?.package">
-                <span 
-                  class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium border"
-                  :class="getPackageColorClass(user.package.id)"
-                >
-                  {{ user.package.name }}
-                </span>
+      <!-- Mobile: Stack cards instead of table -->
+      <div class="block md:hidden">
+        <div v-for="user in filteredUsers" :key="user.id" class="border-b border-gray-200 p-4">
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="font-medium text-gray-900">{{ user.username }}</p>
+                <p class="text-sm text-gray-600">{{ user.email }}</p>
               </div>
-              <span v-else class="text-gray-400">No Package</span>
-            </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">
-                {{ user.role?.id === 2 ? formatDate(user.start_at) : "-" }}
-              </p>
-            </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">
-                {{ user.role?.id === 2 ? formatDate(user.end_at) : "-" }}
-              </p>
-            </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ user.role?.name || user.role }}</p>
-            </td>
-            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
-              <button @click="openEditModal(user)" class="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
-              <button @click="openDeleteModal(user)" class="text-red-600 hover:text-red-900">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              <div v-if="user.role?.id !== 1" class="flex gap-2">
+                <button @click="openEditModal(user)" class="text-blue-600 hover:text-blue-900 text-sm">Edit</button>
+                <button @click="openDeleteModal(user)" class="text-red-600 hover:text-red-900 text-sm">Delete</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <span class="text-gray-500">Package:</span>
+                <div v-if="user?.package" class="mt-1">
+                  <span 
+                    class="inline-flex items-center gap-x-1.5 py-1 px-2 rounded-full text-xs font-medium border"
+                    :class="getPackageColorClass(user.package.id)"
+                  >
+                    {{ user.package.name }}
+                  </span>
+                </div>
+                <span v-else class="text-gray-400">No Package</span>
+              </div>
+              <div>
+                <span class="text-gray-500">Role:</span>
+                <p class="font-medium">{{ user.role?.name || user.role }}</p>
+              </div>
+              <div v-if="user.role?.id === 2">
+                <span class="text-gray-500">Start:</span>
+                <p>{{ formatDate(user.start_at) }}</p>
+              </div>
+              <div v-if="user.role?.id === 2">
+                <span class="text-gray-500">End:</span>
+                <p>{{ formatDate(user.end_at) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop: Table view -->
+      <div class="hidden md:block overflow-x-auto">
+        <table class="min-w-full leading-normal">
+          <thead>
+            <tr>
+              <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Name
+              </th>
+              <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Email
+              </th>
+              <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Package
+              </th>
+              <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Start At
+              </th>
+              <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                End At
+              </th>
+              <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Role
+              </th>
+              <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in filteredUsers" :key="user.id">
+              <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                <p class="text-gray-900 whitespace-no-wrap">{{ user.username }}</p>
+              </td>
+              <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                <p class="text-gray-900 whitespace-no-wrap">{{ user.email }}</p>
+              </td>
+              <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                <div v-if="user?.package">
+                  <span 
+                    class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium border"
+                    :class="getPackageColorClass(user.package.id)"
+                  >
+                    {{ user.package.name }}
+                  </span>
+                </div>
+                <span v-else class="text-gray-400">No Package</span>
+              </td>
+              <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                <p class="text-gray-900 whitespace-no-wrap">
+                  {{ user.role?.id === 2 ? formatDate(user.start_at) : "-" }}
+                </p>
+              </td>
+              <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                <p class="text-gray-900 whitespace-no-wrap">
+                  {{ user.role?.id === 2 ? formatDate(user.end_at) : "-" }}
+                </p>
+              </td>
+              <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                <p class="text-gray-900 whitespace-no-wrap">{{ user.role?.name || user.role }}</p>
+              </td>
+              <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm text-right">
+                <template v-if="user.role?.id !== 1">
+                  <button @click="openEditModal(user)" class="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
+                  <button @click="openDeleteModal(user)" class="text-red-600 hover:text-red-900">Delete</button>
+                </template>
+                <span v-else class="text-gray-400 text-sm">Protected</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
     </div>
 
     <!-- Add/Edit User Modal -->
@@ -151,9 +283,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { useUsers } from '~/composables/useUsers';
+import { useSupabaseClient } from '#imports';
 import Swal from 'sweetalert2';
+
+const supabase = useSupabaseClient();
 
 const {
   users,
@@ -164,6 +299,70 @@ const {
   updateUser: editUser,
   deleteUser: removeUser,
 } = useUsers();
+
+// Filter variables
+const searchUser = ref('');
+const filterPackage = ref('');
+const filterRole = ref('');
+const packages = ref([]);
+
+// Computed filtered users
+const filteredUsers = computed(() => {
+  let filtered = [...users.value];
+
+  // Filter by search term (name or email)
+  if (searchUser.value) {
+    const searchTerm = searchUser.value.toLowerCase();
+    filtered = filtered.filter(user => 
+      user.username?.toLowerCase().includes(searchTerm) ||
+      user.email?.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  // Filter by package
+  if (filterPackage.value) {
+    if (filterPackage.value === 'no-package') {
+      filtered = filtered.filter(user => !user.package);
+    } else {
+      filtered = filtered.filter(user => user.package?.id === parseInt(filterPackage.value));
+    }
+  }
+
+  // Filter by role
+  if (filterRole.value) {
+    filtered = filtered.filter(user => {
+      const userRole = user.role?.id || user.role;
+      return userRole === parseInt(filterRole.value);
+    });
+  }
+
+  return filtered;
+});
+
+// Clear filters function
+function clearFilters() {
+  searchUser.value = '';
+  filterPackage.value = '';
+  filterRole.value = '';
+}
+
+// Fetch packages for filter dropdown
+async function fetchPackages() {
+  try {
+    const { data, error: fetchError } = await supabase
+      .from('package')
+      .select('id, name')
+      .order('name');
+
+    if (fetchError) {
+      throw fetchError;
+    }
+
+    packages.value = data;
+  } catch (e) {
+    console.error('Error fetching packages:', e);
+  }
+}
 
 const showModal = ref(false);
 const showDeleteConfirm = ref(false);
@@ -205,10 +404,13 @@ const formatDate = (val) => {
   try {
     const date = new Date(val);
     if (isNaN(date.getTime())) return "-";
+    
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = months[date.getMonth()];
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${day}-${month}-${year}`;
+    
+    return `${day} ${month} ${year}`;
   } catch (error) {
     return "-";
   }
@@ -299,5 +501,8 @@ const confirmDelete = async () => {
   }
 };
 
-onMounted(fetchUsers);
+onMounted(async () => {
+  await fetchUsers();
+  await fetchPackages();
+});
 </script>

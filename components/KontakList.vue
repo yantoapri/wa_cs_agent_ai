@@ -1,13 +1,17 @@
 <template>
-  <div class="flex flex-col h-[100vh]">
-    <div class="p-8">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="mt-0 text-xl font-bold">Kontak</h2>
-        <div class="flex items-center gap-2">
+  <div class="flex flex-col h-full bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200 px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Kontak</h1>
+          <p class="text-sm text-gray-600 mt-1">Manage your contact list</p>
+        </div>
+        <div class="flex items-center gap-3">
           <!-- Import Button -->
           <button
             @click="showImportModal = true"
-            class="bg-green-600 text-white p-2 rounded-full hover:bg-green-700 transition-colors"
+            class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg flex items-center justify-center"
             title="Import Kontak"
           >
             <svg
@@ -29,7 +33,7 @@
           <!-- Export Button -->
           <button
             @click="exportContacts"
-            class="bg-orange-600 text-white p-2 rounded-full hover:bg-orange-700 transition-colors"
+            class="bg-orange-600 hover:bg-orange-700 text-white p-2 rounded-lg flex items-center justify-center"
             title="Export Kontak"
           >
             <svg
@@ -51,12 +55,12 @@
           <!-- Add Button -->
           <button
             @click="$emit('add-contact')"
-            class="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors flex items-center justify-center"
+            class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg flex items-center justify-center"
             title="Tambah Kontak"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6"
+              class="h-5 w-5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -71,80 +75,75 @@
           </button>
         </div>
       </div>
+    </div>
 
-      <div
-        v-if="loading"
-        class="mt-6 text-center flex-1 flex items-center justify-center"
-      >
+    <!-- Content -->
+    <div class="flex-1 p-6">
+      <div v-if="loading" class="text-center py-8">
         <div class="text-gray-500">Loading kontak...</div>
       </div>
-      <div
-        v-else-if="error"
-        class="mt-6 text-center flex-1 flex items-center justify-center"
-      >
+      <div v-else-if="error" class="text-center py-8">
         <div class="text-red-500">{{ error }}</div>
       </div>
-      <div
-        v-else-if="contacts.length === 0"
-        class="mt-6 text-center flex-1 flex items-center justify-center"
-      >
-        <div class="text-gray-500">Belum ada kontak</div>
+      <div v-else-if="contacts.length === 0" class="text-center py-8">
+        <div class="text-gray-500 mb-4">Belum ada kontak</div>
         <button
           @click="$emit('add-contact')"
-          class="mt-2 text-blue-600 hover:text-blue-700"
+          class="text-blue-600 hover:text-blue-700 underline"
         >
           Tambah kontak pertama
         </button>
       </div>
-      <div v-else class="mt-6 flex-1 min-h-0 overflow-y-auto">
-        <div
-          class="flex items-center mb-4 cursor-pointer p-3 rounded-lg transition-all duration-200 border border-transparent hover:bg-blue-50 hover:border-blue-300 hover:shadow-md hover:scale-[1.02]"
-          v-for="kontak in contacts"
-          :key="kontak.id"
-          @click="$emit('edit-contact', kontak)"
-        >
-          <img
-            :src="
-              kontak.avatar ||
-              `https://ui-avatars.com/api/?name=${kontak.name}&background=random`
-            "
-            class="w-12 h-12 rounded-full"
-            :alt="kontak.name"
-          />
-          <div class="ml-4 flex-1">
-            <div class="font-medium">{{ kontak.name }}</div>
-            <div class="text-gray-500 text-xs">{{ kontak.phone_number }}</div>
-            <div v-if="kontak.email" class="text-gray-400 text-xs">
-              {{ kontak.email }}
+      <div v-else class="bg-white shadow-md rounded-lg overflow-hidden flex-1 flex flex-col">
+        <div class="divide-y divide-gray-200 overflow-y-auto flex-1 max-h-[calc(100vh-150px)]">
+          <div
+            class="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+            v-for="kontak in contacts"
+            :key="kontak.id"
+            @click="$emit('edit-contact', kontak)"
+          >
+            <div class="flex items-center">
+              <img
+                :src="
+                  kontak.avatar ||
+                  `https://ui-avatars.com/api/?name=${kontak.name}&background=random`
+                "
+                class="w-12 h-12 rounded-full"
+                :alt="kontak.name"
+              />
+              <div class="ml-4 flex-1">
+                <div class="font-medium text-gray-900">{{ kontak.name }}</div>
+                <div class="text-gray-500 text-sm">{{ kontak.phone_number }}</div>
+                <div v-if="kontak.email" class="text-gray-400 text-sm">
+                  {{ kontak.email }}
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  @click.stop="deleteContactModal(kontak)"
+                  class="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                  title="Hapus kontak"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
-          <div class="flex gap-1">
-         
-            <button
-              @click.stop="deleteContactModal(kontak)"
-              class="p-1 text-gray-400 hover:text-red-600 transition-colors"
-              title="Hapus kontak"
-            >
-              <svg
-                class="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                ></path>
-              </svg>
-            </button>
           </div>
         </div>
       </div>
     </div>
-
-    
 
     <!-- Delete Confirmation Modal -->
     <div
@@ -289,6 +288,7 @@ Jane Smith,+6289876543210,jane@example.com</pre
         </div>
       </div>
     </div>
+
   </div>
 </template>
 <script setup>

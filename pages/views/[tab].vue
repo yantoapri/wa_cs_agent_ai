@@ -85,51 +85,7 @@
         </div>
 
         <!-- Mobile User Profile -->
-        <div class="flex items-center gap-3 relative" ref="userMenuRef">
-          <button
-            @click="toggleDropdown"
-            class="flex items-center gap-2 focus:outline-none"
-          >
-            <img
-              :src="userAvatar"
-              :alt="userName"
-              class="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
-            />
-            <span class="text-sm font-medium text-gray-700">{{ 
-              userName
-            }}</span>
-            <svg
-              class="w-4 h-4 ml-1 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-          <div
-            v-if="dropdownOpen"
-            class="absolute right-0 top-12 w-40 border border-gray-200 rounded-lg shadow-lg z-50 bg-white"
-          >
-            <button
-              class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50"
-              @click="goToDoc"
-            >
-              Doc
-            </button>
-            <button
-              class="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-50"
-              @click="handleLogout"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
+       
 
         <!-- Hamburger (mobile only) -->
         <button
@@ -163,95 +119,100 @@
           ></div>
           <!-- Sidebar -->
           <aside
-            class="relative w-64 max-w-full h-full shadow-xl z-50 p-6 bg-white border-r border-gray-200"
+            class="relative w-64 max-w-full h-full shadow-xl z-50 bg-white border-r border-gray-200 flex flex-col"
           >
-            <!-- Close Button -->
-            <div class="flex justify-end mb-6">
-              <button
-                @click="showSidebar = false"
-                class="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label="Close menu"
-              >
-                <svg
-                  class="w-6 h-6 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            <!-- Close Button and User Profile - Fixed Top -->
+            <div class="flex-shrink-0 p-6 border-b border-gray-200">
+              <!-- Close Button -->
+              <div class="flex justify-end mb-6">
+                <button
+                  @click="showSidebar = false"
+                  class="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  aria-label="Close menu"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
+                  <svg
+                    class="w-6 h-6 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
 
-            <!-- User Profile Section (mobile only) -->
-            <div class="flex flex-col items-center gap-2 mb-8">
-              <button
-                @click="toggleDropdown"
-                class="flex flex-col items-center gap-1 focus:outline-none"
-              >
-                <img
-                  :src="userAvatar"
-                  :alt="userName"
-                  class="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
-                />
-                <span class="text-base font-medium text-gray-700">{{ 
-                  userName
-                }}</span>
-                <svg
-                  class="w-4 h-4 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  viewBox="0 0 24 24"
+              <!-- User Profile Section -->
+              <div class="flex flex-col items-center gap-2">
+                <button
+                  @click="toggleDropdown"
+                  class="flex flex-col items-center gap-1 focus:outline-none"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M19 9l-7 7-7-7"
+                  <img
+                    :src="userAvatar"
+                    :alt="userName"
+                    class="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
                   />
-                </svg>
-              </button>
-              <div
-                v-if="dropdownOpen"
-                class="absolute left-6 top-24 w-40 border border-gray-200 rounded-lg shadow-lg z-50 bg-white"
-              >
-                <button
-                  class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50"
-                  @click="goToDoc"
-                >
-                  Doc
+                  <span class="text-base font-medium text-gray-700">{{ 
+                    userName
+                  }}</span>
+                  <svg
+                    class="w-4 h-4 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
                 </button>
-                <button
-                  class="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-50"
-                  @click="handleLogout"
+                <div
+                  v-if="dropdownOpen"
+                  class="absolute left-6 top-32 w-40 border border-gray-200 rounded-lg shadow-lg z-50 bg-white"
                 >
-                  Logout
-                </button>
+                  <button
+                    class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50"
+                    @click="goToDoc"
+                  >
+                    Doc
+                  </button>
+                  <button
+                    class="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-50"
+                    @click="handleLogout"
+                  >
+                    Logout
+                  </button>
+                </div>
               </div>
             </div>
 
-            <!-- Menu List -->
-            <nav class="flex flex-col gap-4">
-              <NuxtLink
-                v-for="t in filteredTabs"
-                :key="t.value"
-                :to="`/views/${t.value}`"
-                class="flex items-center gap-3 text-lg py-3 px-3 rounded-lg transition-colors"
-                :class="
-                  currentTab === t.value
-                    ? 'font-bold text-blue-600 bg-blue-50'
-                    : 'text-gray-700 hover:bg-gray-50'
-                "
-                @click="showSidebar = false"
-              >
-                <span v-html="t.icon"></span>
-                <span>{{ t.label }}</span>
-              </NuxtLink>
+            <!-- Menu List - Scrollable -->
+            <nav class="flex-1 overflow-y-auto p-6 pt-4">
+              <div class="flex flex-col gap-4">
+                <NuxtLink
+                  v-for="t in filteredTabs"
+                  :key="t.value"
+                  :to="`/views/${t.value}`"
+                  class="flex items-center gap-3 text-lg py-3 px-3 rounded-lg transition-colors"
+                  :class="
+                    currentTab === t.value
+                      ? 'font-bold text-blue-600 bg-blue-50'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  "
+                  @click="showSidebar = false"
+                >
+                  <span v-html="t.icon"></span>
+                  <span>{{ t.label }}</span>
+                </NuxtLink>
+              </div>
             </nav>
           </aside>
         </div>

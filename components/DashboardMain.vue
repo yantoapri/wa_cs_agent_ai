@@ -20,7 +20,7 @@
         <div v-if="is_trial||new Date(dashboard.endAt)>=new Date()" class="mt-4 p-4 border rounded-lg bg-blue-50 text-blue-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <div class="font-medium" >Masa aktif paket anda 
-            {{ new Date(dashboard.startAt).toLocaleDateString() }} - {{ new Date(dashboard.endAt).toLocaleDateString() }}</div>
+            {{ formatDate(dashboard.startAt) }} - {{ formatDate(dashboard.endAt) }}</div>
             <div class="font-medium" v-if="new Date().getTime()>=new Date(dashboard.endAt).getTime()">Peringatan masa aktif paket anda sudah habis</div>
             <div class="text-sm text-blue-700">Upgrade paket untuk membuka semua fitur tanpa batasan.</div>
           </div>
@@ -193,6 +193,25 @@ const circleCirc = 2 * Math.PI * circleRadius
 function getProgressOffset(percent) {
   const p = Math.max(0, Math.min(100, Number(percent) || 0))
   return circleCirc * (1 - p / 100)
+}
+
+function formatDate(dateString, includeTime = false) {
+  const date = new Date(dateString);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  
+  let formatted = `${day} ${month} ${year}`;
+  
+  if (includeTime) {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    formatted += ` ${hours}:${minutes}`;
+  }
+  
+  return formatted;
 }
 
 // nilai fallback jika relasi package tidak ditemukan

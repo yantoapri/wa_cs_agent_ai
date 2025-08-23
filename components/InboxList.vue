@@ -211,10 +211,10 @@ const formatTime = (dateString) => {
   } else if (diffInHours < 48) {
     return "Kemarin";
   } else {
-    return date.toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
-    });
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    return `${day} ${month}`;
   }
 };
 
@@ -298,7 +298,10 @@ function formatTimeOrDate(ts) {
   } else if (diff < 1000 * 60 * 60 * 48) {
     return "Yesterday";
   } else {
-    return date.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    return `${day} ${month}`;
   }
 }
 </script>

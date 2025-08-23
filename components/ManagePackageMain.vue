@@ -1,16 +1,16 @@
 <template>
   <div class="flex flex-col h-full bg-gray-50">
     <!-- Header -->
-    <div class="bg-white border-b border-gray-200 px-6 py-4">
-      <div class="flex items-center justify-between">
+    <div class="bg-white border-b border-gray-200 px-4 md:px-6 py-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Package Management</h1>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Package Management</h1>
           <p class="text-sm text-gray-600 mt-1">Manage subscription packages</p>
         </div>
         <div class="flex items-center gap-3">
           <button
             @click="openAddModal"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 w-full sm:w-auto justify-center"
           >
             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -21,73 +21,122 @@
       </div>
     </div>
 
-    <div v-if="loading" class="text-center">Loading...</div>
-    <div v-else-if="error" class="text-red-500">{{ error }}</div>
+    <div class="flex-1 p-4 md:p-6 overflow-y-auto">
+      <div v-if="loading" class="text-center">Loading...</div>
+      <div v-else-if="error" class="text-red-500">{{ error }}</div>
 
-    <div v-else class="bg-white shadow-md rounded-lg overflow-hidden overflow-x-auto">
-      <table class="min-w-full leading-normal">
-        <thead>
-          <tr>
-            <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Name
-            </th>
-            <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Price
-            </th>
-            <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Exp Days
-            </th>
-            <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              AI Limit
-            </th>
-            <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Agent Limit
-            </th>
-            <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Broadcast
-            </th>
-            <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Channel
-            </th>
-            <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Product
-            </th>
-            <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="pkg in packages" :key="pkg.id">
-            <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ pkg.name }}</p>
-            </td>
-            <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ pkg.harga }}</p>
-            </td>
-            <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ pkg.exp_date }}</p>
-            </td>
-            <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ pkg.limit_ai }}</p>
-            </td>
-            <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ pkg.limit_agent }}</p>
-            </td>
-            <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ pkg.limit_broadcast }}</p>
-            </td>
-            <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ pkg.limit_chanel }}</p>
-            </td>
-            <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
-              <p class="text-gray-900 whitespace-no-wrap">{{ pkg.limit_produk }}</p>
-            </td>
-            <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm text-right">
-              <button @click="openEditModal(pkg)" class="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
-              <button @click="openDeleteModal(pkg)" class="text-red-600 hover:text-red-900">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else class="bg-white shadow-md rounded-lg overflow-hidden">
+        <!-- Mobile: Stack cards instead of table -->
+        <div class="block md:hidden">
+          <div v-for="pkg in packages" :key="pkg.id" class="border-b border-gray-200 p-4">
+            <div class="space-y-3">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="font-medium text-gray-900">{{ pkg.name }}</h3>
+                  <p class="text-lg font-bold text-blue-600">{{ pkg.harga }}</p>
+                </div>
+                <div class="flex gap-2">
+                  <button @click="openEditModal(pkg)" class="text-blue-600 hover:text-blue-900 text-sm">Edit</button>
+                  <button @click="openDeleteModal(pkg)" class="text-red-600 hover:text-red-900 text-sm">Delete</button>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span class="text-gray-500">Exp Days:</span>
+                  <p class="font-medium">{{ pkg.exp_date }}</p>
+                </div>
+                <div>
+                  <span class="text-gray-500">AI Limit:</span>
+                  <p class="font-medium">{{ pkg.limit_ai }}</p>
+                </div>
+                <div>
+                  <span class="text-gray-500">Agent:</span>
+                  <p class="font-medium">{{ pkg.limit_agent }}</p>
+                </div>
+                <div>
+                  <span class="text-gray-500">Broadcast:</span>
+                  <p class="font-medium">{{ pkg.limit_broadcast }}</p>
+                </div>
+                <div>
+                  <span class="text-gray-500">Channel:</span>
+                  <p class="font-medium">{{ pkg.limit_chanel }}</p>
+                </div>
+                <div>
+                  <span class="text-gray-500">Product:</span>
+                  <p class="font-medium">{{ pkg.limit_produk }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop: Table view -->
+        <div class="hidden md:block overflow-x-auto">
+          <table class="min-w-full leading-normal">
+            <thead>
+              <tr>
+                <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Name
+                </th>
+                <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Price
+                </th>
+                <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Exp Days
+                </th>
+                <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  AI Limit
+                </th>
+                <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Agent Limit
+                </th>
+                <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Broadcast
+                </th>
+                <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Channel
+                </th>
+                <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Product
+                </th>
+                <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="pkg in packages" :key="pkg.id">
+                <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                  <p class="text-gray-900 whitespace-no-wrap">{{ pkg.name }}</p>
+                </td>
+                <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                  <p class="text-gray-900 whitespace-no-wrap">{{ pkg.harga }}</p>
+                </td>
+                <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                  <p class="text-gray-900 whitespace-no-wrap">{{ pkg.exp_date }}</p>
+                </td>
+                <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                  <p class="text-gray-900 whitespace-no-wrap">{{ pkg.limit_ai }}</p>
+                </td>
+                <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                  <p class="text-gray-900 whitespace-no-wrap">{{ pkg.limit_agent }}</p>
+                </td>
+                <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                  <p class="text-gray-900 whitespace-no-wrap">{{ pkg.limit_broadcast }}</p>
+                </td>
+                <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                  <p class="text-gray-900 whitespace-no-wrap">{{ pkg.limit_chanel }}</p>
+                </td>
+                <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                  <p class="text-gray-900 whitespace-no-wrap">{{ pkg.limit_produk }}</p>
+                </td>
+                <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm text-right">
+                  <button @click="openEditModal(pkg)" class="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
+                  <button @click="openDeleteModal(pkg)" class="text-red-600 hover:text-red-900">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- Add/Edit Package Modal -->

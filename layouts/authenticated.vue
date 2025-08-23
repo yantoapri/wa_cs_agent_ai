@@ -5,7 +5,7 @@
       <div class="flex items-center justify-center h-16 border-b border-gray-200">
         <img src="/assets/img/nutra.png" class="h-8 w-8" />
       </div>
-      <nav class="flex-1 flex flex-col items-center py-4 space-y-2">
+      <nav class="flex-1 flex flex-col items-center py-4 space-y-2 overflow-y-auto">
        
         <template v-for="t in filteredTabs" :key="t.value">
           <NuxtLink :to="`/views/${t.value}`" class="w-12 h-12 flex items-center justify-center rounded-lg transition-all duration-200 focus:outline-none"
@@ -27,27 +27,68 @@
       </div>
     </aside>
 
+    <!-- Mobile Sidebar Overlay -->
+    <div v-if="mobileSidebarOpen" class="md:hidden fixed inset-0 z-50 flex">
+      <!-- Backdrop -->
+      <div class="fixed inset-0 bg-gray-600 bg-opacity-50" @click="closeMobileSidebar"></div>
+      
+      <!-- Sidebar -->
+      <div class="relative flex flex-col w-64 h-full bg-white border-r border-gray-200 shadow-xl">
+        <!-- Header - Fixed -->
+        <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-white">
+          <img src="/assets/img/nutra.png" class="h-8 w-[80px]" />
+          <button @click="closeMobileSidebar" class="p-2 rounded-lg hover:bg-gray-100">
+            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Menu Items - Scrollable -->
+        <nav class="flex-1 overflow-y-auto py-4 px-2">
+          <template v-for="t in filteredTabs" :key="t.value">
+            <NuxtLink :to="`/views/${t.value}`" @click="closeMobileSidebar"
+              class="flex items-center gap-3 px-3 py-3 mb-2 rounded-lg transition-all duration-200 focus:outline-none"
+              :class="route.path.startsWith(`/views/${t.value}`) ? 'text-blue-600 bg-blue-50 border border-blue-200' : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'">
+              <span v-html="t.icon" class="flex-shrink-0"></span>
+              <span class="text-sm font-medium">{{ t.label }}</span>
+            </NuxtLink>
+          </template>
+        </nav>
+
+        <!-- User Menu - Fixed at Bottom -->
+        <div class="border-t border-gray-200 p-4 bg-white">
+          <div class="relative">
+            <button @click="toggleDropdown" class="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-gray-50 focus:outline-none">
+              <img :src="userAvatar" :alt="userName" class="w-8 h-8 rounded-full object-cover border-2 border-gray-200 flex-shrink-0" />
+              <span class="text-sm font-medium text-gray-700 truncate">{{ userName }}</span>
+              <svg class="w-4 h-4 ml-auto text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div v-if="dropdownOpen" class="absolute bottom-full left-0 right-0 mb-2 border border-gray-200 rounded-lg shadow-lg z-50 bg-white">
+              <NuxtLink class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50" to="/doc" @click="closeMobileSidebar">Doc</NuxtLink>
+              <button class="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-50" @click="handleLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Main area -->
     <div class="flex flex-1 min-h-0 flex-col">
       <!-- Topbar (mobile) -->
       <div class="md:hidden flex items-center justify-between border-b border-gray-200 px-4 h-16 bg-white">
-        <div class="flex items-center">
-          <div class="text-lg font-bold text-gray-800 mr-4">
-            <img src="/assets/img/nutra.png" class="h-8 w-[80px]" />
-          </div>
-        </div>
-        <div class="flex items-center gap-3 relative" ref="userMenuRef">
-          <button @click="toggleDropdown" class="flex items-center gap-2 focus:outline-none">
-            <img :src="userAvatar" :alt="userName" class="w-8 h-8 rounded-full object-cover border-2 border-gray-200" />
-            <span class="text-sm font-medium text-gray-700">{{ userName }}</span>
-            <svg class="w-4 h-4 ml-1 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+        <div class="flex items-center gap-3">
+          <button @click="openMobileSidebar" class="p-2 rounded-lg hover:bg-gray-100 focus:outline-none">
+            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <div v-if="dropdownOpen" class="absolute right-0 top-12 w-40 border border-gray-200 rounded-lg shadow-lg z-50 bg-white">
-            <NuxtLink class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50" to="/doc">Doc</NuxtLink>
-            <button class="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-50" @click="handleLogout">Logout</button>
-          </div>
+          <img src="/assets/img/nutra.png" class="h-8 w-[80px]" />
+        </div>
+        <!-- Mobile user menu - completely hidden -->
+        <div style="display: none !important;" class="hidden">
         </div>
       </div>
 
@@ -106,9 +147,17 @@ const filteredTabs = computed(() => {
 })
 
 const dropdownOpen = ref(false)
+const mobileSidebarOpen = ref(false)
 const userMenuRef = ref(null)
+
 function toggleDropdown() { dropdownOpen.value = !dropdownOpen.value }
 function closeDropdown() { dropdownOpen.value = false }
+function openMobileSidebar() { mobileSidebarOpen.value = true }
+function closeMobileSidebar() { 
+  mobileSidebarOpen.value = false
+  dropdownOpen.value = false
+}
+
 onClickOutside(userMenuRef, closeDropdown)
 
 async function handleLogout() {
