@@ -81,18 +81,20 @@ export const useAgentStore = () => {
     error.value = null;
 
     try {
-      // Check for duplicate phone number for human agents
+      // Check for duplicate phone number for human agents within the same user
       if (agentData.type === "manusia" && agentData.phone) {
         const { data: existingAgent, error: checkError } = await supabase
           .from("agents")
           .select("*")
           .eq("phone", agentData.phone)
           .eq("type", "manusia")
+          .eq("created_by", user.value?.id)
+          .eq("is_active", true)
           .maybeSingle();
 
         if (checkError) throw checkError;
         if (existingAgent) {
-          throw new Error("Nomor telepon sudah digunakan di agent manusia lain");
+          throw new Error("Nomor telepon sudah ada,gunakan nomor lain");
         }
       }
 
@@ -134,6 +136,24 @@ export const useAgentStore = () => {
     error.value = null;
 
     try {
+      // Check for duplicate phone number for human agents within the same user (excluding current agent)
+      if (updates.type === "manusia" && updates.phone) {
+        const { data: existingAgent, error: checkError } = await supabase
+          .from("agents")
+          .select("*")
+          .eq("phone", updates.phone)
+          .eq("type", "manusia")
+          .eq("created_by", user.value?.id)
+          .eq("is_active", true)
+          .neq("id", id) // Exclude current agent being updated
+          .maybeSingle();
+
+        if (checkError) throw checkError;
+        if (existingAgent) {
+          throw new Error("Nomor telepon sudah digunakan di agent manusia lain milik Anda");
+        }
+      }
+
       const { data, error: updateError } = await supabase
         .from("agents")
         .update(updates)

@@ -20,7 +20,7 @@ export interface Agent {
   name: string;
   type: "ai" | "manusia";
   status: "online" | "offline" | "busy" | "away";
-  no_hp?: string;
+  phone?: string;
   avatar_url?: string;
   description?: string;
   kepintaran?: string;

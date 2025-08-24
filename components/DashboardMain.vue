@@ -33,7 +33,7 @@
         </div>
         
         <!-- Package Expiry Info (hidden when pending invoice exists) -->
-        <div v-else-if="is_trial||new Date(dashboard.endAt)>=new Date()" class="mt-4 p-4 border rounded-lg bg-blue-50 text-blue-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div v-else-if="is_trial||new Date()>=new Date(dashboard.endAt)" class="mt-4 p-4 border rounded-lg bg-blue-50 text-blue-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             
             <div class="font-medium" v-if="new Date().getTime()>=new Date(dashboard.endAt).getTime()">Peringatan masa aktif paket anda sudah habis</div>
