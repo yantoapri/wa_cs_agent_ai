@@ -3,13 +3,29 @@ import nodemailer from 'nodemailer'
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    const { userEmail, userName, invoiceNumber, planName, amount } = body
+    const { userEmail, userName, invoiceNumber, planName, amount, startDate, endDate } = body
+
+    // Debug log untuk melihat data yang diterima
+    console.log('Email data received:', { userEmail, userName, invoiceNumber, planName, amount, startDate, endDate })
 
     // Validasi input
     if (!userEmail || !invoiceNumber) {
+      console.error('Missing required fields:', { userEmail: !!userEmail, invoiceNumber: !!invoiceNumber })
       throw createError({
         statusCode: 400,
         statusMessage: 'Email dan invoice number diperlukan'
+      })
+    }
+
+    // Validasi environment variables
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.error('Missing SMTP configuration:', { 
+        SMTP_USER: !!process.env.SMTP_USER, 
+        SMTP_PASS: !!process.env.SMTP_PASS 
+      })
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'SMTP configuration not found'
       })
     }
 
@@ -17,10 +33,22 @@ export default defineEventHandler(async (event) => {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.SMTP_USER || 'nutrausaindonesia@gmail.com',
-        pass: process.env.SMTP_PASS // Password aplikasi Gmail
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
       }
     })
+
+    // Test koneksi SMTP
+    try {
+      await transporter.verify()
+      console.log('SMTP connection verified successfully')
+    } catch (verifyError) {
+      console.error('SMTP verification failed:', verifyError)
+      throw createError({
+        statusCode: 500,
+        statusMessage: `SMTP connection failed: ${verifyError.message}`
+      })
+    }
 
     // Template email HTML
     const emailTemplate = `
@@ -187,7 +215,7 @@ export default defineEventHandler(async (event) => {
     const mailOptions = {
       from: {
         name: 'Nutra USA Indonesia',
-        address: process.env.SMTP_USER || 'nutrausaindonesia@gmail.com'
+        address: process.env.SMTP_USER
       },
       to: userEmail,
       subject: `✅ Pembayaran Disetujui - Invoice ${invoiceNumber}`,
@@ -203,7 +231,8 @@ Detail Pembayaran:
 - Paket: ${planName || 'N/A'}
 - Jumlah: Rp ${amount ? Number(amount).toLocaleString('id-ID') : 'N/A'}
 - Status: DISETUJUI
-- Tanggal: ${new Date().toLocaleDateString('id-ID')}
+- Tanggal Mulai: ${startDate || 'N/A'}
+- Tanggal Berakhir: ${endDate || 'N/A'}
 
 Akun Anda sekarang sudah aktif dan siap digunakan.
 
@@ -213,13 +242,26 @@ Email: nutrausaindonesia@gmail.com
       `
     }
 
+    console.log('Attempting to send email to:', userEmail)
+
     // Kirim email
-    const info = await transporter.sendMail(mailOptions)
+    let info
+    try {
+      info = await transporter.sendMail(mailOptions)
+      console.log('Email sent successfully:', info.messageId)
+    } catch (sendError) {
+      console.error('Failed to send email:', sendError)
+      throw createError({
+        statusCode: 500,
+        statusMessage: `Failed to send email: ${sendError.message}`
+      })
+    }
 
     return {
       success: true,
       message: 'Email approval berhasil dikirim',
-      messageId: info.messageId
+      messageId: info.messageId,
+      recipient: userEmail
     }
 
   } catch (error) {

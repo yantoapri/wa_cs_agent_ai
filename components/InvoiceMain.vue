@@ -475,10 +475,10 @@ async function approveInvoice(invoice) {
         method: 'POST',
         body: {
           userEmail: invoice.user?.email,
-          userName: invoice.user?.name || 'Customer',
+          userName: invoice.user?.name || invoice.user?.email,
           invoiceNumber: invoice.id,
           amount: invoice.amount,
-          planName: invoice.packages?.name || 'Package',
+          planName: invoice.plan?.name ,
           startDate: formatDate(now),
           endDate: formatDate(endDate)
         }
