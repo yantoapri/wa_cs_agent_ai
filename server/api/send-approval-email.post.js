@@ -1,34 +1,60 @@
 import nodemailer from 'nodemailer'
 
 export default defineEventHandler(async (event) => {
+  console.log('[SEND-EMAIL] === EMAIL APPROVAL PROCESS STARTED ===')
+  console.log('[SEND-EMAIL] Request URL:', event.node.req.url)
+  console.log('[SEND-EMAIL] Request method:', event.node.req.method)
+  console.log('[SEND-EMAIL] Request headers:', event.node.req.headers)
+  
   try {
+    console.log('[SEND-EMAIL] Step 1: Reading request body...')
     const body = await readBody(event)
+    console.log('[SEND-EMAIL] Request body received:', JSON.stringify(body, null, 2))
+    
     const { userEmail, userName, invoiceNumber, planName, amount, startDate, endDate } = body
+    console.log('[SEND-EMAIL] Step 2: Destructured data:', { 
+      userEmail, 
+      userName, 
+      invoiceNumber, 
+      planName, 
+      amount, 
+      startDate, 
+      endDate 
+    })
 
-    // Debug log untuk melihat data yang diterima
-    console.log('Email data received:', { userEmail, userName, invoiceNumber, planName, amount, startDate, endDate })
-
+    console.log('[SEND-EMAIL] Step 3: Validating required fields...')
     // Validasi input
     if (!userEmail || !invoiceNumber) {
-      console.error('Missing required fields:', { userEmail: !!userEmail, invoiceNumber: !!invoiceNumber })
+      console.error('[SEND-EMAIL] ERROR: Missing required fields:', { 
+        userEmail: !!userEmail, 
+        invoiceNumber: !!invoiceNumber,
+        userEmailValue: userEmail,
+        invoiceNumberValue: invoiceNumber
+      })
       throw createError({
         statusCode: 400,
         statusMessage: 'Email dan invoice number diperlukan'
       })
     }
+    console.log('[SEND-EMAIL] ✓ Required fields validation passed')
 
+    console.log('[SEND-EMAIL] Step 4: Checking environment variables...')
     // Validasi environment variables
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.error('Missing SMTP configuration:', { 
+      console.error('[SEND-EMAIL] ERROR: Missing SMTP configuration:', { 
         SMTP_USER: !!process.env.SMTP_USER, 
-        SMTP_PASS: !!process.env.SMTP_PASS 
+        SMTP_PASS: !!process.env.SMTP_PASS,
+        SMTP_USER_VALUE: process.env.SMTP_USER,
+        SMTP_PASS_LENGTH: process.env.SMTP_PASS?.length || 0
       })
       throw createError({
         statusCode: 500,
         statusMessage: 'SMTP configuration not found'
       })
     }
+    console.log('[SEND-EMAIL] ✓ Environment variables validation passed')
 
+    console.log('[SEND-EMAIL] Step 5: Creating SMTP transporter...')
     // Konfigurasi transporter email dengan setting yang lebih spesifik untuk Gmail
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
@@ -43,20 +69,31 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    console.log('SMTP Configuration:', {
+    console.log('[SEND-EMAIL] ✓ SMTP transporter created successfully')
+    console.log('[SEND-EMAIL] SMTP Configuration details:', {
       host: 'smtp.gmail.com',
       port: 587,
       user: process.env.SMTP_USER,
-      passLength: process.env.SMTP_PASS?.length || 0
+      passLength: process.env.SMTP_PASS?.length || 0,
+      secure: false,
+      tls: { rejectUnauthorized: false }
     })
 
+    console.log('[SEND-EMAIL] Step 6: Testing SMTP connection...')
     // Test koneksi SMTP
     try {
-      console.log('Testing SMTP connection...')
+      console.log('[SEND-EMAIL] 6.1: Initiating SMTP verification...')
       await transporter.verify()
-      console.log('SMTP connection verified successfully')
+      console.log('[SEND-EMAIL] ✓ SMTP connection verified successfully')
     } catch (verifyError) {
-      console.error('SMTP verification failed:', verifyError)
+      console.error('[SEND-EMAIL] ERROR: SMTP verification failed:', verifyError)
+      console.error('[SEND-EMAIL] Error details:', {
+        message: verifyError.message,
+        code: verifyError.code,
+        command: verifyError.command,
+        response: verifyError.response,
+        responseCode: verifyError.responseCode
+      })
       
       // Berikan panduan khusus untuk error Gmail
       let errorMessage = verifyError.message
@@ -77,6 +114,7 @@ Original error: ${verifyError.message}`
       })
     }
 
+    console.log('[SEND-EMAIL] Step 7: Creating email template...')
     // Template email HTML
     const emailTemplate = `
 <!DOCTYPE html>
@@ -269,33 +307,88 @@ Email: nutrausaindonesia@gmail.com
       `
     }
 
-    console.log('Attempting to send email to:', userEmail)
+    console.log('[SEND-EMAIL] ✓ Email template created successfully')
+    console.log('[SEND-EMAIL] Template length:', emailTemplate.length)
+
+    console.log('[SEND-EMAIL] Step 8: Preparing mail options...')
+    console.log('[SEND-EMAIL] Mail options:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      hasHtml: !!mailOptions.html,
+      hasText: !!mailOptions.text,
+      htmlLength: mailOptions.html?.length || 0,
+      textLength: mailOptions.text?.length || 0
+    })
+
+    console.log('[SEND-EMAIL] Step 9: Attempting to send email...')
+    console.log('[SEND-EMAIL] Sending email to:', userEmail)
 
     // Kirim email
     let info
     try {
+      console.log('[SEND-EMAIL] 9.1: Calling transporter.sendMail...')
       info = await transporter.sendMail(mailOptions)
-      console.log('Email sent successfully:', info.messageId)
+      console.log('[SEND-EMAIL] ✓ Email sent successfully!')
+      console.log('[SEND-EMAIL] Email details:', {
+        messageId: info.messageId,
+        response: info.response,
+        envelope: info.envelope,
+        accepted: info.accepted,
+        rejected: info.rejected,
+        pending: info.pending
+      })
     } catch (sendError) {
-      console.error('Failed to send email:', sendError)
+      console.error('[SEND-EMAIL] ERROR: Failed to send email:', sendError)
+      console.error('[SEND-EMAIL] Send error details:', {
+        message: sendError.message,
+        code: sendError.code,
+        command: sendError.command,
+        response: sendError.response,
+        responseCode: sendError.responseCode,
+        stack: sendError.stack
+      })
       throw createError({
         statusCode: 500,
         statusMessage: `Failed to send email: ${sendError.message}`
       })
     }
 
-    return {
+    console.log('[SEND-EMAIL] Step 10: Preparing response...')
+    const response = {
       success: true,
       message: 'Email approval berhasil dikirim',
       messageId: info.messageId,
       recipient: userEmail
     }
+    console.log('[SEND-EMAIL] Response prepared:', response)
+    console.log('[SEND-EMAIL] === EMAIL APPROVAL PROCESS COMPLETED SUCCESSFULLY ===')
+
+    return response
 
   } catch (error) {
-    console.error('Error sending approval email:', error)
+    console.error('[SEND-EMAIL] === CRITICAL ERROR IN EMAIL APPROVAL PROCESS ===')
+    console.error('[SEND-EMAIL] Error object:', error)
+    console.error('[SEND-EMAIL] Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      statusCode: error.statusCode,
+      statusMessage: error.statusMessage,
+      data: error.data
+    })
+    console.error('[SEND-EMAIL] Environment check:', {
+      nodeEnv: process.env.NODE_ENV,
+      smtpUser: !!process.env.SMTP_USER,
+      smtpPass: !!process.env.SMTP_PASS,
+      smtpUserValue: process.env.SMTP_USER,
+      smtpPassLength: process.env.SMTP_PASS?.length || 0
+    })
+    console.error('[SEND-EMAIL] === END CRITICAL ERROR ===')
     
     throw createError({
-      statusCode: 500,
+      statusCode: error.statusCode || 500,
       statusMessage: `Gagal mengirim email: ${error.message}`
     })
   }
