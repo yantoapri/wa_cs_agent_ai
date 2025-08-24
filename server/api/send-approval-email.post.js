@@ -29,24 +29,51 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Konfigurasi transporter email
+    // Konfigurasi transporter email dengan setting yang lebih spesifik untuk Gmail
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, // true for 465, false for other ports
       auth: {
         user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
+        pass: process.env.SMTP_PASS // Harus menggunakan App Password, bukan password biasa
+      },
+      tls: {
+        rejectUnauthorized: false
       }
+    })
+
+    console.log('SMTP Configuration:', {
+      host: 'smtp.gmail.com',
+      port: 587,
+      user: process.env.SMTP_USER,
+      passLength: process.env.SMTP_PASS?.length || 0
     })
 
     // Test koneksi SMTP
     try {
+      console.log('Testing SMTP connection...')
       await transporter.verify()
       console.log('SMTP connection verified successfully')
     } catch (verifyError) {
       console.error('SMTP verification failed:', verifyError)
+      
+      // Berikan panduan khusus untuk error Gmail
+      let errorMessage = verifyError.message
+      if (errorMessage.includes('Username and Password not accepted') || errorMessage.includes('BadCredentials')) {
+        errorMessage = `Gmail authentication failed. Pastikan:
+1. Menggunakan App Password (bukan password akun biasa)
+2. 2-Factor Authentication sudah diaktifkan di Gmail
+3. App Password sudah dibuat di Google Account Settings
+4. Email: ${process.env.SMTP_USER}
+5. App Password length: ${process.env.SMTP_PASS?.length || 0} characters
+
+Original error: ${verifyError.message}`
+      }
+      
       throw createError({
         statusCode: 500,
-        statusMessage: `SMTP connection failed: ${verifyError.message}`
+        statusMessage: `SMTP connection failed: ${errorMessage}`
       })
     }
 
