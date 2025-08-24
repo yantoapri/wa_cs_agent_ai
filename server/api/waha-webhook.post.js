@@ -305,109 +305,22 @@ export default defineEventHandler(async (event) => {
   console.log("[WAHA Webhook] User data:", usersData);
   
   // Check subscription expiry - if expired, skip processing
-  if (usersData) {
+  if (usersData && usersData.package && usersData.package.end_at) {
     const now = new Date();
-    const endDate = new Date(usersData.end_at);
+    const endDate = new Date(usersData.package.end_at);
     
-    if (now.getTime() >= endDate.getTime()) {
+    if (now >= endDate) {
       console.log("[WAHA Webhook] Subscription expired, skipping processing:", {
         userId,
         endDate: usersData.package.end_at,
         currentDate: now.toISOString(),
         packageName: usersData.package.name || 'Unknown'
       });
-      
-      // Send notification to the sender about subscription expiry
-      try {
-        const runtimeConfig = useRuntimeConfig();
-        const WAHA_BASE_URL = runtimeConfig.wahaBaseUrl;
-        const WAHA_API_KEY = runtimeConfig.wahaApiKey;
-        
-        // Get sender info
-        const payloadFrom = body?.payload?.from || "";
-        const senderPhone = payloadFrom ? payloadFrom.replace("@c.us", "") : "";
-        
-        // Get session info for sending message
-        const chanelId = body?.metadata?.chanel_id;
-        if (chanelId && senderPhone && WAHA_BASE_URL && WAHA_API_KEY) {
-          // Create Supabase client to get session name
-          const client = createClient(
-            runtimeConfig.public.supabaseUrl,
-            runtimeConfig.supabaseServiceRoleKey
-          );
-          
-          const { data: chanelData } = await client
-            .from("chanels")
-            .select("session_name")
-            .eq("id", chanelId)
-            .maybeSingle();
-          
-          const sessionName = chanelData?.session_name;
-          
-          if (sessionName) {
-            const expiredMessage = `🚫 *Layanan Tidak Tersedia*
-
-Maaf, channel yang Anda hubungi saat ini tidak dapat merespons karena masa berlangganan layanan Nutra AI Agent sudah berakhir.
-
-⏰ *Berakhir pada:* ${new Date(usersData.package.end_at).toLocaleDateString('id-ID', {
-              weekday: 'long',
-              year: 'numeric', 
-              month: 'long',
-              day: 'numeric'
-            })}
-
-📞 Mohon hubungi pemilik channel ini untuk memperpanjang layanan.
-
-_Pesan otomatis dari sistem  Nutra AI Agent(https://wagen.id) _`;
-
-            const messageBody = {
-              session: sessionName,
-              chatId: payloadFrom,
-              text: expiredMessage,
-              metadata: {
-                sender_type: "system",
-                is_subscription_expired_notice: true,
-              },
-            };
-
-            console.log("[WAHA Webhook] Sending subscription expired notification:", {
-              to: senderPhone,
-              sessionName,
-              messageLength: expiredMessage.length
-            });
-
-            await $fetch(`${WAHA_BASE_URL}/api/sendText`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Api-Key": WAHA_API_KEY,
-              },
-              body: messageBody,
-            });
-
-            console.log("[WAHA Webhook] Subscription expired notification sent successfully");
-          } else {
-            console.log("[WAHA Webhook] No session name found, cannot send expiry notification");
-          }
-        } else {
-          console.log("[WAHA Webhook] Missing required data for sending expiry notification:", {
-            chanelId: !!chanelId,
-            senderPhone: !!senderPhone,
-            WAHA_BASE_URL: !!WAHA_BASE_URL,
-            WAHA_API_KEY: !!WAHA_API_KEY
-          });
-        }
-      } catch (notificationError) {
-        console.log("[WAHA Webhook] Error sending subscription expired notification:", notificationError);
-        // Continue with return even if notification fails
-      }
-      
       return {
         status: "subscription_expired",
         message: "Masa berlangganan sudah habis",
         end_date: usersData.package.end_at,
-        current_date: new Date(now).toISOString(),
-        notification_sent: true
+        current_date: now.toISOString()
       };
     }
     
