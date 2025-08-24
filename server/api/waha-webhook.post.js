@@ -326,7 +326,7 @@ export default defineEventHandler(async (event) => {
     
     console.log("[WAHA Webhook] Subscription is active:", {
       userId,
-      endDate: usersData.package.end_at,
+      endDate: usersData.end_at,
       packageName: usersData.package.name || 'Unknown'
     });
   }
