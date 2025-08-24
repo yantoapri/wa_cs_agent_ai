@@ -671,6 +671,7 @@ export default defineEventHandler(async (event) => {
         .select("id")
         .eq("type", "manusia")
         .eq("phone", meId)
+        .eq("created_by", userId)
         .maybeSingle();
       if (agentData && agentData.id) {
         agentManusiaId = agentData.id;
@@ -771,7 +772,6 @@ export default defineEventHandler(async (event) => {
         contact_id: contact_id,
         message_type: "text",
         agent_type: saveAgentType,
-        chat_type: saveAgentType, // biar konsisten
         from: payloadFrom,
         to: meId,
         media_url:body?.payload?.mediaUrl || null,
@@ -906,7 +906,6 @@ export default defineEventHandler(async (event) => {
         contact_id,
         message_type: "text",
         agent_type: "ai",
-        chat_type: "ai",
         from: payloadFrom,
         to: meId,
         media_url: null,
@@ -1024,7 +1023,6 @@ export default defineEventHandler(async (event) => {
             contact_id,
             message_type: "image",
             agent_type: "ai",
-            chat_type: "ai", // tambahkan ini
             from: meId,
             to: payloadFrom,
             media_url: imgUrl,
@@ -1092,7 +1090,6 @@ export default defineEventHandler(async (event) => {
           contact_id,
           message_type: "text",
           agent_type: "ai",
-          chat_type: "ai", // tambahkan ini
           from: meId,
           to: payloadFrom,
           media_url: null,

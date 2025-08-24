@@ -3,8 +3,15 @@ import { serverSupabaseClient } from '#supabase/server';
 export default defineEventHandler(async (event) => {
   const supabase = await serverSupabaseClient(event);
   const body = await readBody(event);
-  const { prompt, knowledge, media, from, to } = body;
+  const { prompt, knowledge, media, from, to, agentConfig } = body;
   const apiKey = useRuntimeConfig().openAiKey;
+
+  // Log untuk debugging
+  console.log("[OpenRouter] Request body keys:", Object.keys(body));
+  console.log("[OpenRouter] agentConfig provided:", !!agentConfig);
+  if (agentConfig?.ongkir_config) {
+    console.log("[OpenRouter] ongkir_config found:", Object.keys(agentConfig.ongkir_config));
+  }
 
   if (!apiKey) {
     return { error: "OPEN_AI_KEY not set in env" };
@@ -72,7 +79,7 @@ PENTING UNTUK PERHITUNGAN ONGKIR:
 1. Ketika user menyebutkan nama produk, konfirmasi produk dan tanyakan jumlah pemesanan.
 2. Setelah user memberikan jumlah, minta alamat pengiriman.
 3. Setelah user memberikan alamat (biasanya berupa nama jalan, desa, kecamatan, kabupaten), JANGAN langsung hitung ongkir.
-4. Tampilkan SEMUA jasa pengiriman yang tersedia dari \`${ongkir_config?.jasaPengiriman}\` beserta tarifnya dari \`${ongkir_config?.tarifPerKg}\`. Sampaikan juga bahwa tarif ini berlaku untuk berat hingga 1 kg (pesanan di bawah 1 kg akan dihitung sebagai 1 kg).
+4. Tampilkan SEMUA jasa pengiriman yang tersedia dari ${agentConfig?.ongkir_config?.jasaPengiriman ? JSON.stringify(agentConfig.ongkir_config.jasaPengiriman) : '["JNE", "J&T", "SiCepat"]'} beserta tarifnya dari ${agentConfig?.ongkir_config?.tarifPerKg ? JSON.stringify(agentConfig.ongkir_config.tarifPerKg) : '{"JNE": 9000, "J&T": 9500, "SiCepat": 8500}'}. Sampaikan juga bahwa tarif ini berlaku untuk berat hingga 1 kg (pesanan di bawah 1 kg akan dihitung sebagai 1 kg).
 5. Tanyakan ke user, "Mau pakai jasa pengiriman apa?".
 6. Setelah user memilih jasa pengiriman, baru LANGSUNG hitung ongkir dengan rumus:
    - Hitung berat total = jumlah_pemesanan x berat_produk.
