@@ -306,10 +306,10 @@ export default defineEventHandler(async (event) => {
   
   // Check subscription expiry - if expired, skip processing
   if (usersData) {
-    const now = new Date().getTime();
-    const endDate = new Date(usersData.end_at).getTime();
+    const now = new Date();
+    const endDate = new Date(usersData.end_at);
     
-    if (now >= endDate) {
+    if (now.getTime() >= endDate.getTime()) {
       console.log("[WAHA Webhook] Subscription expired, skipping processing:", {
         userId,
         endDate: usersData.package.end_at,
