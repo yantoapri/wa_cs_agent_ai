@@ -11,34 +11,62 @@ export default defineEventHandler(async (event) => {
   let nodemailer
   
   try {
-    // Method 1: Simple dynamic import
-    console.log('[SEND-EMAIL] Method 1: Simple dynamic import')
+    // Method 1: Direct dynamic import with inspection
+    console.log('[SEND-EMAIL] Method 1: Direct dynamic import with inspection')
     const nodemailerModule = await import('nodemailer')
-    nodemailer = nodemailerModule.default || nodemailerModule
-    console.log('[SEND-EMAIL] ✓ Method 1 successful:', {
+    console.log('[SEND-EMAIL] Module inspection:', {
       hasDefault: !!nodemailerModule.default,
-      hasCreateTransport: !!(nodemailerModule.default?.createTransport || nodemailerModule.createTransport),
-      type: typeof nodemailer
+      hasCreateTransport: !!nodemailerModule.createTransport,
+      defaultType: typeof nodemailerModule.default,
+      moduleType: typeof nodemailerModule,
+      moduleKeys: Object.keys(nodemailerModule),
+      defaultKeys: nodemailerModule.default ? Object.keys(nodemailerModule.default) : 'N/A'
     })
+    
+    // Try different ways to get the right export
+    if (nodemailerModule.createTransport) {
+      // Direct export
+      nodemailer = nodemailerModule
+      console.log('[SEND-EMAIL] ✓ Using direct module export')
+    } else if (nodemailerModule.default && nodemailerModule.default.createTransport) {
+      // Default export
+      nodemailer = nodemailerModule.default
+      console.log('[SEND-EMAIL] ✓ Using default export')
+    } else {
+      throw new Error('createTransport not found in any export')
+    }
+    
   } catch (error1) {
     console.log('[SEND-EMAIL] Method 1 failed:', error1.message)
     
     try {
-      // Method 2: CommonJS style
+      // Method 2: CommonJS style with createRequire
       console.log('[SEND-EMAIL] Method 2: CommonJS require')
       const { createRequire } = await import('module')
       const require = createRequire(import.meta.url)
       nodemailer = require('nodemailer')
       console.log('[SEND-EMAIL] ✓ Method 2 successful')
     } catch (error2) {
-      console.error('[SEND-EMAIL] All import methods failed:', {
-        error1: error1.message,
-        error2: error2.message
-      })
-      throw createError({
-        statusCode: 500,
-        statusMessage: `Failed to import nodemailer. ES module error: ${error1.message}. CommonJS error: ${error2.message}`
-      })
+      console.log('[SEND-EMAIL] Method 2 failed:', error2.message)
+      
+      try {
+        // Method 3: Legacy require approach
+        console.log('[SEND-EMAIL] Method 3: Legacy require')
+        const Module = await import('module')
+        const require = Module.createRequire ? Module.createRequire(import.meta.url) : eval('require')
+        nodemailer = require('nodemailer')
+        console.log('[SEND-EMAIL] ✓ Method 3 successful')
+      } catch (error3) {
+        console.error('[SEND-EMAIL] All import methods failed:', {
+          error1: error1.message,
+          error2: error2.message,
+          error3: error3.message
+        })
+        throw createError({
+          statusCode: 500,
+          statusMessage: `Failed to import nodemailer. Errors: ${error1.message} | ${error2.message} | ${error3.message}`
+        })
+      }
     }
   }
   
