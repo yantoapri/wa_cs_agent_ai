@@ -15,7 +15,6 @@ export default defineEventHandler(async (event) => {
       created_by,
       wa_message_id,
       agent_type: providedAgentType,
-      chat_type,
     } = body;
     if (
       !agent_id ||
@@ -74,7 +73,6 @@ export default defineEventHandler(async (event) => {
         from,
         to,
         agent_type, // gunakan agent_type untuk filter/grouping
-        chat_type: chat_type || agent_type, // gunakan chat_type jika ada, atau fallback ke agent_type
         created_by: created_by || null,
         wa_message_id: wa_message_id || null,
       })

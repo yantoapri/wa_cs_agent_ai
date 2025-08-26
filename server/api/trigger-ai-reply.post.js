@@ -112,7 +112,6 @@ export default defineEventHandler(async (event) => {
       contact_id,
       message_type: "text",
       agent_type: "ai",
-      chat_type: "ai",
       from: meId,
       to: payloadFrom,
       media_url: null,
