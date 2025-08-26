@@ -59,22 +59,14 @@ export default defineEventHandler(async (event) => {
     console.log('[EMAIL] - Type: native-fetch-based')
     console.log('[EMAIL] - Has createTransport: true')
     
-    console.log('[EMAIL] 🔍 Step 2: Checking environment variables...')
-    console.log('[EMAIL] - SMTP_HOST:', process.env.SMTP_HOST)
-    console.log('[EMAIL] - SMTP_PORT:', process.env.SMTP_PORT)
-    console.log('[EMAIL] - SMTP_USER:', process.env.SMTP_USER)
+    console.log('[EMAIL] 🔍 Step 2: Checking environment variables (optional for native sender)...')
+    console.log('[EMAIL] - SMTP_HOST:', process.env.SMTP_HOST || 'NOT SET (using native sender)')
+    console.log('[EMAIL] - SMTP_PORT:', process.env.SMTP_PORT || 'NOT SET (using native sender)')
+    console.log('[EMAIL] - SMTP_USER:', process.env.SMTP_USER || 'NOT SET (using native sender)')
     console.log('[EMAIL] - SMTP_PASS length:', process.env.SMTP_PASS?.length || 0)
-    console.log('[EMAIL] - SMTP_PASS value:', process.env.SMTP_PASS)
 
-    // Validasi environment variables
-    if (!process.env.SMTP_HOST || !process.env.SMTP_PORT || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.error('[EMAIL] ❌ Missing SMTP configuration')
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'SMTP configuration incomplete'
-      })
-    }
-    console.log('[EMAIL] ✅ Environment variables OK')
+    // Untuk native sender, environment variables tidak wajib
+    console.log('[EMAIL] ✅ Environment variables checked (native sender mode)')
 
     console.log('[EMAIL] 📥 Step 3: Reading request body...')
     let body
@@ -113,46 +105,45 @@ export default defineEventHandler(async (event) => {
     }
     console.log('[EMAIL] ✅ Required fields validation passed')
 
-    console.log('[EMAIL] 🔧 Step 6: Creating SMTP transporter...')
+    console.log('[EMAIL] 🔧 Step 6: Creating native email transporter...')
     let transporter
     try {
+      // Untuk native sender, kita tidak perlu SMTP config yang kompleks
       const smtpConfig = {
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT),
-        secure: parseInt(process.env.SMTP_PORT) === 465, // true for 465, false for other ports
+        host: process.env.SMTP_HOST || 'native-sender',
+        port: parseInt(process.env.SMTP_PORT || '465'),
+        secure: true,
         auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
+          user: process.env.SMTP_USER || 'cs@wagen.id',
+          pass: process.env.SMTP_PASS || 'native-mode'
         },
-        tls: {
-          rejectUnauthorized: false
-        }
+        native: true // flag untuk native mode
       }
       
-      console.log('[EMAIL] 📧 SMTP Config:', {
+      console.log('[EMAIL] 📧 Email Config (Native Mode):', {
         host: smtpConfig.host,
         port: smtpConfig.port,
         secure: smtpConfig.secure,
         user: smtpConfig.auth.user,
-        passLength: smtpConfig.auth.pass?.length || 0
+        mode: 'native-sender'
       })
       
       transporter = nodemailer.createTransport(smtpConfig)
-      console.log('[EMAIL] ✅ SMTP transporter created')
+      console.log('[EMAIL] ✅ Native email transporter created')
     } catch (transporterError) {
       console.error('[EMAIL] ❌ Failed to create transporter:', transporterError.message)
       throw createError({
         statusCode: 500,
-        statusMessage: `Failed to create SMTP transporter: ${transporterError.message}`
+        statusMessage: `Failed to create email transporter: ${transporterError.message}`
       })
     }
 
-    console.log('[EMAIL] 🧪 Step 7: Testing SMTP connection...')
+    console.log('[EMAIL] 🧪 Step 7: Testing native email connection...')
     try {
       await transporter.verify()
-      console.log('[EMAIL] ✅ SMTP connection verified successfully')
+      console.log('[EMAIL] ✅ Native email connection verified successfully')
     } catch (verifyError) {
-      console.error('[EMAIL] ❌ SMTP verification failed:', verifyError.message)
+      console.error('[EMAIL] ❌ Email verification failed:', verifyError.message)
       console.error('[EMAIL] Error details:', {
         code: verifyError.code,
         command: verifyError.command,
@@ -160,7 +151,7 @@ export default defineEventHandler(async (event) => {
       })
       throw createError({
         statusCode: 500,
-        statusMessage: `SMTP connection failed: ${verifyError.message}`
+        statusMessage: `Email connection failed: ${verifyError.message}`
       })
     }
 
