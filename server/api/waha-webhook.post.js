@@ -949,6 +949,7 @@ export default defineEventHandler(async (event) => {
         results: [{ message: "Tidak ada hasil dari AI" }],
       };
     }
+    console.log("[WAHA Webhook] Final contact ID:", finalContactId);
     // Simpan prompt user ke database sebelum proses AI
     try {
       let finalContactId = contact_id;
@@ -962,7 +963,8 @@ export default defineEventHandler(async (event) => {
               name: payloadFrom,
               created_by: body?.metadata?.i || body?.created_by || null,
             },
-          });
+            });
+          console.log("[WAHA Webhook] Contact created/found:", contactRes);
           if (contactRes && contactRes.id) {
             finalContactId = contactRes.id;
           } else if (contactRes && contactRes.data && contactRes.data.id) {

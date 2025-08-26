@@ -60,7 +60,7 @@ export async function handleReceivedMessage({
   // === LOGIKA SESSION KONSISTEN ===
   // Pastikan contactId tidak null: jika null, buat atau cari kontak
   let finalContactId = contactId;
-  if (!finalContactId && payloadFrom) {
+  if (finalContactId==null && payloadFrom) {
     try {
       // Gunakan endpoint /api/contact POST untuk create/find
       const contactRes = await $fetch("/api/contact", {
@@ -71,6 +71,7 @@ export async function handleReceivedMessage({
           created_by: body?.metadata?.i || body?.created_by || null,
         },
       });
+      console.log("[WAHA Webhook] Contact created:", contactRes);
       if (contactRes && contactRes.id) {
         finalContactId = contactRes.id;
       } else if (contactRes && contactRes.data && contactRes.data.id) {
@@ -322,7 +323,7 @@ export async function handleSentMessage({
     const saveData = {
       agent_id: agentId,
       chanel_id: chanelId,
-      contact_id: contactId,
+      contact_id: finalContactId,
       message_type: "text",
       agent_type: "manusia",
       from: from,
