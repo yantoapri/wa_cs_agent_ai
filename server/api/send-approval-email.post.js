@@ -4,7 +4,21 @@ export default defineEventHandler(async (event) => {
   console.log('[SEND-EMAIL] === EMAIL APPROVAL PROCESS STARTED ===')
   console.log('[SEND-EMAIL] Request URL:', event.node.req.url)
   console.log('[SEND-EMAIL] Request method:', event.node.req.method)
-  console.log('[SEND-EMAIL] Request headers:', event.node.req.headers)
+  console.log('[SEND-EMAIL] Timestamp:', new Date().toISOString())
+  console.log('[SEND-EMAIL] Node version:', process.version)
+  console.log('[SEND-EMAIL] Platform:', process.platform)
+  
+  // Test nodemailer import
+  console.log('[SEND-EMAIL] Nodemailer imported:', !!nodemailer)
+  console.log('[SEND-EMAIL] Nodemailer createTransport:', typeof nodemailer.createTransport)
+  
+  // Early environment check
+  console.log('[SEND-EMAIL] Environment variables check:')
+  console.log('[SEND-EMAIL] - NODE_ENV:', process.env.NODE_ENV)
+  console.log('[SEND-EMAIL] - SMTP_USER exists:', !!process.env.SMTP_USER)
+  console.log('[SEND-EMAIL] - SMTP_PASS exists:', !!process.env.SMTP_PASS)
+  console.log('[SEND-EMAIL] - SMTP_USER value:', process.env.SMTP_USER)
+  console.log('[SEND-EMAIL] - SMTP_PASS length:', process.env.SMTP_PASS?.length || 0)
   
   try {
     console.log('[SEND-EMAIL] Step 1: Reading request body...')
@@ -52,6 +66,20 @@ export default defineEventHandler(async (event) => {
         statusMessage: 'SMTP configuration not found'
       })
     }
+    
+    // Validasi format App Password Gmail (16 karakter)
+    const smtpPass = process.env.SMTP_PASS
+    if (smtpPass.length !== 16 || !/^[a-zA-Z]{16}$/.test(smtpPass)) {
+      console.warn('[SEND-EMAIL] WARNING: SMTP_PASS tidak sesuai format App Password Gmail')
+      console.warn('[SEND-EMAIL] App Password Gmail seharusnya 16 karakter huruf saja')
+      console.warn('[SEND-EMAIL] Current SMTP_PASS:', {
+        length: smtpPass.length,
+        isAlphaOnly: /^[a-zA-Z]+$/.test(smtpPass),
+        value: smtpPass
+      })
+      console.warn('[SEND-EMAIL] Silakan generate App Password baru di Google Account Settings')
+    }
+    
     console.log('[SEND-EMAIL] ✓ Environment variables validation passed')
 
     console.log('[SEND-EMAIL] Step 5: Creating SMTP transporter...')

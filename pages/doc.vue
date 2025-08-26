@@ -33,6 +33,15 @@
             <a href="#chanel" class="text-blue-600 hover:underline">Chanel</a>
           </li>
           <li>
+            <a href="#produk" class="text-blue-600 hover:underline">Produk</a>
+          </li>
+          <li>
+            <a href="#broadcast" class="text-blue-600 hover:underline">Broadcast</a>
+          </li>
+          <li>
+            <a href="#schedule" class="text-blue-600 hover:underline">Schedule Pesan</a>
+          </li>
+          <li>
             <a href="#agent-ai" class="text-blue-600 hover:underline"
               >Agent AI</a
             >
@@ -40,6 +49,11 @@
           <li>
             <a href="#agent-manusia" class="text-blue-600 hover:underline"
               >Agent Manusia</a
+            >
+          </li>
+          <li>
+            <a href="#billing" class="text-blue-600 hover:underline"
+              >Billing & Paket</a
             >
           </li>
           <li>
@@ -77,11 +91,16 @@
           </li>
           <li>Inbox terpusat: semua percakapan masuk dalam satu tampilan.</li>
           <li>Manajemen kontak dan channel yang mudah.</li>
+          <li>Kelola katalog produk dengan gambar, deskripsi, dan harga.</li>
+          <li>Broadcast pesan ke ribuan kontak sekaligus.</li>
+          <li>Schedule pesan otomatis untuk pengiriman terjadwal.</li>
+          <li>Import kontak massal dari file CSV/Excel.</li>
           <li>Switch percakapan antara AI dan manusia secara instan.</li>
           <li>
             Pengaturan Agent AI yang fleksibel (nama, deskripsi, kepintaran,
             status aktif).
           </li>
+          <li>Sistem billing dan manajemen paket langganan.</li>
           <li>Update profil dan password user secara mandiri.</li>
           <li>Desain responsif, optimal di desktop dan mobile.</li>
           <li>Keamanan login dan pengelolaan user.</li>
@@ -162,7 +181,68 @@
           </ul>
         </li>
       </ul>
-      <h2 id="agent-ai" class="text-xl font-semibold mt-6 mb-2">4. Agent AI</h2>
+
+      <h2 id="produk" class="text-xl font-semibold mt-6 mb-2">4. Produk</h2>
+      <ul class="list-disc ml-6 mb-4">
+        <li>Kelola katalog produk bisnis Anda dalam satu tempat.</li>
+        <li>Klik tombol <b>Tambah Produk</b> untuk menambah produk baru.</li>
+        <li>
+          Form produk mencakup:
+          <ul class="list-decimal ml-6 mt-2">
+            <li><b>Nama Produk</b> - nama produk yang akan dipromosikan</li>
+            <li><b>Deskripsi</b> - penjelasan detail produk</li>
+            <li><b>Harga</b> - harga produk dalam Rupiah</li>
+            <li><b>Gambar</b> - upload gambar produk (opsional)</li>
+            <li><b>Kategori</b> - kategori produk untuk pengelompokan</li>
+            <li><b>Status</b> - aktif/nonaktif untuk menampilkan produk</li>
+          </ul>
+        </li>
+        <li>Produk yang ditambahkan akan otomatis tersedia untuk AI Agent sebagai referensi dalam percakapan.</li>
+        <li>Edit atau hapus produk melalui tombol aksi di daftar produk.</li>
+        <li>Gunakan filter dan pencarian untuk menemukan produk dengan cepat.</li>
+      </ul>
+
+      <h2 id="broadcast" class="text-xl font-semibold mt-6 mb-2">5. Broadcast</h2>
+      <ul class="list-disc ml-6 mb-4">
+        <li>Kirim pesan ke ribuan kontak sekaligus dengan satu klik.</li>
+        <li>Klik tombol <b>Buat Broadcast</b> untuk memulai campaign baru.</li>
+        <li>
+          Langkah-langkah broadcast:
+          <ul class="list-decimal ml-6 mt-2">
+            <li><b>Pilih Kontak</b> - select kontak target dari daftar atau grup</li>
+            <li><b>Tulis Pesan</b> - buat pesan yang akan dikirim</li>
+            <li><b>Personalisasi</b> - gunakan variabel seperti {nama} untuk personal touch</li>
+            <li><b>Lampiran</b> - tambahkan gambar, dokumen, atau media lain</li>
+            <li><b>Jadwal</b> - kirim sekarang atau atur waktu pengiriman</li>
+            <li><b>Preview</b> - lihat preview pesan sebelum dikirim</li>
+            <li><b>Kirim</b> - eksekusi broadcast ke semua kontak target</li>
+          </ul>
+        </li>
+        <li>Monitor status pengiriman dan statistik broadcast di dashboard.</li>
+        <li>Lihat riwayat broadcast yang pernah dikirim.</li>
+        <li>Template pesan dapat disimpan untuk digunakan kembali.</li>
+      </ul>
+
+      <h2 id="schedule" class="text-xl font-semibold mt-6 mb-2">6. Schedule Pesan</h2>
+      <ul class="list-disc ml-6 mb-4">
+        <li>Atur pengiriman pesan otomatis pada waktu yang ditentukan.</li>
+        <li>Klik tombol <b>Jadwalkan Pesan</b> untuk membuat schedule baru.</li>
+        <li>
+          Konfigurasi schedule:
+          <ul class="list-decimal ml-6 mt-2">
+            <li><b>Pilih Kontak/Grup</b> - tentukan penerima pesan</li>
+            <li><b>Tulis Pesan</b> - buat konten pesan yang akan dikirim</li>
+            <li><b>Atur Waktu</b> - pilih tanggal dan jam pengiriman</li>
+            <li><b>Repeat</b> - set pengulangan (harian, mingguan, bulanan)</li>
+            <li><b>Kondisi</b> - atur kondisi khusus jika diperlukan</li>
+          </ul>
+        </li>
+        <li>Kelola daftar schedule aktif - edit, pause, atau delete schedule.</li>
+        <li>Lihat log pengiriman schedule di riwayat.</li>
+        <li>Perfect untuk reminder, follow-up, atau campaign marketing terjadwal.</li>
+      </ul>
+
+      <h2 id="agent-ai" class="text-xl font-semibold mt-6 mb-2">7. Agent AI</h2>
       <ul class="list-disc ml-6 mb-4">
         <li>Lihat daftar Agent AI.</li>
         <li>Klik tombol plus untuk menambah Agent AI baru.</li>
@@ -184,6 +264,7 @@
               Set <b>Status Aktif</b> untuk mengaktifkan atau menonaktifkan
               Agent AI.
             </li>
+            <li><b>Hubungkan dengan Produk</b> - integrasikan AI dengan katalog produk untuk auto-reply yang lebih akurat.</li>
             <li>Simpan perubahan konfigurasi.</li>
             <li>
               Untuk mengintegrasikan Agent AI ke chanel, buka detail chanel lalu
@@ -193,38 +274,84 @@
         </li>
       </ul>
       <h2 id="agent-manusia" class="text-xl font-semibold mt-6 mb-2">
-        5. Agent Manusia
+        8. Agent Manusia
       </h2>
       <ul class="list-disc ml-6 mb-4">
         <li>Lihat daftar Agent Manusia.</li>
         <li>Klik tombol plus untuk menambah Agent Manusia baru.</li>
         <li>Klik agent untuk melihat detail, edit, atau hapus agent.</li>
+        <li>
+          Fitur takeover dari AI ke Agent Manusia:
+          <ul class="list-decimal ml-6 mt-2">
+            <li>Agent manusia dapat mengambil alih percakapan dari AI kapan saja.</li>
+            <li>Notifikasi otomatis saat ada permintaan takeover dari customer.</li>
+            <li>Handoff yang seamless tanpa kehilangan konteks percakapan.</li>
+            <li>Agent manusia dapat kembali menyerahkan ke AI setelah selesai.</li>
+          </ul>
+        </li>
       </ul>
+
+      <h2 id="billing" class="text-xl font-semibold mt-6 mb-2">9. Billing & Paket</h2>
+      <ul class="list-disc ml-6 mb-4">
+        <li>Kelola paket langganan dan billing di satu tempat.</li>
+        <li>Lihat paket aktif dan tanggal expired.</li>
+        <li>Upgrade atau downgrade paket sesuai kebutuhan.</li>
+        <li>
+          Fitur billing:
+          <ul class="list-decimal ml-6 mt-2">
+            <li><b>Riwayat Pembayaran</b> - lihat history invoice dan payment</li>
+            <li><b>Auto Renewal</b> - perpanjang otomatis paket langganan</li>
+            <li><b>Usage Monitor</b> - pantau penggunaan fitur vs limit paket</li>
+            <li><b>Invoice Download</b> - download invoice untuk keperluan administrasi</li>
+          </ul>
+        </li>
+        <li>Notifikasi otomatis sebelum paket expired.</li>
+        <li>Multiple payment method tersedia.</li>
+      </ul>
+
       <h2 id="my-profile" class="text-xl font-semibold mt-6 mb-2">
-        6. My Profile
+        10. My Profile
       </h2>
       <ul class="list-disc ml-6 mb-4">
         <li>Lihat email user yang sedang login.</li>
         <li>Update password melalui form yang tersedia.</li>
+        <li>Edit informasi profil seperti nama, nomor telepon, dan alamat.</li>
+        <li>Upload foto profil untuk personalisasi akun.</li>
       </ul>
       <h2 id="navigasi" class="text-xl font-semibold mt-6 mb-2">
-        7. Navigasi & Mobile
+        11. Navigasi & Mobile
       </h2>
       <ul class="list-disc ml-6 mb-4">
         <li>Gunakan sidebar (☰) di mobile untuk navigasi menu utama.</li>
         <li>
           Tab dan list akan otomatis menyesuaikan tampilan mobile/desktop.
         </li>
+        <li>Swipe gestures untuk navigasi yang lebih mudah di mobile.</li>
+        <li>Responsive design yang optimal untuk semua ukuran layar.</li>
       </ul>
-      <h2 id="logout" class="text-xl font-semibold mt-6 mb-2">8. Logout</h2>
+      <h2 id="logout" class="text-xl font-semibold mt-6 mb-2">12. Logout</h2>
       <ul class="list-disc ml-6 mb-4">
         <li>
           Gunakan menu avatar (kanan atas/di sidebar mobile) untuk logout.
         </li>
+        <li>Session akan otomatis berakhir setelah periode inaktif.</li>
       </ul>
+
+      <div class="mt-8 p-4 bg-blue-50 rounded-lg">
+        <h3 class="text-lg font-semibold mb-2 text-blue-800">Tips & Best Practices</h3>
+        <ul class="list-disc ml-6 text-blue-700">
+          <li>Selalu update katalog produk secara berkala untuk informasi yang akurat.</li>
+          <li>Gunakan personalisasi dalam broadcast untuk engagement yang lebih baik.</li>
+          <li>Atur Agent AI dengan deskripsi yang jelas untuk respon yang konsisten.</li>
+          <li>Monitor usage paket secara rutin untuk menghindari overload.</li>
+          <li>Backup data kontak dan pesan penting secara berkala.</li>
+          <li>Test schedule pesan di grup kecil sebelum campaign besar.</li>
+        </ul>
+      </div>
+
       <div class="mt-8 text-gray-500 text-sm">
         Dokumentasi ini akan terus diperbarui sesuai pengembangan fitur
-        aplikasi.
+        aplikasi. Untuk bantuan lebih lanjut, hubungi tim support kami.
       </div>
     </div>
   </div>

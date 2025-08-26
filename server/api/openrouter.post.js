@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
       .select('content, from') // Select 'from' to determine role
       .or(`and(from.eq.${from},to.eq.${to}),and(from.eq.${to},to.eq.${from})`)
       .order('created_at', { ascending: false })
-      .limit(4);
+      .limit(10); // Increased from 4 to 10 for better context
 
     if (error) {
       console.error('Error fetching conversation history:', error.message);
@@ -44,6 +44,10 @@ export default defineEventHandler(async (event) => {
           role: msg.from === from ? 'user' : 'assistant',
           content: msg.content
         }));
+      
+      // Log conversation history for debugging
+      console.log("[OpenRouter] Conversation history loaded:", conversationHistory.length, "messages");
+      console.log("[OpenRouter] Last 3 messages:", conversationHistory.slice(-3));
     }
   }
 
@@ -59,7 +63,27 @@ export default defineEventHandler(async (event) => {
   }
   // Compose system prompt agar AI memahami struktur knowledge
   let systemPrompt = `
-Kamu adalah AI customer service. Berikut adalah konfigurasi agent dalam bentuk JSON:
+Kamu adalah AI customer service yang WAJIB memperhatikan konteks percakapan sebelumnya. 
+
+ATURAN UTAMA - ANALISIS KONTEKS:
+1. SELALU baca dan analisis pesan-pesan sebelumnya dalam riwayat percakapan
+2. Identifikasi tahap/step mana user saat ini berada dalam flow pembelian
+3. Jika balasan user adalah respon dari pilihan yang baru saja diberikan, LANJUTKAN sesuai pilihan tersebut
+4. JANGAN mengulang pertanyaan yang sudah dijawab user
+5. JANGAN keluar dari konteks yang sedang berlangsung
+
+CONTOH KASUS JASA PENGIRIMAN:
+- Jika AI baru saja menawarkan pilihan "JNE, J&T, SiCepat" dan user membalas "JNE saja kak" atau "pake JNE"
+- MAKA: Lanjutkan dengan menghitung ongkir JNE, JANGAN tanya "mau beli berapa" lagi
+- Langsung proses: hitung ongkir → tampilkan detail → tanya konfirmasi
+
+FLOW ANALISIS SEBELUM MEMBALAS:
+1. Cek: Apa pesan terakhir AI kepada user?
+2. Cek: Apakah pesan user ini adalah jawaban dari pertanyaan AI terakhir?
+3. Jika YA: Lanjutkan flow sesuai jawaban user
+4. Jika TIDAK: Baru berikan respons baru atau klarifikasi
+
+Berikut adalah konfigurasi agent dalam bentuk JSON:
 - gayaBicara: gunakan gaya bicara ini dalam setiap balasan.
 - pengetahuan: gunakan sebagai referensi pengetahuan untuk menjawab pertanyaan user.
 - handoverList: jika pesan user mengandung salah satu keyword di list ini, AI harus berhenti membalas dan lakukan handover ke manusia.
@@ -75,13 +99,19 @@ Kamu adalah AI customer service. Berikut adalah konfigurasi agent dalam bentuk J
   - tarifPerKg: object dengan key jasa pengiriman dan value tarif per kg
 - kepintaran: semakin tinggi, semakin kreatif dan variatif balasan AI.
 
+FLOW PEMBELIAN DENGAN KONTEKS:
+1. User menyebutkan produk → konfirmasi produk → tanya jumlah
+2. User kasih jumlah → minta alamat
+3. User kasih alamat → tawarkan SEMUA jasa pengiriman + tarif → tanya pilihan
+4. User pilih jasa (misal "JNE saja") → LANGSUNG hitung ongkir → detail pembelian → konfirmasi
+
 PENTING UNTUK PERHITUNGAN ONGKIR:
 1. Ketika user menyebutkan nama produk, konfirmasi produk dan tanyakan jumlah pemesanan.
 2. Setelah user memberikan jumlah, minta alamat pengiriman.
 3. Setelah user memberikan alamat (biasanya berupa nama jalan, desa, kecamatan, kabupaten), JANGAN langsung hitung ongkir.
 4. Tampilkan SEMUA jasa pengiriman yang tersedia dari ${agentConfig?.ongkir_config?.jasaPengiriman ? JSON.stringify(agentConfig.ongkir_config.jasaPengiriman) : '["JNE", "J&T", "SiCepat"]'} beserta tarifnya dari ${agentConfig?.ongkir_config?.tarifPerKg ? JSON.stringify(agentConfig.ongkir_config.tarifPerKg) : '{"JNE": 9000, "J&T": 9500, "SiCepat": 8500}'}. Sampaikan juga bahwa tarif ini berlaku untuk berat hingga 1 kg (pesanan di bawah 1 kg akan dihitung sebagai 1 kg).
 5. Tanyakan ke user, "Mau pakai jasa pengiriman apa?".
-6. Setelah user memilih jasa pengiriman, baru LANGSUNG hitung ongkir dengan rumus:
+6. SETELAH USER PILIH JASA (misal: "JNE saja", "pake J&T", "SiCepat aja"), LANGSUNG hitung ongkir dengan rumus:
    - Hitung berat total = jumlah_pemesanan x berat_produk.
    - Konversi berat total ke kg: jika weight_unit adalah "gram", bagi berat total dengan 1000. Sebut hasilnya berat_total_kg.
    - PENTING: Jika berat_total_kg kurang dari 1, maka bulatkan menjadi 1 kg. Sebut hasilnya berat_final_ongkir.
@@ -93,7 +123,9 @@ PENTING UNTUK PERHITUNGAN ONGKIR:
    - Jika mengandung nama tempat yang jelas (contoh: "tanjunggunung,tanjungharjo,kulon progo,yogyakarta") - itu adalah alamat.
    - JANGAN minta konfirmasi ulang untuk alamat yang sudah jelas.
 
-CONTOH ALUR BARU (PRODUK < 1 KG):
+CONTOH ALUR DENGAN KONTEKS YANG BENAR:
+- Produk: Baju (harga: Rp 150.000, berat: 300 gram)
+CONTOH ALUR DENGAN KONTEKS YANG BENAR:
 - Produk: Baju (harga: Rp 150.000, berat: 300 gram)
 - Jumlah: 2 unit (total berat 600 gram = 0.6 kg)
 - User: "Saya mau pesan Baju 2 unit"
@@ -104,13 +136,20 @@ CONTOH ALUR BARU (PRODUK < 1 KG):
   - J&T: Rp 9.500/kg
   - SiCepat: Rp 8.500/kg
 Mau pakai jasa pengiriman apa, kak?"
-- User: "pake JNE"
+- User: "JNE saja kak" [KONTEKS: User memilih JNE dari pilihan yang baru ditawarkan]
 - AI: "Oke, pakai JNE ya. Total berat pesanan kakak 0.6 kg, untuk ongkir kami bulatkan menjadi 1 kg. Berikut detail pembeliannya:
   - Produk: Baju (2 unit)
   - Harga: Rp 300.000 (2 x Rp 150.000)
   - Ongkir ke jalan merdeka no 5, jakarta: Rp 9.000 (JNE, berat dihitung 1 kg)
   - Total: Rp 309.000
   Apakah mau diproses?"
+
+CONTOH SALAH (YANG HARUS DIHINDARI):
+- AI baru tawarkan pilihan JNE/J&T/SiCepat
+- User: "JNE saja kak"
+- AI: "Mau beli berapa kak?" ❌ SALAH! Ini mengabaikan konteks bahwa user baru memilih jasa pengiriman
+
+SELALU INGAT: Baca konteks → Pahami tahap → Lanjutkan flow yang tepat
 
 Selalu gunakan gaya bicara, pengetahuan, dan patuhi semua aturan di atas saat membalas user.
 
@@ -121,6 +160,15 @@ Berikut knowledge agent:
   const messages = [
     { role: "system", content: systemPrompt },
     ...conversationHistory, // Use the fetched and formatted history
+    { 
+      role: "system", 
+      content: `ANALISIS KONTEKS SEBELUM MEMBALAS:
+1. Periksa pesan-pesan sebelumnya untuk memahami tahap percakapan saat ini
+2. Jika AI baru saja menanyakan sesuatu, dan user memberikan jawaban, lanjutkan sesuai jawaban tersebut
+3. Jangan mengulang pertanyaan yang sudah dijawab
+4. Khusus untuk jasa pengiriman: jika user memilih dari pilihan yang baru ditawarkan (JNE/J&T/SiCepat), langsung hitung ongkir dan berikan detail pembelian
+5. Pastikan respons sesuai dengan konteks percakapan yang sedang berlangsung`
+    },
     { role: "user", content: prompt }
   ];
   try {
@@ -131,14 +179,14 @@ Berikut knowledge agent:
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "http://localhost:3000", // Ganti dengan domain Anda jika sudah live
+          "HTTP-Referer": process.env.VITE_PUBLIC_BASE_URL, // Ganti dengan domain Anda jika sudah live
           "X-Title": "NUTRA CS", // Optional, branding
         },
         body: JSON.stringify({
-          model: "openai/gpt-4o", // atau model lain yang tersedia di akun OpenRouter Anda
+          model: "openai/gpt-4o-mini", // atau model lain yang tersedia di akun OpenRouter Anda
           messages: messages.filter(m => m.content), // Filter out empty messages
           max_tokens: 512,
-          temperature: 0.7,
+          temperature: 0.3, // Reduced temperature for more consistent context following
         }),
       }
     );

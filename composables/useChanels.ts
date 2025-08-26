@@ -176,11 +176,37 @@ export const useChanelstore = () => {
     }
   };
 
+  // Get all chanels (including inactive ones)
+  const fetchAllChannels = async () => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("chanels")
+        .select("*")
+        .eq("created_by", user.value?.id)
+        .order("created_at", { ascending: false });
+
+      if (fetchError) throw fetchError;
+      if (data && data.length > 0) {
+        chanels.value = data || [];
+      }
+    } catch (err) {
+      error.value =
+        err instanceof Error ? err.message : "Failed to fetch chanels";
+      console.error("Error fetching chanels:", err);
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     chanels: readonly(chanels),
     loading: readonly(loading),
     error: readonly(error),
     fetchchanels,
+    fetchAllChannels,
     addchanel,
     updatechanel,
     deletechanel,
