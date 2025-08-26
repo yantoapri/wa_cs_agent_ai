@@ -33,7 +33,7 @@ export async function handleReceivedMessage({
       chat_id: chatId 
     };
   }
-
+  console.log("Received message contact:", contactId);
   // Ambil chanel_id dari metadata/body
   const chanelId = body?.metadata?.chanel_id || body?.chanel_id || null;
   if (!chanelId) {
@@ -58,14 +58,36 @@ export async function handleReceivedMessage({
   }
 
   // === LOGIKA SESSION KONSISTEN ===
+  // Pastikan contactId tidak null: jika null, buat atau cari kontak
+  let finalContactId = contactId;
+  if (!finalContactId && payloadFrom) {
+    try {
+      // Gunakan endpoint /api/contact POST untuk create/find
+      const contactRes = await $fetch("/api/contact", {
+        method: "POST",
+        body: {
+          phone_number: payloadFrom,
+          name: payloadFrom,
+          created_by: body?.metadata?.i || body?.created_by || null,
+        },
+      });
+      if (contactRes && contactRes.id) {
+        finalContactId = contactRes.id;
+      } else if (contactRes && contactRes.data && contactRes.data.id) {
+        finalContactId = contactRes.data.id;
+      }
+    } catch (err) {
+      console.log("[Handler] Error creating/finding contact:", err);
+    }
+  }
   // Cek pesan terakhir dari chanel & contact ini (baik AI atau manusia)
   let lastMessage = null;
-  if (contactId) {
+  if (finalContactId) {
     const res = await client
       .from("messages")
       .select("created_at, agent_type, from")
       .eq("chanel_id", chanelId)
-      .eq("contact_id", contactId)
+      .eq("contact_id", finalContactId)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -83,7 +105,7 @@ export async function handleReceivedMessage({
   if (!lastMessage) {
     // Tidak ada pesan sama sekali, mulai dengan AI
     console.log("[WAHA Handler] No previous messages, starting with AI");
-    return { status: "ok", takeover: true, proceed: true, sessionType: "ai" };
+    return { status: "ok", takeover: true, proceed: true, sessionType: "ai", contact_id: finalContactId };
   }
 
   const now = new Date();
@@ -120,6 +142,7 @@ export async function handleReceivedMessage({
         reason: "Masih dalam waktu takeover",
         diffMinutes,
         waktuTakeover,
+        contact_id: finalContactId,
       };
     }
   }

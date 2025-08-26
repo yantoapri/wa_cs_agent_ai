@@ -951,11 +951,32 @@ export default defineEventHandler(async (event) => {
     }
     // Simpan prompt user ke database sebelum proses AI
     try {
+      let finalContactId = contact_id;
+      // Jika contact_id null, cari atau buat kontak baru
+      if (!finalContactId) {
+        try {
+          const contactRes = await $fetch("/api/contact", {
+            method: "POST",
+            body: {
+              phone_number: payloadFrom,
+              name: payloadFrom,
+              created_by: body?.metadata?.i || body?.created_by || null,
+            },
+          });
+          if (contactRes && contactRes.id) {
+            finalContactId = contactRes.id;
+          } else if (contactRes && contactRes.data && contactRes.data.id) {
+            finalContactId = contactRes.data.id;
+          }
+        } catch (err) {
+          console.log("[WAHA Webhook] Error creating/finding contact for prompt save:", err);
+        }
+      }
       const waMessageId = body?.payload?.id || body?.payload?.key?.id || null;
       const userPromptData = {
         agent_id: saveAgentId,
         chanel_id: body?.metadata?.chanel_id || null,
-        contact_id,
+        contact_id: finalContactId,
         message_type: "text",
         agent_type: "ai",
         from: payloadFrom,
