@@ -8,6 +8,10 @@ export default defineEventHandler(async (event) => {
     console.log('[EMAIL] - Node version:', process.version)
     console.log('[EMAIL] - Platform:', process.platform)
     
+    // Get runtime config untuk akses environment variables
+    const config = useRuntimeConfig()
+    console.log('[EMAIL] 🔧 Runtime config loaded')
+    
     console.log('[EMAIL] 📦 Step 1: Creating native email sender...')
     
     // Buat email sender menggunakan fetch API native (kompatibel dengan edge environments)
@@ -60,10 +64,10 @@ export default defineEventHandler(async (event) => {
     console.log('[EMAIL] - Has createTransport: true')
     
     console.log('[EMAIL] 🔍 Step 2: Checking environment variables (optional for native sender)...')
-    console.log('[EMAIL] - SMTP_HOST:', process.env.SMTP_HOST || 'NOT SET (using native sender)')
-    console.log('[EMAIL] - SMTP_PORT:', process.env.SMTP_PORT || 'NOT SET (using native sender)')
-    console.log('[EMAIL] - SMTP_USER:', process.env.SMTP_USER || 'NOT SET (using native sender)')
-    console.log('[EMAIL] - SMTP_PASS length:', process.env.SMTP_PASS?.length || 0)
+    console.log('[EMAIL] - SMTP_HOST:', config.smtpHost || 'NOT SET (using native sender)')
+    console.log('[EMAIL] - SMTP_PORT:', config.smtpPort || 'NOT SET (using native sender)')
+    console.log('[EMAIL] - SMTP_USER:', config.smtpUser || 'NOT SET (using native sender)')
+    console.log('[EMAIL] - SMTP_PASS length:', config.smtpPass?.length || 0)
 
     // Untuk native sender, environment variables tidak wajib
     console.log('[EMAIL] ✅ Environment variables checked (native sender mode)')
@@ -110,12 +114,12 @@ export default defineEventHandler(async (event) => {
     try {
       // Untuk native sender, kita tidak perlu SMTP config yang kompleks
       const smtpConfig = {
-        host: process.env.SMTP_HOST || 'native-sender',
-        port: parseInt(process.env.SMTP_PORT || '465'),
+        host: config.smtpHost || 'native-sender',
+        port: parseInt(config.smtpPort || '465'),
         secure: true,
         auth: {
-          user: process.env.SMTP_USER || 'cs@wagen.id',
-          pass: process.env.SMTP_PASS || 'native-mode'
+          user: config.smtpUser || 'cs@wagen.id',
+          pass: config.smtpPass || 'native-mode'
         },
         native: true // flag untuk native mode
       }
@@ -275,7 +279,7 @@ export default defineEventHandler(async (event) => {
     const mailOptions = {
       from: {
         name: 'Nutra USA Indonesia',
-        address: process.env.SMTP_USER
+        address: config.smtpUser || 'cs@wagen.id'
       },
       to: userEmail,
       subject: `✅ Pembayaran Disetujui - Invoice ${invoiceNumber}`,

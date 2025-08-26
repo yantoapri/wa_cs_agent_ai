@@ -14,12 +14,18 @@ export default defineNuxtConfig({
       supabaseKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
       baseUrl: process.env.VITE_BASE_URL,
     },
+    // Server-side environment variables
     supabaseServiceRoleKey: process.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
     openAiKey: process.env.OPEN_AI_KEY,
     wahaBaseUrl: process.env.VITE_BASE_URL_WAHA,
     wahaApiKey: process.env.VITE_WAHA_API,
     wahaUsername: process.env.VITE_WAHA_USERNAME,
     wahaPassword: process.env.VITE_WAHA_PASSWORD,
+    // SMTP configuration
+    smtpHost: process.env.SMTP_HOST,
+    smtpPort: process.env.SMTP_PORT,
+    smtpUser: process.env.SMTP_USER,
+    smtpPass: process.env.SMTP_PASS,
   },
 
   supabase: {
