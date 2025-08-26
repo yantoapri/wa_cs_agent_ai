@@ -1,5 +1,3 @@
-import nodemailer from 'nodemailer'
-
 export default defineEventHandler(async (event) => {
   console.log('[SEND-EMAIL] === EMAIL APPROVAL PROCESS STARTED ===')
   console.log('[SEND-EMAIL] Request URL:', event.node.req.url)
@@ -8,9 +6,57 @@ export default defineEventHandler(async (event) => {
   console.log('[SEND-EMAIL] Node version:', process.version)
   console.log('[SEND-EMAIL] Platform:', process.platform)
   
-  // Test nodemailer import
-  console.log('[SEND-EMAIL] Nodemailer imported:', !!nodemailer)
-  console.log('[SEND-EMAIL] Nodemailer createTransport:', typeof nodemailer.createTransport)
+  // Try different approaches for importing nodemailer
+  console.log('[SEND-EMAIL] Attempting to import nodemailer...')
+  let nodemailer
+  
+  try {
+    // Method 1: Simple dynamic import
+    console.log('[SEND-EMAIL] Method 1: Simple dynamic import')
+    const nodemailerModule = await import('nodemailer')
+    nodemailer = nodemailerModule.default || nodemailerModule
+    console.log('[SEND-EMAIL] ✓ Method 1 successful:', {
+      hasDefault: !!nodemailerModule.default,
+      hasCreateTransport: !!(nodemailerModule.default?.createTransport || nodemailerModule.createTransport),
+      type: typeof nodemailer
+    })
+  } catch (error1) {
+    console.log('[SEND-EMAIL] Method 1 failed:', error1.message)
+    
+    try {
+      // Method 2: CommonJS style
+      console.log('[SEND-EMAIL] Method 2: CommonJS require')
+      const { createRequire } = await import('module')
+      const require = createRequire(import.meta.url)
+      nodemailer = require('nodemailer')
+      console.log('[SEND-EMAIL] ✓ Method 2 successful')
+    } catch (error2) {
+      console.error('[SEND-EMAIL] All import methods failed:', {
+        error1: error1.message,
+        error2: error2.message
+      })
+      throw createError({
+        statusCode: 500,
+        statusMessage: `Failed to import nodemailer. ES module error: ${error1.message}. CommonJS error: ${error2.message}`
+      })
+    }
+  }
+  
+  if (!nodemailer || !nodemailer.createTransport) {
+    console.error('[SEND-EMAIL] ERROR: Nodemailer not properly imported:', {
+      hasNodemailer: !!nodemailer,
+      hasCreateTransport: !!(nodemailer?.createTransport),
+      nodeMailerType: typeof nodemailer,
+      nodeMailerKeys: nodemailer ? Object.keys(nodemailer) : 'N/A'
+    })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Nodemailer createTransport method not available'
+    })
+  }
+  
+  console.log('[SEND-EMAIL] ✓ Nodemailer imported successfully')
+  console.log('[SEND-EMAIL] CreateTransport type:', typeof nodemailer.createTransport)
   
   // Early environment check
   console.log('[SEND-EMAIL] Environment variables check:')

@@ -126,7 +126,7 @@
                 </span>
               </td>
               <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm text-right">
-                <button v-if="invoice?.status.name === 'Waiting Payment'" @click="openUploadModal(invoice)" class="text-blue-600 hover:text-blue-900 mr-4">Upload Bukti</button>
+                <button v-if="invoice?.status.id==1" @click="openUploadModal(invoice)" class="text-blue-600 hover:text-blue-900 mr-4">Upload Bukti</button>
                 <button @click="openDetailModal(invoice)" class="text-gray-600 hover:text-gray-900">Detail</button>
               </td>
             </tr>

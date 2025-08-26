@@ -217,7 +217,7 @@
                   </span>
                 </td>
                 <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm text-right">
-                  <button v-if="invoice.status.id === 2" @click="approveInvoice(invoice)" class="text-green-600 hover:text-green-900 mr-4">Approve</button>
+                  <button v-if="invoice?.status?.id === 2" @click="approveInvoice(invoice)" class="text-green-600 hover:text-green-900 mr-4">Approve</button>
                   <button @click="openDetailModal(invoice)" class="text-gray-600 hover:text-gray-900 mr-4">Detail</button>
                 </td>
               </tr>
