@@ -293,8 +293,29 @@ export async function handleSentMessage({
     console.log("[WAHA Webhook] Error mencari contact:", e.message);
   }
 
-  // Return takeover decision without saving message
-  // Message will be saved by the main webhook handler
+  // Simpan pesan outgoing ke database sebagai manual reply
+  // Pastikan created_by dan wa_message_id terisi
+  try {
+    const saveData = {
+      agent_id: agentId,
+      chanel_id: chanelId,
+      contact_id: contactId,
+      message_type: "text",
+      agent_type: "manusia",
+      from: from,
+      to: messageTo,
+      media_url: body?.payload?.mediaUrl || null,
+      content: messageContent,
+      created_by: body?.metadata?.i || body?.created_by || null,
+      wa_message_id: body?.payload?.id || body?.payload?.key?.id || null,
+    };
+    console.log("[WAHA Handler] Saving outgoing message to database:", saveData);
+    await client.from("messages").insert([saveData]);
+  } catch (err) {
+    console.log("[WAHA Handler] Error saving outgoing message to database:", err);
+  }
+  // Pastikan takeoverActive selalu terdefinisi (default: false)
+  let takeoverActive = false;
   return { 
     status: "ok", 
     takeover: takeoverActive, 

@@ -24,12 +24,14 @@ export default defineEventHandler(async (event) => {
       !message_type ||
       !content ||
       !from ||
-      !to
+      !to||
+      !created_by||
+      !wa_message_id
     ) {
       return {
         error: true,
         message:
-          "agent_id, chanel_id, contact_id, message_type, content, from, dan to wajib diisi",
+          "agent_id, chanel_id, contact_id, message_type, content, from, dan to,created_by,wa_message_id wajib diisi",
       };
     }
     const runtimeConfig = useRuntimeConfig();

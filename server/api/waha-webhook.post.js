@@ -801,10 +801,10 @@ export default defineEventHandler(async (event) => {
         agent_type: saveAgentType,
         from: payloadFrom,
         to: meId,
-        media_url:body?.payload?.mediaUrl || null,
+        media_url: body?.payload?.mediaUrl || null,
         content: payloadBody,
-        created_by: body?.metadata?.i,
-        wa_message_id: body?.payload?.id || body?.payload?.key?.id || null,
+        created_by: body?.metadata?.i || body?.created_by || null,
+        wa_message_id: waMessageId,
       };
       console.log(
         "[WAHA Webhook] Saving incoming message to database:",
@@ -927,6 +927,7 @@ export default defineEventHandler(async (event) => {
     }
     // Simpan prompt user ke database sebelum proses AI
     try {
+      const waMessageId = body?.payload?.id || body?.payload?.key?.id || null;
       const userPromptData = {
         agent_id: saveAgentId,
         chanel_id: body?.metadata?.chanel_id || null,
@@ -937,7 +938,8 @@ export default defineEventHandler(async (event) => {
         to: meId,
         media_url: null,
         content: payloadBody,
-        created_by: body?.metadata?.i,
+        created_by: body?.metadata?.i || body?.created_by || null,
+        wa_message_id: waMessageId,
       };
       console.log(
         "[WAHA Webhook] Saving user prompt to database:",
@@ -1054,7 +1056,8 @@ export default defineEventHandler(async (event) => {
             to: payloadFrom,
             media_url: imgUrl,
             content: aiText, // caption dari AI
-            created_by: body?.metadata?.i,
+            created_by: body?.metadata?.i || body?.created_by || null,
+            wa_message_id: body?.payload?.id || body?.payload?.key?.id || null,
           };
           console.log(
             "[WAHA Webhook] Saving AI image message to database:",
@@ -1121,7 +1124,8 @@ export default defineEventHandler(async (event) => {
           to: payloadFrom,
           media_url: null,
           content: aiText,
-          created_by: body?.metadata?.i,
+          created_by: body?.metadata?.i || body?.created_by || null,
+          wa_message_id: body?.payload?.id || body?.payload?.key?.id || null,
         };
         console.log("[WAHA Webhook] Saving AI message to database:", saveData);
         const saveResult = await $fetch("/api/message", {
