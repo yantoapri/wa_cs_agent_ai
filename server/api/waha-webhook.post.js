@@ -810,7 +810,7 @@ export default defineEventHandler(async (event) => {
       const saveData = {
         agent_id: saveAgentId,
         chanel_id: body?.metadata?.chanel_id || null,
-        contact_id: contact_id,
+        contact_id: finalContactId,
         message_type: "text",
         agent_type: saveAgentType,
         from: payloadFrom,
@@ -1096,7 +1096,7 @@ export default defineEventHandler(async (event) => {
           const saveData = {
             agent_id: saveAgentId,
             chanel_id: body?.metadata?.chanel_id || null,
-            contact_id,
+            contact_id:finalContactId,
             message_type: "image",
             agent_type: "ai",
             from: meId,
@@ -1164,7 +1164,7 @@ export default defineEventHandler(async (event) => {
         const saveData = {
           agent_id: saveAgentId,
           chanel_id: body?.metadata?.chanel_id || null,
-          contact_id,
+          contact_id:finalContactId,
           message_type: "text",
           agent_type: "ai",
           from: meId,
