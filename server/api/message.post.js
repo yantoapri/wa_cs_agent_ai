@@ -76,7 +76,9 @@ export default defineEventHandler(async (event) => {
         created_by: created_by || null,
         wa_message_id: wa_message_id || null,
         agent_type
-      });
+      })
+      .order("created_at", { ascending: asc })
+      .maybeSingle();
     if (dupError) {
       return {
         error: true,
