@@ -1,172 +1,70 @@
 export default defineEventHandler(async (event) => {
-  console.log('[SEND-EMAIL] === EMAIL APPROVAL PROCESS STARTED ===')
-  console.log('[SEND-EMAIL] Request URL:', event.node.req.url)
-  console.log('[SEND-EMAIL] Request method:', event.node.req.method)
-  console.log('[SEND-EMAIL] Timestamp:', new Date().toISOString())
-  console.log('[SEND-EMAIL] Node version:', process.version)
-  console.log('[SEND-EMAIL] Platform:', process.platform)
-  
-  // Try different approaches for importing nodemailer
-  console.log('[SEND-EMAIL] Attempting to import nodemailer...')
-  let nodemailer
-  
   try {
-    // Method 1: Direct dynamic import with inspection
-    console.log('[SEND-EMAIL] Method 1: Direct dynamic import with inspection')
-    let nodemailerModule
+    console.log('[EMAIL] 🚀 === EMAIL APPROVAL PROCESS STARTED ===')
+    console.log('[EMAIL] 📍 Step 0: Basic info')
+    console.log('[EMAIL] - URL:', event.node.req.url)
+    console.log('[EMAIL] - Method:', event.node.req.method)
+    console.log('[EMAIL] - Timestamp:', new Date().toISOString())
+    console.log('[EMAIL] - Node version:', process.version)
+    console.log('[EMAIL] - Platform:', process.platform)
+    
+    console.log('[EMAIL] 📦 Step 1: Importing nodemailer...')
+    let nodemailer
     
     try {
-      nodemailerModule = await import('nodemailer')
-      console.log('[SEND-EMAIL] ✓ Import successful, inspecting module...')
-    } catch (importError) {
-      console.log('[SEND-EMAIL] Import failed during actual import:', importError.message)
-      throw importError
-    }
-    
-    console.log('[SEND-EMAIL] Module inspection:', {
-      hasDefault: !!nodemailerModule.default,
-      hasCreateTransport: !!nodemailerModule.createTransport,
-      defaultType: typeof nodemailerModule.default,
-      moduleType: typeof nodemailerModule,
-      moduleKeys: Object.keys(nodemailerModule),
-      defaultKeys: nodemailerModule.default ? Object.keys(nodemailerModule.default) : 'N/A'
-    })
-    
-    // Try different ways to get the right export
-    if (nodemailerModule.createTransport) {
-      // Direct export
-      nodemailer = nodemailerModule
-      console.log('[SEND-EMAIL] ✓ Using direct module export')
-    } else if (nodemailerModule.default && nodemailerModule.default.createTransport) {
-      // Default export
-      nodemailer = nodemailerModule.default
-      console.log('[SEND-EMAIL] ✓ Using default export')
-    } else {
-      throw new Error('createTransport not found in any export')
-    }
-    
-  } catch (error1) {
-    console.log('[SEND-EMAIL] Method 1 failed:', error1.message)
-    
-    try {
-      // Method 2: Try static import by creating a new function
-      console.log('[SEND-EMAIL] Method 2: Function-wrapped static import')
-      const getNodemailer = new Function('return import("nodemailer")')
-      nodemailer = await getNodemailer()
+      // Coba import nodemailer sederhana
+      nodemailer = await import('nodemailer')
       
-      if (nodemailer.createTransport) {
-        console.log('[SEND-EMAIL] ✓ Method 2 successful - direct export')
-      } else if (nodemailer.default && nodemailer.default.createTransport) {
+      // Cek apakah ada default export
+      if (nodemailer.default) {
+        console.log('[EMAIL] ✅ Using default export')
         nodemailer = nodemailer.default
-        console.log('[SEND-EMAIL] ✓ Method 2 successful - default export')
-      } else {
-        throw new Error('createTransport not found')
       }
-    } catch (error2) {
-      console.log('[SEND-EMAIL] Method 2 failed:', error2.message)
       
-      try {
-        // Method 3: CommonJS require
-        console.log('[SEND-EMAIL] Method 3: CommonJS require')
-        const { createRequire } = await import('module')
-        const require = createRequire(import.meta.url)
-        nodemailer = require('nodemailer')
-        console.log('[SEND-EMAIL] ✓ Method 3 successful')
-      } catch (error3) {
-        console.log('[SEND-EMAIL] Method 3 failed:', error3.message)
-        
-        try {
-          // Method 4: Use Gmail API via fetch (works in edge environments)
-          console.log('[SEND-EMAIL] Method 4: Gmail API via fetch')
-          
-          // We'll implement a simple email sender using Gmail's SMTP via fetch
-          // This is a placeholder - we'll use the environment variables to send via a webhook service
-          
-          if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-            throw new Error('SMTP credentials not available')
-          }
-          
-          // Create a simple email sender function
-          nodemailer = {
-            createTransport: (config) => ({
-              sendMail: async (mailOptions) => {
-                console.log('[SEND-EMAIL] Using fetch-based email sender')
-                console.log('[SEND-EMAIL] Mail options:', {
-                  from: mailOptions.from,
-                  to: mailOptions.to,
-                  subject: mailOptions.subject,
-                  htmlLength: mailOptions.html?.length || 0
-                })
-                
-                // For now, log the email content and return success
-                // In production, you could integrate with SendGrid, Mailgun, or similar
-                console.log('[SEND-EMAIL] Email would be sent:', {
-                  to: mailOptions.to,
-                  subject: mailOptions.subject,
-                  from: mailOptions.from
-                })
-                
-                return {
-                  messageId: `mock-${Date.now()}`,
-                  response: 'Email sent via fallback method'
-                }
-              }
-            })
-          }
-          
-          console.log('[SEND-EMAIL] ✓ Method 4 successful - using fetch-based email')
-          
-        } catch (error4) {
-          console.error('[SEND-EMAIL] All import methods failed:', {
-            error1: error1.message,
-            error2: error2.message,
-            error3: error3.message,
-            error4: error4.message
-          })
-          
-          // Return a mock success for now to prevent blocking
-          console.log('[SEND-EMAIL] FALLBACK: Returning mock success response')
-          return {
-            success: true,
-            message: 'Email service temporarily unavailable - approval notification will be sent via alternative method',
-            fallback: true
-          }
-        }
-      }
+      console.log('[EMAIL] ✅ Nodemailer imported successfully')
+      console.log('[EMAIL] - Type:', typeof nodemailer)
+      console.log('[EMAIL] - Has createTransport:', !!nodemailer.createTransport)
+      
+    } catch (importError) {
+      console.error('[EMAIL] ❌ Failed to import nodemailer:', importError.message)
+      throw createError({
+        statusCode: 500,
+        statusMessage: `Cannot import nodemailer: ${importError.message}`
+      })
     }
-  }
-  
-  if (!nodemailer || !nodemailer.createTransport) {
-    console.error('[SEND-EMAIL] ERROR: Nodemailer not properly imported:', {
-      hasNodemailer: !!nodemailer,
-      hasCreateTransport: !!(nodemailer?.createTransport),
-      nodeMailerType: typeof nodemailer,
-      nodeMailerKeys: nodemailer ? Object.keys(nodemailer) : 'N/A'
-    })
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Nodemailer createTransport method not available'
-    })
-  }
-  
-  console.log('[SEND-EMAIL] ✓ Nodemailer imported successfully')
-  console.log('[SEND-EMAIL] CreateTransport type:', typeof nodemailer.createTransport)
-  
-  // Early environment check
-  console.log('[SEND-EMAIL] Environment variables check:')
-  console.log('[SEND-EMAIL] - NODE_ENV:', process.env.NODE_ENV)
-  console.log('[SEND-EMAIL] - SMTP_USER exists:', !!process.env.SMTP_USER)
-  console.log('[SEND-EMAIL] - SMTP_PASS exists:', !!process.env.SMTP_PASS)
-  console.log('[SEND-EMAIL] - SMTP_USER value:', process.env.SMTP_USER)
-  console.log('[SEND-EMAIL] - SMTP_PASS length:', process.env.SMTP_PASS?.length || 0)
-  
-  try {
-    console.log('[SEND-EMAIL] Step 1: Reading request body...')
-    const body = await readBody(event)
-    console.log('[SEND-EMAIL] Request body received:', JSON.stringify(body, null, 2))
     
+    console.log('[EMAIL] 🔍 Step 2: Checking environment variables...')
+    console.log('[EMAIL] - SMTP_HOST:', process.env.SMTP_HOST)
+    console.log('[EMAIL] - SMTP_PORT:', process.env.SMTP_PORT)
+    console.log('[EMAIL] - SMTP_USER:', process.env.SMTP_USER)
+    console.log('[EMAIL] - SMTP_PASS length:', process.env.SMTP_PASS?.length || 0)
+    console.log('[EMAIL] - SMTP_PASS value:', process.env.SMTP_PASS)
+
+    // Validasi environment variables
+    if (!process.env.SMTP_HOST || !process.env.SMTP_PORT || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.error('[EMAIL] ❌ Missing SMTP configuration')
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'SMTP configuration incomplete'
+      })
+    }
+    console.log('[EMAIL] ✅ Environment variables OK')
+
+    console.log('[EMAIL] 📥 Step 3: Reading request body...')
+    let body
+    try {
+      body = await readBody(event)
+      console.log('[EMAIL] ✅ Request body received:', JSON.stringify(body, null, 2))
+    } catch (bodyError) {
+      console.error('[EMAIL] ❌ Failed to read body:', bodyError.message)
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid request body'
+      })
+    }
+
     const { userEmail, userName, invoiceNumber, planName, amount, startDate, endDate } = body
-    console.log('[SEND-EMAIL] Step 2: Destructured data:', { 
+    console.log('[EMAIL] 📋 Step 4: Extracted data:', { 
       userEmail, 
       userName, 
       invoiceNumber, 
@@ -176,114 +74,71 @@ export default defineEventHandler(async (event) => {
       endDate 
     })
 
-    console.log('[SEND-EMAIL] Step 3: Validating required fields...')
-    // Validasi input
+    console.log('[EMAIL] ✅ Step 5: Validating required fields...')
     if (!userEmail || !invoiceNumber) {
-      console.error('[SEND-EMAIL] ERROR: Missing required fields:', { 
+      console.error('[EMAIL] ❌ Missing required fields:', { 
         userEmail: !!userEmail, 
-        invoiceNumber: !!invoiceNumber,
-        userEmailValue: userEmail,
-        invoiceNumberValue: invoiceNumber
+        invoiceNumber: !!invoiceNumber
       })
       throw createError({
         statusCode: 400,
         statusMessage: 'Email dan invoice number diperlukan'
       })
     }
-    console.log('[SEND-EMAIL] ✓ Required fields validation passed')
+    console.log('[EMAIL] ✅ Required fields validation passed')
 
-    console.log('[SEND-EMAIL] Step 4: Checking environment variables...')
-    // Validasi environment variables
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.error('[SEND-EMAIL] ERROR: Missing SMTP configuration:', { 
-        SMTP_USER: !!process.env.SMTP_USER, 
-        SMTP_PASS: !!process.env.SMTP_PASS,
-        SMTP_USER_VALUE: process.env.SMTP_USER,
-        SMTP_PASS_LENGTH: process.env.SMTP_PASS?.length || 0
+    console.log('[EMAIL] 🔧 Step 6: Creating SMTP transporter...')
+    let transporter
+    try {
+      const smtpConfig = {
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT),
+        secure: parseInt(process.env.SMTP_PORT) === 465, // true for 465, false for other ports
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
+        },
+        tls: {
+          rejectUnauthorized: false
+        }
+      }
+      
+      console.log('[EMAIL] 📧 SMTP Config:', {
+        host: smtpConfig.host,
+        port: smtpConfig.port,
+        secure: smtpConfig.secure,
+        user: smtpConfig.auth.user,
+        passLength: smtpConfig.auth.pass?.length || 0
       })
+      
+      transporter = nodemailer.createTransport(smtpConfig)
+      console.log('[EMAIL] ✅ SMTP transporter created')
+    } catch (transporterError) {
+      console.error('[EMAIL] ❌ Failed to create transporter:', transporterError.message)
       throw createError({
         statusCode: 500,
-        statusMessage: 'SMTP configuration not found'
+        statusMessage: `Failed to create SMTP transporter: ${transporterError.message}`
       })
     }
-    
-    // Validasi format App Password Gmail (16 karakter)
-    const smtpPass = process.env.SMTP_PASS
-    if (smtpPass.length !== 16 || !/^[a-zA-Z]{16}$/.test(smtpPass)) {
-      console.warn('[SEND-EMAIL] WARNING: SMTP_PASS tidak sesuai format App Password Gmail')
-      console.warn('[SEND-EMAIL] App Password Gmail seharusnya 16 karakter huruf saja')
-      console.warn('[SEND-EMAIL] Current SMTP_PASS:', {
-        length: smtpPass.length,
-        isAlphaOnly: /^[a-zA-Z]+$/.test(smtpPass),
-        value: smtpPass
-      })
-      console.warn('[SEND-EMAIL] Silakan generate App Password baru di Google Account Settings')
-    }
-    
-    console.log('[SEND-EMAIL] ✓ Environment variables validation passed')
 
-    console.log('[SEND-EMAIL] Step 5: Creating SMTP transporter...')
-    // Konfigurasi transporter email dengan setting yang lebih spesifik untuk Gmail
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false, // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS // Harus menggunakan App Password, bukan password biasa
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    })
-
-    console.log('[SEND-EMAIL] ✓ SMTP transporter created successfully')
-    console.log('[SEND-EMAIL] SMTP Configuration details:', {
-      host: 'smtp.gmail.com',
-      port: 587,
-      user: process.env.SMTP_USER,
-      passLength: process.env.SMTP_PASS?.length || 0,
-      secure: false,
-      tls: { rejectUnauthorized: false }
-    })
-
-    console.log('[SEND-EMAIL] Step 6: Testing SMTP connection...')
-    // Test koneksi SMTP
+    console.log('[EMAIL] 🧪 Step 7: Testing SMTP connection...')
     try {
-      console.log('[SEND-EMAIL] 6.1: Initiating SMTP verification...')
       await transporter.verify()
-      console.log('[SEND-EMAIL] ✓ SMTP connection verified successfully')
+      console.log('[EMAIL] ✅ SMTP connection verified successfully')
     } catch (verifyError) {
-      console.error('[SEND-EMAIL] ERROR: SMTP verification failed:', verifyError)
-      console.error('[SEND-EMAIL] Error details:', {
-        message: verifyError.message,
+      console.error('[EMAIL] ❌ SMTP verification failed:', verifyError.message)
+      console.error('[EMAIL] Error details:', {
         code: verifyError.code,
         command: verifyError.command,
-        response: verifyError.response,
-        responseCode: verifyError.responseCode
+        response: verifyError.response
       })
-      
-      // Berikan panduan khusus untuk error Gmail
-      let errorMessage = verifyError.message
-      if (errorMessage.includes('Username and Password not accepted') || errorMessage.includes('BadCredentials')) {
-        errorMessage = `Gmail authentication failed. Pastikan:
-1. Menggunakan App Password (bukan password akun biasa)
-2. 2-Factor Authentication sudah diaktifkan di Gmail
-3. App Password sudah dibuat di Google Account Settings
-4. Email: ${process.env.SMTP_USER}
-5. App Password length: ${process.env.SMTP_PASS?.length || 0} characters
-
-Original error: ${verifyError.message}`
-      }
-      
       throw createError({
         statusCode: 500,
-        statusMessage: `SMTP connection failed: ${errorMessage}`
+        statusMessage: `SMTP connection failed: ${verifyError.message}`
       })
     }
 
-    console.log('[SEND-EMAIL] Step 7: Creating email template...')
-    // Template email HTML
+    console.log('[EMAIL] 📝 Step 8: Creating email template...')
     const emailTemplate = `
 <!DOCTYPE html>
 <html lang="id">
@@ -312,12 +167,6 @@ Original error: ${verifyError.message}`
             margin-bottom: 30px;
             padding-bottom: 20px;
             border-bottom: 2px solid #e1e5e9;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2563eb;
-            margin-bottom: 10px;
         }
         .status-badge {
             background-color: #10b981;
@@ -354,97 +203,58 @@ Original error: ${verifyError.message}`
             font-size: 18px;
             font-weight: bold;
         }
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e1e5e9;
-            color: #64748b;
-            font-size: 14px;
-        }
-        .cta-button {
-            display: inline-block;
-            background-color: #2563eb;
-            color: white;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 500;
-            margin: 20px 0;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">🌿 Nutra USA Indonesia - WA CS AGENT AI</div>
-            <h2 style="color: #1e293b; margin: 0;">Pembayaran Berhasil Disetujui!</h2>
+            <h2>🌿 Nutra USA Indonesia - WA CS AGENT AI</h2>
+            <h3 style="color: #1e293b;">Pembayaran Berhasil Disetujui!</h3>
             <div class="status-badge">✅ APPROVED</div>
         </div>
 
         <p>Halo <strong>${userName || 'Pelanggan'}</strong>,</p>
-
-        <p>Kami dengan senang hati memberitahukan bahwa pembayaran Anda telah berhasil disetujui dan diproses.</p>
+        <p>Pembayaran Anda telah berhasil disetujui dan diproses.</p>
 
         <div class="invoice-details">
-            <h3 style="margin-top: 0; color: #1e293b;">Detail Pembayaran:</h3>
+            <h3>Detail Pembayaran:</h3>
             <div class="detail-row">
                 <span class="detail-label">Nomor Invoice:</span>
                 <span class="detail-value">${invoiceNumber}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Paket Berlangganan:</span>
+                <span class="detail-label">Paket:</span>
                 <span class="detail-value">${planName || 'N/A'}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Jumlah Pembayaran:</span>
+                <span class="detail-label">Jumlah:</span>
                 <span class="detail-value amount">Rp ${amount ? Number(amount).toLocaleString('id-ID') : 'N/A'}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-label">Status:</span>
-                <span class="detail-value" style="color: #10b981; font-weight: bold;">DISETUJUI</span>
+                <span class="detail-value" style="color: #10b981;">DISETUJUI</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Tanggal Approval:</span>
-                <span class="detail-value">${new Date().toLocaleDateString('id-ID', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                })}</span>
+                <span class="detail-label">Tanggal:</span>
+                <span class="detail-value">${new Date().toLocaleDateString('id-ID')}</span>
             </div>
         </div>
 
-        <p><strong>Akun Anda sekarang sudah aktif!</strong> Anda dapat mulai menggunakan semua fitur yang tersedia dalam paket berlangganan Anda.</p>
-
-        <div style="text-align: center;">
-            <a href="${process.env.VITE_PUBLIC_BASE_URL || 'https://your-domain.com'}/login" class="cta-button">
-                🚀 Mulai Menggunakan Layanan
-            </a>
-        </div>
-
-        <div style="background-color: #fef3c7; padding: 15px; border-radius: 6px; margin: 20px 0;">
-            <p style="margin: 0; color: #92400e;">
-                <strong>💡 Tips:</strong> Jika Anda memiliki pertanyaan atau membutuhkan bantuan, jangan ragu untuk menghubungi tim support kami.
-            </p>
-        </div>
-
-        <p>Terima kasih telah mempercayai layanan kami!</p>
-
-        <div class="footer">
+        <p>Akun Anda sekarang sudah aktif!</p>
+        <p>Terima kasih telah mempercayai layanan kami.</p>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e1e5e9; color: #64748b; font-size: 14px;">
             <p><strong>Tim Nutra USA Indonesia</strong></p>
-            <p>Email: nutrausaindonesia@gmail.com</p>
-            <p style="font-size: 12px; color: #9ca3af;">
-                Email ini dikirim secara otomatis, mohon tidak membalas email ini.
-            </p>
+            <p>cs@wagen.id</p>
         </div>
     </div>
 </body>
 </html>
     `
 
-    // Konfigurasi email
+    console.log('[EMAIL] ✅ Template created, length:', emailTemplate.length)
+
+    console.log('[EMAIL] 📮 Step 9: Preparing mail options...')
     const mailOptions = {
       from: {
         name: 'Nutra USA Indonesia',
@@ -453,68 +263,48 @@ Original error: ${verifyError.message}`
       to: userEmail,
       subject: `✅ Pembayaran Disetujui - Invoice ${invoiceNumber}`,
       html: emailTemplate,
-      // Text fallback
       text: `
 Halo ${userName || 'Pelanggan'},
 
 Pembayaran Anda telah berhasil disetujui!
 
-Detail Pembayaran:
-- Nomor Invoice: ${invoiceNumber}
+Detail:
+- Invoice: ${invoiceNumber}
 - Paket: ${planName || 'N/A'}
 - Jumlah: Rp ${amount ? Number(amount).toLocaleString('id-ID') : 'N/A'}
-- Status: DISETUJUI
-- Tanggal Mulai: ${startDate || 'N/A'}
-- Tanggal Berakhir: ${endDate || 'N/A'}
 
-Akun Anda sekarang sudah aktif dan siap digunakan.
+Akun Anda sekarang sudah aktif.
 
 Terima kasih,
 Tim Nutra USA Indonesia
-Email: nutrausaindonesia@gmail.com
       `
     }
 
-    console.log('[SEND-EMAIL] ✓ Email template created successfully')
-    console.log('[SEND-EMAIL] Template length:', emailTemplate.length)
-
-    console.log('[SEND-EMAIL] Step 8: Preparing mail options...')
-    console.log('[SEND-EMAIL] Mail options:', {
+    console.log('[EMAIL] 📧 Mail options:', {
       from: mailOptions.from,
       to: mailOptions.to,
       subject: mailOptions.subject,
-      hasHtml: !!mailOptions.html,
-      hasText: !!mailOptions.text,
-      htmlLength: mailOptions.html?.length || 0,
-      textLength: mailOptions.text?.length || 0
+      htmlLength: mailOptions.html.length,
+      textLength: mailOptions.text.length
     })
 
-    console.log('[SEND-EMAIL] Step 9: Attempting to send email...')
-    console.log('[SEND-EMAIL] Sending email to:', userEmail)
-
-    // Kirim email
+    console.log('[EMAIL] 🚀 Step 10: Sending email...')
     let info
     try {
-      console.log('[SEND-EMAIL] 9.1: Calling transporter.sendMail...')
       info = await transporter.sendMail(mailOptions)
-      console.log('[SEND-EMAIL] ✓ Email sent successfully!')
-      console.log('[SEND-EMAIL] Email details:', {
+      console.log('[EMAIL] ✅ Email sent successfully!')
+      console.log('[EMAIL] 📬 Send result:', {
         messageId: info.messageId,
         response: info.response,
-        envelope: info.envelope,
         accepted: info.accepted,
-        rejected: info.rejected,
-        pending: info.pending
+        rejected: info.rejected
       })
     } catch (sendError) {
-      console.error('[SEND-EMAIL] ERROR: Failed to send email:', sendError)
-      console.error('[SEND-EMAIL] Send error details:', {
-        message: sendError.message,
+      console.error('[EMAIL] ❌ Failed to send email:', sendError.message)
+      console.error('[EMAIL] Send error details:', {
         code: sendError.code,
         command: sendError.command,
-        response: sendError.response,
-        responseCode: sendError.responseCode,
-        stack: sendError.stack
+        response: sendError.response
       })
       throw createError({
         statusCode: 500,
@@ -522,38 +312,31 @@ Email: nutrausaindonesia@gmail.com
       })
     }
 
-    console.log('[SEND-EMAIL] Step 10: Preparing response...')
+    console.log('[EMAIL] 🎉 Step 11: Preparing response...')
     const response = {
       success: true,
       message: 'Email approval berhasil dikirim',
       messageId: info.messageId,
-      recipient: userEmail
+      recipient: userEmail,
+      timestamp: new Date().toISOString()
     }
-    console.log('[SEND-EMAIL] Response prepared:', response)
-    console.log('[SEND-EMAIL] === EMAIL APPROVAL PROCESS COMPLETED SUCCESSFULLY ===')
 
+    console.log('[EMAIL] ✅ Response:', response)
+    console.log('[EMAIL] 🏁 === EMAIL APPROVAL PROCESS COMPLETED ===')
+    
     return response
 
   } catch (error) {
-    console.error('[SEND-EMAIL] === CRITICAL ERROR IN EMAIL APPROVAL PROCESS ===')
-    console.error('[SEND-EMAIL] Error object:', error)
-    console.error('[SEND-EMAIL] Error details:', {
+    console.error('[EMAIL] 💥 === CRITICAL ERROR ===')
+    console.error('[EMAIL] Error message:', error.message)
+    console.error('[EMAIL] Error details:', {
       name: error.name,
-      message: error.message,
-      stack: error.stack,
       code: error.code,
       statusCode: error.statusCode,
-      statusMessage: error.statusMessage,
-      data: error.data
+      statusMessage: error.statusMessage
     })
-    console.error('[SEND-EMAIL] Environment check:', {
-      nodeEnv: process.env.NODE_ENV,
-      smtpUser: !!process.env.SMTP_USER,
-      smtpPass: !!process.env.SMTP_PASS,
-      smtpUserValue: process.env.SMTP_USER,
-      smtpPassLength: process.env.SMTP_PASS?.length || 0
-    })
-    console.error('[SEND-EMAIL] === END CRITICAL ERROR ===')
+    console.error('[EMAIL] Stack trace:', error.stack)
+    console.error('[EMAIL] === END ERROR ===')
     
     throw createError({
       statusCode: error.statusCode || 500,
