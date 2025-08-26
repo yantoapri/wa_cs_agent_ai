@@ -21,7 +21,6 @@ export default defineEventHandler(async (event) => {
       !chanel_id ||
       !contact_id ||
       !message_type ||
-      !content ||
       !from ||
       !to||
       !created_by||

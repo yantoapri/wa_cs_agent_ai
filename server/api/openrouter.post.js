@@ -51,15 +51,39 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Jika ada media dari user, hanya proses jika image
-  if (media) {
-    if (media.mimetype && media.mimetype.includes("image")) {
-      console.log("[OpenRouter] User sent image media:", media);
-      // Di sini bisa tambahkan logic jika ingin memproses image lebih lanjut
+  // Jika user hanya mengirim gambar
+  if (media && media.mimetype && media.mimetype.includes("image") && (!prompt || prompt.trim() === "")) {
+    // Cek apakah pesan AI sebelumnya meminta bukti pembayaran
+    const lastAIMsg = conversationHistory && conversationHistory.length > 0
+      ? conversationHistory.filter(m => m.role === 'assistant').slice(-1)[0]?.content?.toLowerCase() || ''
+      : '';
+    const paymentKeywords = [
+      'bukti pembayaran',
+      'bukti transfer',
+      'payment proof',
+      'kirim bukti',
+      'upload bukti',
+      'silakan transfer',
+      'mohon transfer',
+      'mohon kirim bukti',
+      'mohon upload bukti',
+      'setelah pembayaran',
+      'setelah transfer',
+    ];
+    const aiAskedForProof = paymentKeywords.some(kw => lastAIMsg.includes(kw));
+    if (aiAskedForProof) {
+      return {
+        result: "Terima kasih telah mengirimkan bukti pembayaran. Kami akan segera memproses pesanan Anda. Jika ada pertanyaan lebih lanjut atau kebutuhan lainnya, jangan ragu untuk menghubungi kami."
+      };
     } else {
-      console.log("[OpenRouter] User sent non-image media, ignored:", media);
-      // Media bukan image, diabaikan
+      // Jika AI sebelumnya tidak meminta bukti pembayaran, balas tanya gambar apa ini
+      return {
+        result: "Gambar apa ini? Mohon jelaskan maksud atau tujuan Anda mengirim gambar ini."
+      };
     }
+  } else if (media && !(media.mimetype && media.mimetype.includes("image"))) {
+    console.log("[OpenRouter] User sent non-image media, ignored:", media);
+    // Media bukan image, diabaikan
   }
   // Compose system prompt agar AI memahami struktur knowledge
   let systemPrompt = `
@@ -194,7 +218,7 @@ Berikut knowledge agent:
           "X-Title": "NUTRA CS", // Optional, branding
         },
         body: JSON.stringify({
-          model: "openai/gpt-4o-mini", // atau model lain yang tersedia di akun OpenRouter Anda
+          model: "openai/gpt-4o", // atau model lain yang tersedia di akun OpenRouter Anda
           messages: messages.filter(m => m.content), // Filter out empty messages
           max_tokens: 512,
           temperature: 0.3, // Reduced temperature for more consistent context following

@@ -184,8 +184,18 @@ function isMessageEvent(body) {
   const hasFromField = payload.from;
   const hasToField = payload.to || payload.chatId;
 
-  // Check if this is a message event by presence of message fields
-  if (hasMessageFields && (hasFromField || hasToField)) {
+  // Check for media fields (image, video, audio, document, sticker, etc.)
+  const hasMediaFields =
+    payload.image ||
+    payload.video ||
+    payload.audio ||
+    payload.document ||
+    payload.sticker ||
+    payload.media ||
+    (payload.type && ["image"].includes(payload.type));
+
+  // If any message or media fields are present, and from/to/chatId exists, treat as message event
+  if ((hasMessageFields || hasMediaFields) && (hasFromField || hasToField)) {
     return true;
   }
 
@@ -898,14 +908,24 @@ export default defineEventHandler(async (event) => {
         "[WAHA Webhook] Calling AI service with prompt:",
         payloadBody
       );
+      // Sertakan media jika ada (misal gambar dari user)
+      const media = body?.payload?.mediaUrl
+        ? {
+            url: body.payload.mediaUrl,
+            mimetype: body.payload.mimetype || null,
+            filename: body.payload.filename || null,
+          }
+        : undefined;
+      const openrouterBody = {
+        prompt: payloadBody,
+        knowledge: JSON.stringify(config),
+        from: payloadFrom,
+        to: meId,
+      };
+      if (media) openrouterBody.media = media;
       const aiRes = await $fetch("/api/openrouter", {
         method: "POST",
-        body: {
-          prompt: payloadBody,
-          knowledge: JSON.stringify(config),
-          from:payloadFrom,
-          to:meId
-        },
+        body: openrouterBody,
       });
       aiText = aiRes?.result;
       images = aiRes?.images;
