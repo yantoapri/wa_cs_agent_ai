@@ -65,13 +65,16 @@ function checkBroadcastEvent(body) {
     ) : false;
 
   // Check for empty or system-like content
-  // Jika ada media (image/video/dll), JANGAN anggap system content meski body kosong
+  // Jika ada media (image/video/dll), isSystemContent harus selalu false
   const hasMedia = !!(body?.payload?.mediaUrl || body?.payload?.media || (body?.payload?.hasMedia && (body?.payload?.mimetype || body?.payload?.mediaType)));
-  const isSystemContent =
-    (!payloadBody || payloadBody.trim().length === 0)
-      ? (!hasMedia &&
-          /^(status|broadcast|system|announcement|newsletter|bulletin|update|maintenance)?$/i.test(payloadBody || ""))
-      : /^(status|broadcast|system|announcement|newsletter|bulletin|update|maintenance)/i.test(payloadBody);
+  let isSystemContent = false;
+  if (!hasMedia) {
+    if (!payloadBody || payloadBody.trim().length === 0) {
+      isSystemContent = true;
+    } else if (/^(status|broadcast|system|announcement|newsletter|bulletin|update|maintenance)/i.test(payloadBody)) {
+      isSystemContent = true;
+    }
+  }
 
   // Check for group messages that might be broadcasts
   const isGroupBroadcast =

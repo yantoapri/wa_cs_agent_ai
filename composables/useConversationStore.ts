@@ -19,123 +19,15 @@ export const useConversationStore = () => {
     try {
       // Use a more efficient query with DISTINCT to get unique combinations
       const { data: rawData, error: queryError } = await supabase
-        .from("messages")
-        .select(
-          `
-          agent_id,
-          contact_id,
-          chanel_id,
-          content,
-          created_at,
-          agents!inner(
-            id,
-            name,
-            type,
-            avatar_url,
-            created_by
-          ),
-          contacts!inner(
-            id,
-            name,
-            phone_number,
-            avatar_url
-          ),
-          chanels!inner(
-            id,
-            name,
-            type,
-            icon_url
-          )
-        `
-        )
-        .eq("agent_type", "ai") // Ganti filter ke agent_type
-        .eq("agents.created_by", user.value?.id)
-        .not("agent_id", "is", null)
-        .not("contact_id", "is", null)
-        .not("chanel_id", "is", null);
-
-      if (queryError) throw queryError;
-
-      // Group by unique combinations using an array to avoid duplicates
-      const conversationGroups: Array<{
-        key: string;
-        agent_id: string;
-        contact_id: string;
-        chanel_id: string;
-        agent: any;
-        contact: any;
-        chanel: any;
-        messageCount: number;
-        lastActivity: number;
-        messages: Array<{ content: string; created_at: string }>;
-      }> = [];
-
-      rawData?.forEach(item => {
-        const key = `${item.agent_id}-${item.contact_id}-${item.chanel_id}`;
-
-        let group = conversationGroups.find(g => g.key === key);
-
-        if (!group) {
-          group = {
-            key: key,
-            agent_id: item.agent_id,
-            contact_id: item.contact_id,
-            chanel_id: item.chanel_id,
-            agent: item.agents,
-            contact: item.contacts,
-            chanel: item.chanels,
-            messageCount: 0,
-            lastActivity: 0,
-            messages: [],
-          };
-          conversationGroups.push(group);
-        }
-
-        // Count messages for this group
-        group.messageCount++;
-
-        // Update last activity
-        const messageTime = new Date(item.created_at || new Date()).getTime();
-        if (messageTime > group.lastActivity) {
-          group.lastActivity = messageTime;
-        }
-        // Kumpulkan pesan untuk lastMessage
-        if (item.content && item.created_at) {
-          group.messages.push({
-            content: item.content,
-            created_at: item.created_at,
-          });
-        }
+      .rpc('get_latest_messages_by_agent_chanel_contact',{
+        p_agent_type: "ai",
+        p_created_by: user.value?.id
       });
-
-      // Convert groups to array and format result
-      const result = conversationGroups.map((group) => {
-        // Ambil pesan terakhir (created_at terbaru)
-        let lastMessage = "";
-        if (group.messages && group.messages.length > 0) {
-          group.messages.sort(
-            (a, b) =>
-              new Date(b.created_at || 0).getTime() -
-              new Date(a.created_at || 0).getTime()
-          );
-          lastMessage = group.messages[0].content;
-        }
-        return {
-          agent: group.agent,
-          contact: group.contact,
-          chanel: group.chanel,
-          messages: [],
-          totalMessages: group.messageCount,
-          unreadCount: 0, // TODO: Implement unread count
-          lastActivity: group.lastActivity,
-          lastMessage,
-        };
-      });
-
-      // Sort by last activity (newest first)
-      result.sort((a, b) => b.lastActivity - a.lastActivity);
-
-      return result;
+       if (queryError) {
+      console.error('Error saat memanggil fungsi:', error);
+      return null;
+    }
+      return rawData;
     } catch (err) {
       error.value =
         err instanceof Error
@@ -155,124 +47,16 @@ export const useConversationStore = () => {
 
     try {
       // Use a more efficient query with DISTINCT to get unique combinations
-      const { data: rawData, error: queryError } = await supabase
-        .from("messages")
-        .select(
-          `
-          agent_id,
-          contact_id,
-          chanel_id,
-          content,
-          created_at,
-          agents!inner(
-            id,
-            name,
-            type,
-            avatar_url,
-            created_by
-          ),
-          contacts!inner(
-            id,
-            name,
-            phone_number,
-            avatar_url
-          ),
-          chanels!inner(
-            id,
-            name,
-            type,
-            icon_url
-          )
-        `
-        )
-        .eq("agent_type", "manusia") // Ganti filter ke agent_type
-        .eq("agents.created_by", user.value?.id)
-        .not("agent_id", "is", null)
-        .not("contact_id", "is", null)
-        .not("chanel_id", "is", null);
-
-      if (queryError) throw queryError;
-
-      // Group by unique combinations using an array to avoid duplicates
-      const conversationGroups: Array<{
-        key: string;
-        agent_id: string;
-        contact_id: string;
-        chanel_id: string;
-        agent: any;
-        contact: any;
-        chanel: any;
-        messageCount: number;
-        lastActivity: number;
-        messages: Array<{ content: string; created_at: string }>;
-      }> = [];
-
-      rawData?.forEach(item => {
-        const key = `${item.agent_id}-${item.contact_id}-${item.chanel_id}`;
-
-        let group = conversationGroups.find(g => g.key === key);
-
-        if (!group) {
-          group = {
-            key: key,
-            agent_id: item.agent_id,
-            contact_id: item.contact_id,
-            chanel_id: item.chanel_id,
-            agent: item.agents,
-            contact: item.contacts,
-            chanel: item.chanels,
-            messageCount: 0,
-            lastActivity: 0,
-            messages: [],
-          };
-          conversationGroups.push(group);
-        }
-
-        // Count messages for this group
-        group.messageCount++;
-
-        // Update last activity
-        const messageTime = new Date(item.created_at || new Date()).getTime();
-        if (messageTime > group.lastActivity) {
-          group.lastActivity = messageTime;
-        }
-        // Kumpulkan pesan untuk lastMessage
-        if (item.content && item.created_at) {
-          group.messages.push({
-            content: item.content,
-            created_at: item.created_at,
-          });
-        }
+       const { data: rawData, error: queryError } = await supabase
+      .rpc('get_latest_messages_by_agent_chanel_contact',{
+        p_agent_type: "ai",
+        p_created_by: user.value?.id
       });
-
-      // Convert groups to array and format result
-      const result = conversationGroups.map((group) => {
-        // Ambil pesan terakhir (created_at terbaru)
-        let lastMessage = "";
-        if (group.messages && group.messages.length > 0) {
-          group.messages.sort(
-            (a, b) =>
-              new Date(b.created_at || 0).getTime() -
-              new Date(a.created_at || 0).getTime()
-          );
-          lastMessage = group.messages[0].content;
-        }
-        return {
-          agent: group.agent,
-          contact: group.contact,
-          chanel: group.chanel,
-          messages: [],
-          totalMessages: group.messageCount,
-          unreadCount: 0, // TODO: Implement unread count
-          lastActivity: group.lastActivity,
-          lastMessage,
-        };
-      });
-
-      // Sort by last activity (newest first)
-      result.sort((a, b) => b.lastActivity - a.lastActivity);
-
-      return result;
+       if (queryError) {
+      console.error('Error saat memanggil fungsi:', error);
+      return null;
+    }
+      return rawData;
     } catch (err) {
       error.value =
         err instanceof Error
@@ -293,7 +77,9 @@ export const useConversationStore = () => {
   ) => {
     loading.value = true;
     error.value = null;
-
+    console.log({agentId,
+    contactId,
+    chanelId})
     try {
       const { data, error: fetchError } = await supabase
         .from("messages")
@@ -324,6 +110,7 @@ export const useConversationStore = () => {
         .eq("contact_id", contactId)
         .eq("chanel_id", chanelId)
         .eq("agents.type", "ai")
+        .eq("created_by", user.value?.id)
         .order("created_at", { ascending: true });
       if (fetchError) throw fetchError;
 
@@ -378,6 +165,7 @@ export const useConversationStore = () => {
         .eq("contact_id", contactId)
         .eq("chanel_id", chanelId)
         .eq("agent_type", "manusia") // filter by agent_type di tabel messages
+        .eq("created_by", user.value?.id)
         .order("created_at", { ascending: true });
       if (fetchError) throw fetchError;
 

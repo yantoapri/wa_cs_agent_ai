@@ -71,18 +71,16 @@
           class="flex items-center gap-2 sm:gap-3 px-2 py-3 sm:py-3 rounded-lg border-b border-gray-100 transition-all duration-200 border border-transparent hover:bg-blue-50 hover:border-blue-300 hover:shadow-sm sm:hover:shadow-md hover:scale-[1.01] sm:hover:scale-[1.02] mx-1 sm:mx-0 w-full max-w-full overflow-hidden min-w-0"
           @click="handleAgentHeaderClick(agentData)"
         >
-          <img
-            class="w-12 h-12 sm:w-12 sm:h-12 rounded-full object-cover flex-shrink-0"
-            :src="
-              agentData.agent.avatar_url ||
-              `https://ui-avatars.com/api/?name=${agentData.agent.name}&background=random`
-            "
-            :alt="agentData.agent.name"
-          />
+         
+          <div
+            class="w-12 h-12 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-blue-200 text-blue-800 font-bold text-lg sm:text-xl flex-shrink-0 select-none"
+          >
+            {{ agentData.contact_name?.substring(0,2)||agentData.contact_phone_number?.substring(0,2)  }}
+          </div>
           <div class="flex-1 min-w-0 overflow-hidden w-full">
             <div class="flex items-center justify-between mb-1 w-full">
               <span class="font-semibold text-sm sm:text-base text-gray-900 truncate max-w-[50%] flex-shrink-1">{{
-                agentData.agent.name || "-"
+                agentData.contact_name || "-"
               }}</span>
               <div class="flex flex-col items-end text-right flex-shrink-0 min-w-[70px] max-w-[80px]">
                 <span class="text-xs text-green-600 font-medium whitespace-nowrap truncate">{{ formatTimeOrDate(agentData.lastActivity) }}</span>
@@ -90,18 +88,32 @@
               </div>
             </div>
             <div class="text-xs text-gray-400 truncate">
-              <span class="inline-block max-w-[70%] truncate">{{
-                agentData.contact?.name ||
-                agentData.contact?.phone_number ||
-                "-"
-              }}</span><span v-if="agentData.chanel?.name" class="hidden sm:inline">
-                • {{ agentData.chanel.name }}</span
-              >
+                <span class="max-w-[70%] mr-2 flex items-center gap-1">
+                  <svg v-if="agentData.agent_type === 'ai'" xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <rect x="4" y="4" width="16" height="16" rx="4" stroke-width="2"/>
+                    <circle cx="9" cy="10" r="1" fill="currentColor"/>
+                    <circle cx="15" cy="10" r="1" fill="currentColor"/>
+                    <rect x="8" y="14" width="8" height="2" rx="1" fill="currentColor"/>
+                  </svg>
+                  <svg v-else-if="agentData.agent_type === 'manusia'" xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 15c0-1.104.896-2 2-2h4c1.104 0 2 .896 2 2v1H8v-1zm4-7a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>
+                  </svg>
+                  {{ agentData.agent_name }}
+                </span>
+
+                <span v-if="agentData.chanel_name" class="hidden sm:inline flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.5 17.5a16 16 0 0 1 19 0M6 13a10 10 0 0 1 12 0M9.5 9.5a4 4 0 0 1 5 0"/>
+                    <circle cx="12" cy="20" r="1.5" fill="currentColor"/>
+                  </svg>
+                  {{ agentData.chanel_name }}
+                </span>
             </div>
             <div class="text-xs text-gray-500 truncate leading-tight">
               <span class="inline-block max-w-full truncate">{{ 
-                agentData.lastMessage ? 
-                  (agentData.lastMessage.length > 40 ? agentData.lastMessage.slice(0, 40) + '...' : agentData.lastMessage) : 
+                agentData.content ? 
+                  (agentData.content.length > 40 ? agentData.content.slice(0, 40) + '...' : agentData.lastMessage) : 
                   "—" 
               }}</span>
             </div>
@@ -227,10 +239,25 @@ const selectConversation = (conversation) => {
 };
 
 const handleAgentHeaderClick = (agentData) => {
+  // Map agent, contact, chanel as objects for InboxMain.vue compatibility
+  const agent = agentData.agent || {
+    id: agentData.agent_id,
+    name: agentData.agent_name,
+    type: agentData.agent_type
+  };
+  const contact = agentData.contact || {
+    id: agentData.contact_id,
+    name: agentData.contact_name,
+    phone_number: agentData.contact_phone_number
+  };
+  const chanel = agentData.chanel || {
+    id: agentData.chanel_id,
+    name: agentData.chanel_name
+  };
   emit("select-conversation", {
-    agent: agentData.agent,
-    contact: agentData.contact,
-    chanel: agentData.chanel,
+    agent,
+    contact,
+    chanel
   });
 };
 

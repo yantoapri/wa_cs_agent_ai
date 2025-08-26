@@ -60,6 +60,35 @@ export default defineEventHandler(async (event) => {
         message: "agent_type tidak ditemukan untuk agent_id: " + agent_id,
       };
     }
+    // Cek duplikat pesan
+    const { data: existing, error: dupError } = await client
+      .from("messages")
+      .select("id")
+      .match({
+        agent_id,
+        chanel_id,
+        contact_id,
+        message_type,
+        media_url: media_url || null,
+        content,
+        from,
+        to,
+        created_by: created_by || null,
+        wa_message_id: wa_message_id || null,
+        agent_type
+      });
+    if (dupError) {
+      return {
+        error: true,
+        message: dupError.message,
+      };
+    }
+    if (existing && existing.length > 0) {
+      return {
+        error: true,
+        message: "Pesan duplikat: data dengan field yang sama sudah ada.",
+      };
+    }
     const { data, error } = await client
       .from("messages")
       .insert({
