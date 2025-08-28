@@ -26,6 +26,9 @@ export default defineNuxtConfig({
     smtpPort: process.env.SMTP_PORT,
     smtpUser: process.env.SMTP_USER,
     smtpPass: process.env.SMTP_PASS,
+    apiKeyEmail: process.env.API_KEY_EMAIL,
+    email: process.env.EMAIL,
+    apiUrlEmail: process.env.API_URL_EMAIL,
   },
 
   supabase: {

@@ -1,3 +1,5 @@
+import { defineEventHandler, readBody, createError } from 'h3'
+
 export default defineEventHandler(async (event) => {
   try {
     console.log('[EMAIL] 🚀 === EMAIL APPROVAL PROCESS STARTED ===')
@@ -12,81 +14,25 @@ export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig()
     console.log('[EMAIL] 🔧 Runtime config loaded')
     
-    console.log('[EMAIL] 📦 Step 1: Creating native email sender...')
-    
-    // Buat email sender menggunakan fetch API native (kompatibel dengan edge environments)
-    const createEmailSender = () => {
-      return {
-        sendMail: async (mailOptions) => {
-          console.log('[EMAIL] 📧 Using native fetch-based email sender')
-          
-          // Untuk sekarang, kita akan log email details dan return success
-          // Nanti bisa diintegrasikan dengan service seperti SendGrid, EmailJS, dll
-          
-          console.log('[EMAIL] 📬 Email would be sent with details:')
-          console.log('[EMAIL] - From:', mailOptions.from)
-          console.log('[EMAIL] - To:', mailOptions.to)
-          console.log('[EMAIL] - Subject:', mailOptions.subject)
-          console.log('[EMAIL] - HTML Length:', mailOptions.html?.length || 0)
-          console.log('[EMAIL] - Text Length:', mailOptions.text?.length || 0)
-          
-          // Generate realistic message ID
-          const messageId = `${Date.now()}-${Math.random().toString(36).substring(2)}@wagen.id`
-          
-          console.log('[EMAIL] ✅ Email processed successfully (logged)')
-          
-          return {
-            messageId: messageId,
-            response: '250 2.0.0 OK id=native-sender',
-            accepted: [mailOptions.to],
-            rejected: [],
-            pending: [],
-            envelope: {
-              from: mailOptions.from?.address || mailOptions.from,
-              to: [mailOptions.to]
-            }
-          }
-        },
-        
-        verify: async () => {
-          console.log('[EMAIL] ✅ Native email sender verification OK')
-          return true
-        }
-      }
-    }
-    
-    const nodemailer = {
-      createTransport: () => createEmailSender()
-    }
-    
-    console.log('[EMAIL] ✅ Native email sender created successfully')
-    console.log('[EMAIL] - Type: native-fetch-based')
-    console.log('[EMAIL] - Has createTransport: true')
-    
-    console.log('[EMAIL] 🔍 Step 2: Checking environment variables (optional for native sender)...')
-    console.log('[EMAIL] - SMTP_HOST:', config.smtpHost || 'NOT SET (using native sender)')
-    console.log('[EMAIL] - SMTP_PORT:', config.smtpPort || 'NOT SET (using native sender)')
-    console.log('[EMAIL] - SMTP_USER:', config.smtpUser || 'NOT SET (using native sender)')
-    console.log('[EMAIL] - SMTP_PASS length:', config.smtpPass?.length || 0)
+    // Ambil konfigurasi dari environment
+    const apiKeyEmail = process.env.API_KEY_EMAIL
+    const emailSender = process.env.EMAIL
+    const apiUrlEmail = process.env.API_URL_EMAIL
 
-    // Untuk native sender, environment variables tidak wajib
-    console.log('[EMAIL] ✅ Environment variables checked (native sender mode)')
-
-    console.log('[EMAIL] 📥 Step 3: Reading request body...')
-    let body
-    try {
-      body = await readBody(event)
-      console.log('[EMAIL] ✅ Request body received:', JSON.stringify(body, null, 2))
-    } catch (bodyError) {
-      console.error('[EMAIL] ❌ Failed to read body:', bodyError.message)
+    if (!apiKeyEmail || !emailSender || !apiUrlEmail) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Invalid request body'
+        statusCode: 500,
+        statusMessage: 'Konfigurasi email tidak lengkap (API_KEY_EMAIL, EMAIL, API_URL_EMAIL)'
       })
     }
 
+    console.log('[EMAIL] 📦 Step 1: Creating email sender using mailketing.co.id...')
+    
+    // Ambil data dari body
+    const body = await readBody(event)
     const { userEmail, userName, invoiceNumber, planName, amount, startDate, endDate } = body
-    console.log('[EMAIL] 📋 Step 4: Extracted data:', { 
+
+    console.log('[EMAIL] 📋 Step 2: Extracted data:', { 
       userEmail, 
       userName, 
       invoiceNumber, 
@@ -96,7 +42,7 @@ export default defineEventHandler(async (event) => {
       endDate 
     })
 
-    console.log('[EMAIL] ✅ Step 5: Validating required fields...')
+    console.log('[EMAIL] ✅ Step 3: Validating required fields...')
     if (!userEmail || !invoiceNumber) {
       console.error('[EMAIL] ❌ Missing required fields:', { 
         userEmail: !!userEmail, 
@@ -109,57 +55,7 @@ export default defineEventHandler(async (event) => {
     }
     console.log('[EMAIL] ✅ Required fields validation passed')
 
-    console.log('[EMAIL] 🔧 Step 6: Creating native email transporter...')
-    let transporter
-    try {
-      // Untuk native sender, kita tidak perlu SMTP config yang kompleks
-      const smtpConfig = {
-        host: config.smtpHost || 'native-sender',
-        port: parseInt(config.smtpPort || '465'),
-        secure: true,
-        auth: {
-          user: config.smtpUser || 'cs@wagen.id',
-          pass: config.smtpPass || 'native-mode'
-        },
-        native: true // flag untuk native mode
-      }
-      
-      console.log('[EMAIL] 📧 Email Config (Native Mode):', {
-        host: smtpConfig.host,
-        port: smtpConfig.port,
-        secure: smtpConfig.secure,
-        user: smtpConfig.auth.user,
-        mode: 'native-sender'
-      })
-      
-      transporter = nodemailer.createTransport(smtpConfig)
-      console.log('[EMAIL] ✅ Native email transporter created')
-    } catch (transporterError) {
-      console.error('[EMAIL] ❌ Failed to create transporter:', transporterError.message)
-      throw createError({
-        statusCode: 500,
-        statusMessage: `Failed to create email transporter: ${transporterError.message}`
-      })
-    }
-
-    console.log('[EMAIL] 🧪 Step 7: Testing native email connection...')
-    try {
-      await transporter.verify()
-      console.log('[EMAIL] ✅ Native email connection verified successfully')
-    } catch (verifyError) {
-      console.error('[EMAIL] ❌ Email verification failed:', verifyError.message)
-      console.error('[EMAIL] Error details:', {
-        code: verifyError.code,
-        command: verifyError.command,
-        response: verifyError.response
-      })
-      throw createError({
-        statusCode: 500,
-        statusMessage: `Email connection failed: ${verifyError.message}`
-      })
-    }
-
-    console.log('[EMAIL] 📝 Step 8: Creating email template...')
+    console.log('[EMAIL] 📝 Step 4: Creating email template...')
     const emailTemplate = `
 <!DOCTYPE html>
 <html lang="id">
@@ -275,11 +171,11 @@ export default defineEventHandler(async (event) => {
 
     console.log('[EMAIL] ✅ Template created, length:', emailTemplate.length)
 
-    console.log('[EMAIL] 📮 Step 9: Preparing mail options...')
+    console.log('[EMAIL] 📮 Step 5: Preparing mail options...')
     const mailOptions = {
       from: {
         name: 'Nutra USA Indonesia',
-        address: config.smtpUser || 'cs@wagen.id'
+        address: config.EMAIL|| 'cs@wagen.id'
       },
       to: userEmail,
       subject: `✅ Pembayaran Disetujui - Invoice ${invoiceNumber}`,
@@ -309,16 +205,57 @@ Tim Nutra USA Indonesia
       textLength: mailOptions.text.length
     })
 
-    console.log('[EMAIL] 🚀 Step 10: Sending email...')
+    console.log('[EMAIL] 🚀 Step 6: Sending email via mailketing.co.id...')
     let info
     try {
-      info = await transporter.sendMail(mailOptions)
+      // Siapkan payload untuk mailketing.co.id
+      const payload = {
+        api_key: apiKeyEmail,
+        from: emailSender,
+        to: userEmail,
+        subject: `✅ Pembayaran Disetujui - Invoice ${invoiceNumber}`,
+        html: emailTemplate,
+        text: `
+Halo ${userName || 'Pelanggan'},
+
+Pembayaran Anda telah berhasil disetujui!
+
+Detail:
+- Invoice: ${invoiceNumber}
+- Paket: ${planName || 'N/A'}
+- Jumlah: Rp ${amount ? Number(amount).toLocaleString('id-ID') : 'N/A'}
+
+Akun Anda sekarang sudah aktif.
+
+Terima kasih,
+Tim Nutra USA Indonesia
+      `
+      }
+      
+      // Kirim request ke mailketing.co.id
+      const response = await fetch(apiUrlEmail, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || result.status !== 'success') {
+        throw createError({
+          statusCode: 500,
+          statusMessage: result.message || 'Gagal mengirim email via mailketing.co.id'
+        })
+      }
+
       console.log('[EMAIL] ✅ Email sent successfully!')
       console.log('[EMAIL] 📬 Send result:', {
-        messageId: info.messageId,
-        response: info.response,
-        accepted: info.accepted,
-        rejected: info.rejected
+        messageId: result.messageId,
+        response: result.response,
+        accepted: result.accepted,
+        rejected: result.rejected
       })
     } catch (sendError) {
       console.error('[EMAIL] ❌ Failed to send email:', sendError.message)
@@ -333,12 +270,10 @@ Tim Nutra USA Indonesia
       })
     }
 
-    console.log('[EMAIL] 🎉 Step 11: Preparing response...')
+    console.log('[EMAIL] 🎉 Step 7: Preparing response...')
     const response = {
       success: true,
       message: 'Email approval berhasil dikirim',
-      messageId: info.messageId,
-      recipient: userEmail,
       timestamp: new Date().toISOString()
     }
 
