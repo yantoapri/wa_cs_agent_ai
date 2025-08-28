@@ -9,26 +9,24 @@ export default defineNuxtConfig({
 
   // Runtime config untuk environment variables
   runtimeConfig: {
-    public: {
-      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
-      supabaseKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
-      baseUrl: process.env.VITE_BASE_URL,
-    },
-    // Server-side environment variables
+    apiKeyEmail: process.env.API_KEY_EMAIL,
+    email: process.env.EMAIL,
+    apiUrlEmail: process.env.API_URL_EMAIL,
     supabaseServiceRoleKey: process.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
     openAiKey: process.env.OPEN_AI_KEY,
     wahaBaseUrl: process.env.VITE_BASE_URL_WAHA,
     wahaApiKey: process.env.WAHA_API_KEY,
     wahaUsername: process.env.VITE_WAHA_USERNAME,
     wahaPassword: process.env.VITE_WAHA_PASSWORD,
-    // SMTP configuration
     smtpHost: process.env.SMTP_HOST,
     smtpPort: process.env.SMTP_PORT,
     smtpUser: process.env.SMTP_USER,
     smtpPass: process.env.SMTP_PASS,
-    apiKeyEmail: process.env.API_KEY_EMAIL,
-    email: process.env.EMAIL,
-    apiUrlEmail: process.env.API_URL_EMAIL,
+    public: {
+      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
+      supabaseKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
+      baseUrl: process.env.VITE_BASE_URL,
+    },
   },
 
   supabase: {
