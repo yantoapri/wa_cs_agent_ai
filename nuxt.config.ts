@@ -18,7 +18,7 @@ export default defineNuxtConfig({
     supabaseServiceRoleKey: process.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
     openAiKey: process.env.OPEN_AI_KEY,
     wahaBaseUrl: process.env.VITE_BASE_URL_WAHA,
-    wahaApiKey: process.env.VITE_WAHA_API,
+    wahaApiKey: process.env.WAHA_API_KEY,
     wahaUsername: process.env.VITE_WAHA_USERNAME,
     wahaPassword: process.env.VITE_WAHA_PASSWORD,
     // SMTP configuration

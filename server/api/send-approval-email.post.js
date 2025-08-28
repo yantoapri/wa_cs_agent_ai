@@ -15,9 +15,10 @@ export default defineEventHandler(async (event) => {
     console.log('[EMAIL] 🔧 Runtime config loaded')
     
     // Ambil konfigurasi dari environment
-    const apiKeyEmail = process.env.API_KEY_EMAIL
-    const emailSender = process.env.EMAIL
-    const apiUrlEmail = process.env.API_URL_EMAIL
+    const apiKeyEmail = config.apiKeyEmail
+    const emailSender = config.email
+    const apiUrlEmail = config.apiUrlEmail
+    console.log('[EMAIL] Runtime config:', { apiKeyEmail, emailSender, apiUrlEmail })
 
     if (!apiKeyEmail || !emailSender || !apiUrlEmail) {
       throw createError({
