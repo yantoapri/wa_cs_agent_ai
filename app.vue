@@ -1,5 +1,7 @@
 <template>
-  <NuxtPage />
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
   <BaseToast ref="baseToast" />
 </template>
 <script setup>
