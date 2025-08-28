@@ -223,7 +223,7 @@ onMounted(async () => {
 })
 
 function toIDR(n) {
-  return (n || 0).toLocaleString('id-ID')
+  return 'Rp ' + (n || 0).toLocaleString('id-ID')
 }
 
 async function copy(text) {

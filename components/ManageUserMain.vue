@@ -67,7 +67,7 @@
             >
               Clear Filters
             </button>
-            <button
+            <!-- <button
               @click="openAddModal"
               class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
             >
@@ -75,7 +75,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
               Add User
-            </button>
+            </button> -->
           </div>
         </div>
       </div>

@@ -198,8 +198,14 @@ onMounted(async () => {
 });
 
 const formatPrice = (price) => {
-  return new Intl.NumberFormat("id-ID").format(price || 0);
-};
+  return 'Rp ' + new Intl.NumberFormat("id-ID").format(price || 0);
+}
+
+function handlePriceInput(e, product) {
+  let raw = e.target.value.replace(/[^\d]/g, '');
+  if (raw) raw = String(Number(raw));
+  product.price = raw;
+}
 
 // Expose methods to parent component
 defineExpose({

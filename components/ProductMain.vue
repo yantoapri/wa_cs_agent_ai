@@ -109,9 +109,14 @@
                   <label class="block text-sm font-medium text-gray-700 mb-1">
                     Harga
                   </label>
-                  <p class="text-lg font-semibold text-green-600">
-                    Rp {{ formatPrice(selectedProduct.price) }}
-                  </p>
+                  <input
+                    type="text"
+                    :value="formatPrice(selectedProduct.price)"
+                    required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    @input="handlePriceInput"
+                    autocomplete="off"
+                  />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -222,8 +227,14 @@ const getHeaderSubtitle = () => {
 };
 
 const formatPrice = (price) => {
-  return new Intl.NumberFormat("id-ID").format(price || 0);
-};
+  return 'Rp ' + new Intl.NumberFormat("id-ID").format(price || 0);
+}
+
+function handlePriceInput(e) {
+  let raw = e.target.value.replace(/[^\d]/g, '');
+  if (raw) raw = String(Number(raw));
+  selectedProduct.price = raw;
+}
 
 const formatDate = (dateString) => {
   if (!dateString) return '';

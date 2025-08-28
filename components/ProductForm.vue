@@ -56,12 +56,12 @@
                 Harga *
               </label>
               <input
-                v-model="form.price"
-                type="number"
+                type="text"
+                :value="formatPrice(form.value.price)"
                 required
-                min="0"
-                class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="0"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                @input="handlePriceInput"
+                autocomplete="off"
               />
             </div>
             <div>
@@ -381,4 +381,14 @@ const handleSubmit = async () => {
 onMounted(() => {
   initializeForm();
 });
+
+const formatPrice = (price) => {
+  return 'Rp ' + new Intl.NumberFormat("id-ID").format(price || 0);
+}
+
+function handlePriceInput(e) {
+  let raw = e.target.value.replace(/[^\d]/g, '');
+  if (raw) raw = String(Number(raw));
+  form.value.price = raw;
+}
 </script>

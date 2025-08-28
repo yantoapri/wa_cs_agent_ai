@@ -33,7 +33,7 @@
               <div class="flex justify-between items-start">
                 <div>
                   <h3 class="font-medium text-gray-900">{{ pkg.name }}</h3>
-                  <p class="text-lg font-bold text-blue-600">{{ pkg.harga }}</p>
+                  <p class="text-lg font-bold text-blue-600">{{ toRupiah(pkg.harga) }}</p>
                 </div>
                 <div class="flex gap-2">
                   <button @click="openEditModal(pkg)" class="text-blue-600 hover:text-blue-900 text-sm">Edit</button>
@@ -91,13 +91,16 @@
                   Agent Limit
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Broadcast
+                  Broadcast Limit
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Channel
+                  Channel Limit
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Product
+                  Product Limit
+                </th>
+                <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Scheduled Limit
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
               </tr>
@@ -108,7 +111,7 @@
                   <p class="text-gray-900 whitespace-no-wrap">{{ pkg.name }}</p>
                 </td>
                 <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p class="text-gray-900 whitespace-no-wrap">{{ pkg.harga }}</p>
+                  <p class="text-gray-900 whitespace-no-wrap">{{ toRupiah(pkg.harga) }}</p>
                 </td>
                 <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
                   <p class="text-gray-900 whitespace-no-wrap">{{ pkg.exp_date }}</p>
@@ -127,6 +130,9 @@
                 </td>
                 <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
                   <p class="text-gray-900 whitespace-no-wrap">{{ pkg.limit_produk }}</p>
+                </td>
+                <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
+                  <p class="text-gray-900 whitespace-no-wrap">{{ pkg.limit_schedule }}</p>
                 </td>
                 <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm text-right">
                   <button @click="openEditModal(pkg)" class="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
@@ -152,7 +158,14 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Price *</label>
-                <input v-model="form.harga" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                <input
+                  type="text"
+                  :value="toRupiah(form.harga)"
+                  required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  @input="handleHargaInput"
+                  autocomplete="off"
+                />
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Expires In (Days) *</label>
@@ -177,6 +190,10 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Product Limit *</label>
                 <input v-model.number="form.limit_produk" type="number" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Scheduled Limit *</label>
+                <input v-model.number="form.limit_schedule" type="number" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -217,7 +234,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, watch, nextTick } from 'vue';
 import { usePackages } from '~/composables/usePackages';
 import Swal from 'sweetalert2';
 
@@ -237,6 +254,7 @@ const isEditMode = ref(false);
 const saving = ref(false);
 const deleting = ref(false);
 const packageToDelete = ref(null);
+const hargaInputRef = ref(null);
 
 const form = reactive({
   name: '',
@@ -248,6 +266,38 @@ const form = reactive({
   limit_broadcast: 0,
   limit_produk: 0,
   limit_chanel: 0,
+  limit_schedule: 0,
+});
+
+// Format number to Rupiah
+const toRupiah = (val) => {
+  if (!val && val !== 0) return '';
+  return 'Rp ' + Number(val).toLocaleString('id-ID');
+}
+
+function handleHargaInput(e) {
+  // Remove non-digit
+  let raw = e.target.value.replace(/[^\d]/g, '');
+  if (raw) raw = String(Number(raw));
+  form.harga = raw;
+}
+
+// Watcher agar input selalu terformat saat form.harga berubah (termasuk autofill/edit data)
+watch(() => form.harga, (newVal) => {
+  if (hargaInputRef.value) {
+    hargaInputRef.value.value = toRupiah(newVal);
+  }
+});
+
+// Format saat modal dibuka (edit/add)
+watch(() => showModal.value, (show) => {
+  if (show) {
+    nextTick(() => {
+      if (hargaInputRef.value) {
+        hargaInputRef.value.value = toRupiah(form.harga);
+      }
+    });
+  }
 });
 
 const resetForm = () => {
@@ -260,6 +310,7 @@ const resetForm = () => {
   form.limit_broadcast = 0;
   form.limit_produk = 0;
   form.limit_chanel = 0;
+  form.limit_schedule = 0;
 };
 
 const openAddModal = () => {
@@ -281,6 +332,7 @@ const openEditModal = (pkg) => {
   form.limit_broadcast = pkg.limit_broadcast || 0;
   form.limit_produk = pkg.limit_produk || 0;
   form.limit_chanel = pkg.limit_chanel || 0;
+  form.limit_schedule = pkg.limit_schedule || 0;
   showModal.value = true;
 };
 

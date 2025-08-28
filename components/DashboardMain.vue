@@ -44,7 +44,28 @@
       </div>
 
       <!-- Kartu metrik di bawah paket -->
-      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Scheduled Limit Card -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center">
+          <div class="text-sm text-gray-500">Scheduled Message</div>
+          <div class="mt-3 relative w-36 h-36">
+            <svg class="w-36 h-36 transform -rotate-90">
+              <circle cx="72" cy="72" r="42" stroke="#E5E7EB" stroke-width="12" fill="none" />
+              <circle cx="72" cy="72" r="42" stroke="#6366F1" stroke-width="12" fill="none"
+                :stroke-dasharray="circleCirc"
+                :stroke-dashoffset="getProgressOffset(dashboard.scheduledPercentRemaining)"
+                stroke-linecap="round" />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <div class="text-2xl font-bold">{{ dashboard.scheduledPercentRemaining }}%</div>
+              <div class="text-xs text-gray-500">Sisa</div>
+            </div>
+          </div>
+          <div class="mt-2 text-sm text-gray-600">
+            {{ dashboard.scheduledRemaining }} sisa dari {{ dashboard.scheduledLimit }} jadwal
+          </div>
+          <div class="text-xs text-gray-500">Digunakan: {{ dashboard.scheduledCount }}</div>
+        </div>
         <!-- Chat Message AI -->
         <div class="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center">
           <div class="text-sm text-gray-500">Chat Message AI</div>
@@ -178,6 +199,11 @@ const dashboard = reactive({
   broadcastCount: 0,
   productCount: 0,
   // plan & period
+  // Scheduled limit & progress
+  scheduledLimit: 0,
+  scheduledRemaining: 0,
+  scheduledPercentRemaining: 100,
+  scheduledCount: 0,
   plan: null,
   startAt: null,
   endAt: null,
@@ -297,11 +323,24 @@ async function fetchUserPackage() {
     // Plan dari package/invoice
     dashboard.plan = data?.package?.name || null
 
-    // Limits dari package
-    const limitAI = data?.package?.limit_ai ?? 0
-    const limitAgent = data?.package?.limit_agent ?? 0
-    const limitBroadcast = data?.package?.limit_broadcast ?? 0
-    const limitProduk = data?.package?.limit_produk ?? 0
+  // Limits dari package
+  const limitAI = data?.package?.limit_ai ?? 0
+  const limitAgent = data?.package?.limit_agent ?? 0
+  const limitBroadcast = data?.package?.limit_broadcast ?? 0
+  const limitProduk = data?.package?.limit_produk ?? 0
+  const limitSchedule = data?.package?.limit_schedule ?? 0
+    // Count Scheduled
+    const { count: scheduledCount } = await supabase
+      .from('auto_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('created_by', user.value.id)
+    dashboard.scheduledCount = scheduledCount || 0
+    dashboard.scheduledLimit = limitSchedule
+    const remainingScheduled = Math.max(0, dashboard.scheduledLimit - dashboard.scheduledCount)
+    dashboard.scheduledRemaining = remainingScheduled
+    dashboard.scheduledPercentRemaining = dashboard.scheduledLimit > 0
+      ? Math.max(0, Math.min(100, Math.round((remainingScheduled / dashboard.scheduledLimit) * 100)))
+      : 0
 
     // Set limit AI message
     dashboard.limit = (typeof limitAI === 'number' && !isNaN(limitAI)) ? limitAI : (planLimits[dashboard.plan] || 1000)
