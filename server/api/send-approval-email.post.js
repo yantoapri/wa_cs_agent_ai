@@ -175,7 +175,7 @@ export default defineEventHandler(async (event) => {
     console.log('[EMAIL] 📮 Step 5: Preparing mail options...')
     const mailOptions = {
       from: {
-        name: 'Nutra USA Indonesia',
+        name: 'Wagen | Nutra USA Indonesia',
         address: config.EMAIL|| 'cs@wagen.id'
       },
       to: userEmail,
@@ -211,26 +211,12 @@ Tim Nutra USA Indonesia
     try {
       // Siapkan payload untuk mailketing.co.id
       const payload = {
-        api_key: apiKeyEmail,
-        from: emailSender,
-        to: userEmail,
+        api_token: apiKeyEmail,
+        from_name: 'Nutra USA Indonesia',
+        from_email: emailSender,
+        recipient: userEmail,
         subject: `✅ Pembayaran Disetujui - Invoice ${invoiceNumber}`,
-        html: emailTemplate,
-        text: `
-Halo ${userName || 'Pelanggan'},
-
-Pembayaran Anda telah berhasil disetujui!
-
-Detail:
-- Invoice: ${invoiceNumber}
-- Paket: ${planName || 'N/A'}
-- Jumlah: Rp ${amount ? Number(amount).toLocaleString('id-ID') : 'N/A'}
-
-Akun Anda sekarang sudah aktif.
-
-Terima kasih,
-Tim Nutra USA Indonesia
-      `
+        content: emailTemplate,
       }
       
       // Kirim request ke mailketing.co.id
@@ -245,6 +231,7 @@ Tim Nutra USA Indonesia
       const result = await response.json()
 
       if (!response.ok || result.status !== 'success') {
+        console.error('[EMAIL] ❌ Mailketing API Error:', result);
         throw createError({
           statusCode: 500,
           statusMessage: result.message || 'Gagal mengirim email via mailketing.co.id'
