@@ -245,6 +245,7 @@ Tim Nutra USA Indonesia
       const result = await response.json()
 
       if (!response.ok || result.status !== 'success') {
+        console.error('[EMAIL] ❌ Mailketing API Error:', result);
         throw createError({
           statusCode: 500,
           statusMessage: result.message || 'Gagal mengirim email via mailketing.co.id'
@@ -259,22 +260,16 @@ Tim Nutra USA Indonesia
         rejected: result.rejected
       })
     } catch (sendError) {
-      console.error('[EMAIL] ❌ Failed to send email:', sendError);
-      
-      // Extract more details from the error
-      const errorDetails = {
-        message: sendError.message,
-        stack: sendError.stack,
-        cause: sendError.cause,
-      };
-
-      console.error('[EMAIL] Send error details:', errorDetails);
-
+      console.error('[EMAIL] ❌ Failed to send email:', sendError.message)
+      console.error('[EMAIL] Send error details:', {
+        code: sendError.code,
+        command: sendError.command,
+        response: sendError.response
+      })
       throw createError({
         statusCode: 500,
-        statusMessage: `Failed to send email: ${sendError.message}`,
-        data: errorDetails, // Pass details in the data field
-      });
+        statusMessage: `Failed to send email: ${sendError.message}`
+      })
     }
 
     console.log('[EMAIL] 🎉 Step 7: Preparing response...')

@@ -4,8 +4,8 @@
     <header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-gray-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <img src="/assets/img/nutra.png" alt="Nutra" class="h-8 w-8" />
-          <span class="font-semibold">Nutra AI Chat</span>
+          <img src="/assets/img/log-lg.png" alt="Nutra" class="h-8 " />
+          <!-- <span class="font-semibold">Nutra AI Chat</span> -->
         </div>
         <nav class="hidden md:flex items-center gap-6">
           <a href="#home" class="hover:text-blue-600">Home</a>

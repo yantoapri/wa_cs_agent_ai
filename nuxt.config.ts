@@ -53,10 +53,12 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' },
         { charset: 'utf-8' }
       ],
-      link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      ],
       title: "Nutra AI Chat",
       htmlAttrs: {
-        lang: "id",
+        lang: 'id',
       },
     },
   },

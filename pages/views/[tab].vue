@@ -8,7 +8,7 @@
       <div
         class="flex items-center justify-center h-16 border-b border-gray-200"
       >
-        <img src="/assets/img/nutra.png" class="h-8 w-8" />
+        <img src="/assets/img/logo.png" class="h-8 w-8" />
       </div>
 
       <!-- Navigation Icons -->
