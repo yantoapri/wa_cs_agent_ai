@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
     console.log('[EMAIL] 🔧 Runtime config loaded')
     
     // Ambil konfigurasi dari environment
-    const apiKeyEmail = config.apiKeyEmail
+    const apiKeyEmail = config.apiKeyEmail.trim()
     const emailSender = config.email
     const apiUrlEmail = config.apiUrlEmail
     console.log('[EMAIL] Runtime config:', { apiKeyEmail, emailSender, apiUrlEmail })
@@ -245,7 +245,6 @@ Tim Nutra USA Indonesia
       const result = await response.json()
 
       if (!response.ok || result.status !== 'success') {
-        console.error('[EMAIL] ❌ Mailketing API Error:', result);
         throw createError({
           statusCode: 500,
           statusMessage: result.message || 'Gagal mengirim email via mailketing.co.id'
