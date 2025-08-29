@@ -157,7 +157,7 @@
                   @click="$emit('edit-product', selectedProduct)"
                   class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
                 >
-                  Edit
+                  Ubah
                 </button>
                 <button
                   @click="handleDeleteProduct"

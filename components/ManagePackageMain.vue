@@ -4,8 +4,8 @@
     <div class="bg-white border-b border-gray-200 px-4 md:px-6 py-4">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Package Management</h1>
-          <p class="text-sm text-gray-600 mt-1">Manage subscription packages</p>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Manajemen Paket</h1>
+          <p class="text-sm text-gray-600 mt-1">Kelola paket langganan</p>
         </div>
         <div class="flex items-center gap-3">
           <button
@@ -15,14 +15,14 @@
             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            Add Package
+            Tambah Paket
           </button>
         </div>
       </div>
     </div>
 
     <div class="flex-1 p-4 md:p-6 overflow-y-auto">
-      <div v-if="loading" class="text-center">Loading...</div>
+      <div v-if="loading" class="text-center">Memuat...</div>
       <div v-else-if="error" class="text-red-500">{{ error }}</div>
 
       <div v-else class="bg-white shadow-md rounded-lg overflow-hidden">
@@ -36,17 +36,17 @@
                   <p class="text-lg font-bold text-blue-600">{{ toRupiah(pkg.harga) }}</p>
                 </div>
                 <div class="flex gap-2">
-                  <button @click="openEditModal(pkg)" class="text-blue-600 hover:text-blue-900 text-sm">Edit</button>
-                  <button @click="openDeleteModal(pkg)" class="text-red-600 hover:text-red-900 text-sm">Delete</button>
+                  <button @click="openEditModal(pkg)" class="text-blue-600 hover:text-blue-900 text-sm">Ubah</button>
+                  <button @click="openDeleteModal(pkg)" class="text-red-600 hover:text-red-900 text-sm">Hapus</button>
                 </div>
               </div>
               <div class="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span class="text-gray-500">Exp Days:</span>
+                  <span class="text-gray-500">Hari Kadaluarsa:</span>
                   <p class="font-medium">{{ pkg.exp_date }}</p>
                 </div>
                 <div>
-                  <span class="text-gray-500">AI Limit:</span>
+                  <span class="text-gray-500">Batas AI:</span>
                   <p class="font-medium">{{ pkg.limit_ai }}</p>
                 </div>
                 <div>
@@ -54,11 +54,11 @@
                   <p class="font-medium">{{ pkg.limit_agent }}</p>
                 </div>
                 <div>
-                  <span class="text-gray-500">Broadcast:</span>
+                  <span class="text-gray-500">Siaran:</span>
                   <p class="font-medium">{{ pkg.limit_broadcast }}</p>
                 </div>
                 <div>
-                  <span class="text-gray-500">Channel:</span>
+                  <span class="text-gray-500">Kanal:</span>
                   <p class="font-medium">{{ pkg.limit_chanel }}</p>
                 </div>
                 <div>
@@ -76,31 +76,31 @@
             <thead>
               <tr>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Name
+                  Nama
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Price
+                  Harga
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Exp Days
+                  Hari Kadaluarsa
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  AI Limit
+                  Batas AI
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Agent Limit
+                  Batas Agent
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Broadcast Limit
+                  Batas Siaran
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Channel Limit
+                  Batas Kanal
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Product Limit
+                  Batas Produk
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Scheduled Limit
+                  Batas Terjadwal
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
               </tr>
@@ -135,8 +135,8 @@
                   <p class="text-gray-900 whitespace-no-wrap">{{ pkg.limit_schedule }}</p>
                 </td>
                 <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm text-right">
-                  <button @click="openEditModal(pkg)" class="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
-                  <button @click="openDeleteModal(pkg)" class="text-red-600 hover:text-red-900">Delete</button>
+                  <button @click="openEditModal(pkg)" class="text-blue-600 hover:text-blue-900 mr-4">Ubah</button>
+                  <button @click="openDeleteModal(pkg)" class="text-red-600 hover:text-red-900">Hapus</button>
                 </td>
               </tr>
             </tbody>
@@ -149,15 +149,15 @@
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
       <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 my-8">
         <div class="p-6">
-          <h3 class="text-lg font-semibold mb-4">{{ isEditMode ? 'Edit Package' : 'Add New Package' }}</h3>
+          <h3 class="text-lg font-semibold mb-4">{{ isEditMode ? 'Ubah Paket' : 'Tambah Paket Baru' }}</h3>
           <form @submit.prevent="isEditMode ? updatePackage() : addPackage()">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama *</label>
                 <input v-model="form.name" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Harga *</label>
                 <input
                   type="text"
                   :value="toRupiah(form.harga)"
@@ -168,44 +168,44 @@
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Expires In (Days) *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kadaluarsa Dalam (Hari) *</label>
                 <input v-model.number="form.exp_date" type="number" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">AI Limit *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Batas AI *</label>
                 <input v-model.number="form.limit_ai" type="number" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Agent Limit *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Batas Agent *</label>
                 <input v-model.number="form.limit_agent" type="number" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Broadcast Limit *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Batas Siaran *</label>
                 <input v-model.number="form.limit_broadcast" type="number" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Channel Limit *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Batas Kanal *</label>
                 <input v-model.number="form.limit_chanel" type="number" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Product Limit *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Batas Produk *</label>
                 <input v-model.number="form.limit_produk" type="number" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Scheduled Limit *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Batas Terjadwal *</label>
                 <input v-model.number="form.limit_schedule" type="number" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
                 <textarea v-model="form.deskripsi" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
               </div>
             </div>
             <div class="flex gap-3 mt-6">
               <button type="submit" :disabled="saving" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg">
-                {{ saving ? 'Saving...' : 'Save' }}
+                {{ saving ? 'Menyimpan...' : 'Simpan' }}
               </button>
               <button type="button" @click="closeModal" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg">
-                Cancel
+                Batal
               </button>
             </div>
           </form>
@@ -217,14 +217,14 @@
     <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div class="p-6">
-          <h3 class="text-lg font-semibold mb-4 text-red-600">Delete Package</h3>
-          <p>Are you sure you want to delete <strong>{{ packageToDelete?.name }}</strong>?</p>
+          <h3 class="text-lg font-semibold mb-4 text-red-600">Hapus Paket</h3>
+          <p>Apakah Anda yakin ingin menghapus <strong>{{ packageToDelete?.name }}</strong>?</p>
           <div class="flex gap-3 mt-6">
             <button @click="confirmDelete" :disabled="deleting" class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg">
-              {{ deleting ? 'Deleting...' : 'Delete' }}
+              {{ deleting ? 'Menghapus...' : 'Hapus' }}
             </button>
             <button @click="closeDeleteModal" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg">
-              Cancel
+              Batal
             </button>
           </div>
         </div>
@@ -346,9 +346,9 @@ const addPackage = async () => {
     await createPackage({ ...form });
     await fetchPackages();
     closeModal();
-    Swal.fire('Success', 'Package added successfully', 'success');
+    Swal.fire('Berhasil', 'Paket berhasil ditambahkan', 'success');
   } catch (err) {
-    Swal.fire('Error', err.message, 'error');
+    Swal.fire('Kesalahan', err.message, 'error');
   } finally {
     saving.value = false;
   }
@@ -360,7 +360,7 @@ const updatePackage = async () => {
     await editPackage(form.id, { ...form });
     await fetchPackages();
     closeModal();
-    Swal.fire('Success', 'Package updated successfully', 'success');
+    Swal.fire('Berhasil', 'Paket berhasil diperbarui', 'success');
   } catch (err) {
     Swal.fire('Error', err.message, 'error');
   } finally {
@@ -384,7 +384,7 @@ const confirmDelete = async () => {
     await removePackage(packageToDelete.value.id);
     await fetchPackages();
     closeDeleteModal();
-    Swal.fire('Success', 'Package deleted successfully', 'success');
+    Swal.fire('Berhasil', 'Paket berhasil dihapus', 'success');
   } catch (err) {
     Swal.fire('Error', err.message, 'error');
   } finally {

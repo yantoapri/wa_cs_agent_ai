@@ -4,8 +4,8 @@
     <div class="bg-white border-b border-gray-200 px-6 py-4">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Billing & Payment History</h1>
-          <p class="text-sm text-gray-600 mt-1">View your billing history and payment status</p>
+          <h1 class="text-2xl font-bold text-gray-900">Riwayat Tagihan & Pembayaran</h1>
+          <p class="text-sm text-gray-600 mt-1">Lihat riwayat tagihan dan status pembayaran Anda</p>
         </div>
       </div>
     </div>
@@ -17,11 +17,11 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Search by Invoice Number -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Search Invoice</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Cari Invoice</label>
             <input
               v-model="searchInvoice"
               type="text"
-              placeholder="Search by invoice number..."
+              placeholder="Cari berdasarkan nomor invoice..."
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -33,16 +33,16 @@
               v-model="filterStatus"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="">All Status</option>
-              <option value="1">Waiting Payment</option>
-              <option value="2">Paid</option>
-              <option value="3">Verified</option>
+              <option value="">Semua Status</option>
+              <option value="1">Menunggu Pembayaran</option>
+              <option value="2">Sudah Dibayar</option>
+              <option value="3">Terverifikasi</option>
             </select>
           </div>
 
           <!-- Date Range -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Rentang Tanggal</label>
             <div class="flex gap-2">
               <input
                 v-model="dateFrom"
@@ -68,13 +68,13 @@
               @click="clearFilters"
               class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
             >
-              Clear Filters
+              Hapus Filter
             </button>
           </div>
         </div>
       </div>
 
-      <div v-if="loading" class="text-center py-8">Loading...</div>
+      <div v-if="loading" class="text-center py-8">Memuat...</div>
       <div v-else-if="error" class="text-red-500 text-center py-8">{{ error }}</div>
 
       <div v-else class="bg-white shadow-md rounded-lg overflow-hidden overflow-x-auto">
@@ -82,16 +82,16 @@
           <thead>
             <tr>
               <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Invoice Number
+                Nomor Invoice
               </th>
               <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Plan
+                Paket
               </th>
               <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Amount
+                Jumlah
               </th>
               <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Date
+                Tanggal
               </th>
               <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Status
@@ -119,6 +119,8 @@
                     'bg-yellow-200 text-yellow-800': invoice.status.id===1,
                     'bg-green-200 text-green-800': invoice.status.id === 2,
                     'bg-blue-200 text-blue-800': invoice.status.id === 3,
+                    'bg-red-200 text-red-800': invoice.status.id === 4,
+                    'bg-yellow-200 text-yellow-800': invoice.status.id === 5
                   }"
                   class="px-2 py-1 rounded-full text-xs font-semibold"
                 >
@@ -126,8 +128,8 @@
                 </span>
               </td>
               <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm text-right">
-                <button v-if="invoice?.status.id==1" @click="openUploadModal(invoice)" class="text-blue-600 hover:text-blue-900 mr-4">Upload Bukti</button>
-                <button @click="openDetailModal(invoice)" class="text-gray-600 hover:text-gray-900">Detail</button>
+                <button v-if="invoice?.status.id==1||invoice?.status.id==5" @click="openUploadModal(invoice)" class="bg-blue-600 text-white px-3 py-1 rounded text-sm mr-2 hover:bg-blue-700 transition-colors">{{invoice?.status.id==5 ? 'Reupload Bukti' : 'Upload Bukti'}}</button>
+                <button @click="openDetailModal(invoice)" class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors">Detail</button>
               </td>
             </tr>
           </tbody>
@@ -137,15 +139,15 @@
     <div v-if="showUploadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div class="p-6">
-          <h3 class="text-lg font-semibold mb-4">Upload Proof of Payment</h3>
+          <h3 class="text-lg font-semibold mb-4">Upload Bukti Pembayaran</h3>
           <div v-if="selectedInvoice">
             <p class="mb-4">Invoice: <strong>{{ selectedInvoice.invoice_number }}</strong></p>
             <input type="file" @change="handleFileUpload" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
             <div class="flex gap-3 mt-6">
               <button @click="submitProofOfPayment" :disabled="uploading" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg">
-                {{ uploading ? 'Uploading...' : 'Submit' }}
+                {{ uploading ? 'Mengupload...' : 'Kirim' }}
               </button>
-              <button @click="closeUploadModal" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg">Cancel</button>
+              <button @click="closeUploadModal" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg">Batal</button>
             </div>
           </div>
         </div>
@@ -158,11 +160,12 @@
         <div class="p-6">
           <h3 class="text-lg font-semibold mb-4">Detail Transaksi</h3>
           <div v-if="selectedInvoice" class="space-y-2">
-            <p><strong>Invoice Number:</strong> {{ selectedInvoice.invoice_number }}</p>
-            <p><strong>Plan:</strong> {{ selectedInvoice?.plan.name }}</p>
+            <p><strong>Nomor Invoice:</strong> {{ selectedInvoice.invoice_number }}</p>
+            <p><strong>Paket:</strong> {{ selectedInvoice?.plan.name }}</p>
             
-            <p><strong>Date:</strong> {{ formatDate(selectedInvoice.created_at, true) }}</p>
-            <p><strong>Status:</strong> <span class="font-semibold capitalize">{{ selectedInvoice?.status.name }}</span></p>
+            <p><strong>Tanggal:</strong> {{ formatDate(selectedInvoice.created_at, true) }}</p>
+            <p><strong>Status:</strong> <span  :class="{'bg-yellow-200 text-yellow-800': selectedInvoice.status.id===1,'bg-green-200 text-green-800': selectedInvoice.status.id === 2,'bg-blue-200 text-blue-800': selectedInvoice.status.id === 3,'bg-red-200 text-red-800': selectedInvoice.status.id === 4,'bg-yellow-200 text-yellow-800': selectedInvoice.status.id === 5}"
+                  class="inline-block px-2 py-1 rounded-full text-xs font-semibold">{{ selectedInvoice?.status.name }}</span></p>
             <p>
                 <strong>Bank Tujuan:</strong><br>
                 {{ selectedInvoice?.bank_name }} - {{ selectedInvoice?.bank_account_name }}<br>
@@ -172,14 +175,14 @@
             <p><strong>Harga</strong> Rp. {{ toIDR(selectedInvoice?.plan.harga) }}</p>
             <p><strong>Subtotal:</strong>Rp. {{ toIDR(selectedInvoice.subtotal) }}</p>
             
-            <p><strong>Discount:</strong>Rp. {{ toIDR(selectedInvoice?.discount) }}</p>
-            <p><strong>Amount:</strong> Rp {{ toIDR(selectedInvoice.total) }}</p>
+            <p><strong>Diskon:</strong>Rp. {{ toIDR(selectedInvoice?.discount) }}</p>
+            <p><strong>Jumlah:</strong> Rp {{ toIDR(selectedInvoice.total) }}</p>
             <div v-if="selectedInvoice.payment_receipt">
-              <strong>Proof of Payment:</strong> <a :href="selectedInvoice.payment_receipt" target="_blank" class="text-blue-600 hover:underline">View Image</a>
+              <strong>Bukti Pembayaran:</strong> <a :href="selectedInvoice.payment_receipt" target="_blank" class="text-blue-600 hover:underline">Lihat Gambar</a>
             </div>
           </div>
           <div class="text-right mt-6">
-            <button @click="closeDetailModal" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg">Close</button>
+            <button @click="closeDetailModal" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg">Tutup</button>
           </div>
         </div>
       </div>
@@ -368,7 +371,7 @@ async function submitProofOfPayment() {
       throw updateError;
     }
 
-    showToast({ type: 'success', message: 'Proof of payment uploaded successfully' });
+    showToast({ type: 'success', message: 'Bukti pembayaran berhasil diupload' });
     await fetchInvoices();
     closeUploadModal();
   } catch (e) {

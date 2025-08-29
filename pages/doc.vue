@@ -20,7 +20,7 @@
         <ul class="space-y-2">
           <li>
             <a href="#get-started" class="text-blue-600 hover:underline"
-              >Get Started</a
+              >Memulai</a
             >
           </li>
           <li>
@@ -58,7 +58,7 @@
           </li>
           <li>
             <a href="#my-profile" class="text-blue-600 hover:underline"
-              >My Profile</a
+              >Profil Saya</a
             >
           </li>
           <li>
@@ -74,7 +74,7 @@
     </nav>
     <!-- Main Content -->
     <div class="flex-1">
-      <h2 id="get-started" class="text-xl font-semibold mb-2">Get Started</h2>
+      <h2 id="get-started" class="text-xl font-semibold mb-2">Memulai</h2>
       <div class="mb-6 text-gray-700">
         <p class="mb-3">
           Nutra AI Chat adalah platform chat multi-channel yang memudahkan Anda
@@ -105,7 +105,7 @@
           <li>Desain responsif, optimal di desktop dan mobile.</li>
           <li>Keamanan login dan pengelolaan user.</li>
         </ul>
-        <h3 class="text-lg font-semibold mt-6 mb-2">Login</h3>
+        <h3 class="text-lg font-semibold mt-6 mb-2">Masuk</h3>
         <ul class="list-disc ml-6 mb-4">
           <li>
             Masukkan email dan password yang sudah terdaftar pada form login.
@@ -116,7 +116,7 @@
           </li>
           <li>Jika lupa password, hubungi admin untuk reset password.</li>
         </ul>
-        <h3 class="text-lg font-semibold mt-6 mb-2">Register</h3>
+        <h3 class="text-lg font-semibold mt-6 mb-2">Daftar</h3>
         <ul class="list-disc ml-6 mb-4">
           <li>Klik link <b>Register</b> di halaman login.</li>
           <li>Isi form pendaftaran dengan email dan password yang valid.</li>
@@ -161,11 +161,11 @@
             <li>Jika belum terhubung, akan muncul status dan QR code.</li>
             <li>
               Buka aplikasi WhatsApp di HP, pilih menu
-              <b>Linked Devices</b> lalu scan QR code yang muncul di web.
+              <b>Perangkat Tertaut</b> lalu scan QR code yang muncul di web.
             </li>
             <li>
-              Tunggu status koneksi berubah menjadi <b>Ready</b> atau
-              <b>Authenticated</b>.
+              Tunggu status koneksi berubah menjadi <b>Siap</b> atau
+              <b>Terautentikasi</b>.
             </li>
             <li>
               Jika ingin menghubungkan Agent AI ke chanel, klik tombol
@@ -214,7 +214,7 @@
             <li><b>Personalisasi</b> - gunakan variabel seperti {nama} untuk personal touch</li>
             <li><b>Lampiran</b> - tambahkan gambar, dokumen, atau media lain</li>
             <li><b>Jadwal</b> - kirim sekarang atau atur waktu pengiriman</li>
-            <li><b>Preview</b> - lihat preview pesan sebelum dikirim</li>
+            <li><b>Pratinjau</b> - lihat pratinjau pesan sebelum dikirim</li>
             <li><b>Kirim</b> - eksekusi broadcast ke semua kontak target</li>
           </ul>
         </li>
@@ -233,7 +233,7 @@
             <li><b>Pilih Kontak/Grup</b> - tentukan penerima pesan</li>
             <li><b>Tulis Pesan</b> - buat konten pesan yang akan dikirim</li>
             <li><b>Atur Waktu</b> - pilih tanggal dan jam pengiriman</li>
-            <li><b>Repeat</b> - set pengulangan (harian, mingguan, bulanan)</li>
+            <li><b>Ulangi</b> - set pengulangan (harian, mingguan, bulanan)</li>
             <li><b>Kondisi</b> - atur kondisi khusus jika diperlukan</li>
           </ul>
         </li>
@@ -300,9 +300,9 @@
           Fitur billing:
           <ul class="list-decimal ml-6 mt-2">
             <li><b>Riwayat Pembayaran</b> - lihat history invoice dan payment</li>
-            <li><b>Auto Renewal</b> - perpanjang otomatis paket langganan</li>
-            <li><b>Usage Monitor</b> - pantau penggunaan fitur vs limit paket</li>
-            <li><b>Invoice Download</b> - download invoice untuk keperluan administrasi</li>
+            <li><b>Perpanjangan Otomatis</b> - perpanjang otomatis paket langganan</li>
+            <li><b>Monitor Penggunaan</b> - pantau penggunaan fitur vs limit paket</li>
+            <li><b>Unduh Invoice</b> - download invoice untuk keperluan administrasi</li>
           </ul>
         </li>
         <li>Notifikasi otomatis sebelum paket expired.</li>

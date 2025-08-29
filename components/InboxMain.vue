@@ -84,7 +84,7 @@
                                             selectedConversation.contact?.phone_number==message.from 
                                               ? selectedConversation.contact?.name ||
                                                 selectedConversation.contact?.phone_number ||
-                                                "User"
+                                                "Pengguna"
                                               : selectedConversation.agent?.name || "Agent"
                                           }}
                                         </div>
@@ -144,7 +144,7 @@
           <!-- Image Attachment -->
           <label
             class="p-1 sm:p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full cursor-pointer"
-            title="Attach Image"
+            title="Lampirkan Gambar"
           >
             <input
               type="file"
@@ -225,7 +225,7 @@
                 </span>
                 <div class="flex items-center space-x-2 mt-1">
                   <span v-if="imageCaption" class="text-xs text-gray-500">
-                    • {{ imageCaption.length }} characters
+                    • {{ imageCaption.length }} karakter
                   </span>
                 </div>
               </div>
@@ -235,7 +235,7 @@
             <button
               @click="removeImage"
               class="p-1 text-red-500 hover:text-red-700 rounded-full hover:bg-red-50"
-              title="Remove image"
+              title="Hapus gambar"
             >
               <svg
                 class="w-4 h-4"
@@ -268,7 +268,7 @@
             <div
               class="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200"
             >
-              <h3 class="text-lg font-medium text-gray-900">Add Caption</h3>
+              <h3 class="text-lg font-medium text-gray-900">Tambah Keterangan</h3>
               <button
                 @click="showCaptionPopup = false"
                 class="text-gray-400 hover:text-gray-600"
@@ -295,7 +295,7 @@
               <div class="flex items-center space-x-3 mb-4">
                 <img
                   :src="imagePreview"
-                  alt="Preview"
+                  alt="Pratinjau"
                   class="w-16 h-16 object-cover rounded-lg border border-gray-200"
                 />
                 <div>
@@ -315,11 +315,11 @@
               <!-- Caption Input -->
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-700">
-                  Caption (optional)
+                  Keterangan (opsional)
                 </label>
                 <textarea
                   v-model="imageCaption"
-                  placeholder="Add a caption to your image..."
+                  placeholder="Tambahkan keterangan untuk gambar Anda..."
                   class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   rows="3"
                   maxlength="500"
@@ -334,7 +334,7 @@
                     v-if="imageCaption.trim()"
                     class="text-xs text-gray-500 hover:text-gray-700"
                   >
-                    Clear
+                    Hapus
                   </button>
                 </div>
               </div>
@@ -348,7 +348,7 @@
                 @click="showCaptionPopup = false"
                 class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
               >
-                Cancel
+                Batal
               </button>
               <button
                 @click="sendMessageFromPopup"
@@ -367,7 +367,7 @@
                     d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
                   ></path>
                 </svg>
-                <span>Send</span>
+                <span>Kirim</span>
               </button>
             </div>
           </div>
@@ -397,7 +397,7 @@
               <input
                 v-model="searchQuery"
                 type="text"
-                placeholder="search emojis"
+                placeholder="cari emoji"
                 class="w-full pl-8 sm:pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 @input="handleSearch"
               />
@@ -408,7 +408,7 @@
           <div class="p-2 sm:p-3 max-h-64 overflow-y-auto">
             <div class="mb-2 sm:mb-3">
               <h3 class="text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                Smileys & people
+                Senyum & orang
               </h3>
               <div class="grid grid-cols-10 gap-0">
                 <button

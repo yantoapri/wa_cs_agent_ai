@@ -254,7 +254,7 @@
                 @click="$emit('edit', selectedAutoMessage)"
                 class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
               >
-                Edit
+                Ubah
               </button>
               <button
                 @click="handleDeleteAutoMessage"
@@ -434,7 +434,7 @@ const getHeaderTitle = () => {
     const isEditing = !!props.formEditData;
     const formType =
       props.formType === "broadcast" ? "Broadcast" : "Pesan Otomatis";
-    return isEditing ? `Edit ${formType}` : `Tambah ${formType}`;
+    return isEditing ? `Ubah ${formType}` : `Tambah ${formType}`;
   }
   if (props.selectedBroadcast) return "Detail Broadcast";
   if (props.selectedAutoMessage) return "Detail Pesan Otomatis";

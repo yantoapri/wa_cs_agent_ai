@@ -9,7 +9,7 @@
 
       <!-- Package Selection -->
       <section id="pricing" class="mt-10">
-        <div v-if="loading" class="text-center">Loading packages...</div>
+        <div v-if="loading" class="text-center">Memuat paket...</div>
         <div v-else-if="error" class="text-center text-red-500">{{ error }}</div>
         <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div 
@@ -57,7 +57,7 @@
                   <input v-model="email" id="email" type="email" placeholder="you@example.com" required class="input mt-1" :disabled="paymentLoading" />
                 </div>
                 <div>
-                  <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                  <label for="password" class="block text-sm font-medium text-gray-700">Kata Sandi</label>
                   <div class="relative mt-1">
                     <input
                       v-model="password"
@@ -105,7 +105,7 @@
               
               <div class="mt-4">
                 <div class="text-sm font-medium text-gray-700 mb-2">Tambahkan Kartu Kredit Anda</div>
-                
+
                 <div class="text-sm font-medium text-gray-700 mb-2">Siklus Pembayaran</div>
                 <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden">
                   <button
@@ -152,13 +152,13 @@
           
           <div class="mt-8 border-t pt-6">
             <button @click="registerAndPay" class="btn-primary w-full" :disabled="paymentLoading || !email || !password">
-              <span v-if="paymentLoading">Processing...</span>
+              <span v-if="paymentLoading">Memproses...</span>
               <span v-else>Daftar & Konfirmasi Pembayaran</span>
             </button>
             <p v-if="paymentError" class="text-red-500 mt-3 text-sm text-center">{{ paymentError }}</p>
             <p class="mt-4 text-center text-sm">
               Sudah punya akun? 
-              <NuxtLink to="/login" class="font-medium text-blue-600 hover:text-blue-500">Login di sini</NuxtLink>
+              <NuxtLink to="/login" class="font-medium text-blue-600 hover:text-blue-500">Masuk di sini</NuxtLink>
             </p>
           </div>
         </div>

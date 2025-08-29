@@ -205,8 +205,8 @@
               <input v-model="contactForm.email" type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="kontak@email.com" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Avatar URL</label>
-              <input v-model="contactForm.avatar_url" type="url" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="https://example.com/avatar.jpg" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">URL Avatar</label>
+              <input v-model="contactForm.avatar_url" type="url" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="https://contoh.com/avatar.jpg" />
             </div>
           </div>
           <div class="flex gap-3 mt-6">
@@ -353,7 +353,7 @@ const getContactEmail = (contact) => {
 
 const getContactChanel = (contact) => {
   const chanel = chanels.value.find((c) => c.id === contact.chanel_id);
-  return chanel ? chanel.name : "Unknown chanel";
+  return chanel ? chanel.name : "Kanal tidak diketahui";
 };
 
 const getContactNotes = (contact) => {

@@ -99,7 +99,7 @@
                 </svg>
                 {{ 
                   aiGenerating
-                    ? "Generating..."
+                    ? "Membuat..."
                     : !selectedProduct
                     ? "Pilih produk untuk generate pesan"
                     : "Generate Pesan dengan AI"
@@ -250,7 +250,7 @@
                     class="mr-2 text-blue-600 focus:ring-blue-500 relative z-10 pointer-events-auto"
                   />
                   <span class="text-sm text-gray-700 pointer-events-auto"
-                    >Custom (Multi Jadwal)</span
+                    >Kustom (Multi Jadwal)</span
                   >
                 </label>
                 <label
@@ -440,7 +440,7 @@
               >
                 <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
                   <h4 class="text-sm font-medium text-blue-800 mb-2">
-                    Preview Jadwal ({{ form.schedules.length }} jadwal)
+                    Pratinjau Jadwal ({{ form.schedules.length }} jadwal)
                   </h4>
                   <div class="max-h-32 overflow-y-auto space-y-1">
                     <div
@@ -469,7 +469,7 @@
               :disabled="loading || !isFormValid"
               class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {{ loading ? "Mengirim..." : isEditing ? "Update" : "Kirim" }}
+              {{ loading ? "Mengirim..." : isEditing ? "Perbarui" : "Kirim" }}
             </button>
             <button
               type="button"

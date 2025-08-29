@@ -39,7 +39,7 @@
       v-if="loading"
       class="text-center py-4 sm:py-8 flex-1 flex items-center justify-center"
     >
-      <div class="text-gray-500 text-sm sm:text-base">Loading inbox...</div>
+      <div class="text-gray-500 text-sm sm:text-base">Memuat inbox...</div>
     </div>
     <div
       v-else-if="currentAgentConversations.length === 0"
@@ -322,12 +322,12 @@ function formatTimeOrDate(ts) {
   const diff = now - date;
   if (diff < 1000 * 60 * 60 * 24) {
     // < 1 hari
-    return date.toLocaleTimeString("en-US", {
+    return date.toLocaleTimeString("id-ID", {
       hour: "2-digit",
       minute: "2-digit",
     });
   } else if (diff < 1000 * 60 * 60 * 48) {
-    return "Yesterday";
+    return "Kemarin";
   } else {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const day = date.getDate();

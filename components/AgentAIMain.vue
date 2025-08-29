@@ -489,7 +489,7 @@
                   type="submit"
                   class="mt-4 bg-blue-700 text-white hover:bg-blue-500 border-none rounded-xl px-6 py-3 text-base flex items-center gap-2"
                 >
-                  Submit
+                  Kirim
                 </button>
               </form>
               <div class="mt-6 font-medium">Followup</div>
@@ -1261,7 +1261,7 @@
                 <div class="relative inline-block">
                   <img
                     :src="productForm.image"
-                    alt="Preview"
+                    alt="Pratinjau"
                     class="max-w-xs max-h-48 rounded-lg border border-gray-200"
                   />
                 </div>
@@ -1279,7 +1279,7 @@
                 savingProduct
                   ? "Menyimpan..."
                   : editingProduct
-                  ? "Update"
+                  ? "Perbarui"
                   : "Simpan"
               }}
             </button>

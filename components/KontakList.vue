@@ -5,7 +5,7 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-gray-900">Kontak</h1>
-          <p class="text-sm text-gray-600 mt-1">Manage your contact list</p>
+          <p class="text-sm text-gray-600 mt-1">Kelola daftar kontak Anda</p>
         </div>
         <div class="flex items-center gap-3">
           <!-- Import Button -->
@@ -213,7 +213,7 @@ John Doe,+6281234567890,john@example.com
 Jane Smith,+6289876543210,jane@example.com</pre
               >
             </div>
-            <a href="https://gsjemxdabcjfyqeeetuo.supabase.co/storage/v1/object/public/other/contacts_2025-08-15.csv" class="text-blue-600 hover:underline" download>Example File Contacts</a>
+            <a href="https://gsjemxdabcjfyqeeetuo.supabase.co/storage/v1/object/public/other/contacts_2025-08-15.csv" class="text-blue-600 hover:underline" download>File Contoh Kontak</a>
           </div>
 
           <div class="space-y-4">
@@ -275,7 +275,7 @@ Jane Smith,+6289876543210,jane@example.com</pre
               :disabled="importing || importPreview.length === 0"
               class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              {{ importing ? "Importing..." : "Import Kontak" }}
+              {{ importing ? "Mengimport..." : "Import Kontak" }}
             </button>
             <button
               @click="closeImportModal"
@@ -787,7 +787,7 @@ const refreshContacts = async () => {
     console.error('Error refreshing contacts:', error);
     showAlert({
       title: 'Error',
-      text: 'Failed to refresh contacts',
+      text: 'Gagal memperbarui kontak',
       icon: 'error'
     });
   }

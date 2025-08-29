@@ -1,11 +1,34 @@
 <template>
+    <!-- Modal Reject -->
+    <div v-if="showRejectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="p-4 md:p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg md:text-xl font-semibold">Tolak Invoice</h3>
+            <button @click="closeRejectModal" class="text-gray-400 hover:text-gray-600 md:hidden">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Alasan penolakan</label>
+            <textarea v-model="rejectReason" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"></textarea>
+          </div>
+          <div class="flex justify-end mt-6 pt-4 border-t gap-2">
+            <button @click="closeRejectModal" class="bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors">Batal</button>
+            <button @click="submitReject" :disabled="!rejectReason.trim()" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50">Tolak</button>
+          </div>
+        </div>
+      </div>
+    </div>
   <div class="flex flex-col h-full bg-gray-50">
     <!-- Header -->
     <div class="bg-white border-b border-gray-200 px-4 md:px-6 py-4">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Invoice Management</h1>
-          <p class="text-sm text-gray-600 mt-1">Manage customer invoices and payments</p>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Manajemen Invoice</h1>
+          <p class="text-sm text-gray-600 mt-1">Kelola invoice dan pembayaran pelanggan</p>
         </div>
       </div>
     </div>
@@ -17,11 +40,11 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <!-- Search by Username -->
           <div class="sm:col-span-2 lg:col-span-1">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Search Username</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Cari Username</label>
             <input
               v-model="searchUsername"
               type="text"
-              placeholder="Search by username..."
+              placeholder="Cari berdasarkan username..."
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -33,7 +56,7 @@
               v-model="filterStatus"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="">All Status</option>
+              <option value="">Semua Status</option>
               <option v-for="status in statusOptions" :key="status.id" :value="status.id">
                 {{ status.name }}
               </option>
@@ -42,7 +65,7 @@
 
           <!-- Date From -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Dari</label>
             <input
               v-model="dateFrom"
               type="date"
@@ -52,7 +75,7 @@
 
           <!-- Date To -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Sampai</label>
             <input
               v-model="dateTo"
               type="date"
@@ -71,13 +94,13 @@
               @click="clearFilters"
               class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
             >
-              Clear Filters
+              Hapus Filter
             </button>
             <button
               @click="applyFilters"
               class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              Apply Filters
+              Terapkan Filter
             </button>
           </div>
         </div>
@@ -85,9 +108,9 @@
 
       <div v-if="loading" class="text-center py-8">
         <div class="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-blue-600 rounded-full" role="status" aria-label="loading">
-          <span class="sr-only">Loading...</span>
+          <span class="sr-only">Memuat...</span>
         </div>
-        <p class="mt-2 text-gray-600">Loading invoices...</p>
+        <p class="mt-2 text-gray-600">Memuat invoice...</p>
       </div>
       <div v-else-if="error" class="text-red-500 text-center py-8">
         <svg class="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -99,21 +122,21 @@
         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <h3 class="mt-2 text-sm md:text-base font-medium text-gray-900">No invoices</h3>
-        <p class="mt-1 text-sm text-gray-500">There are no invoices in the system yet.</p>
+        <h3 class="mt-2 text-sm md:text-base font-medium text-gray-900">Tidak ada invoice</h3>
+        <p class="mt-1 text-sm text-gray-500">Belum ada invoice di sistem.</p>
       </div>
       <div v-else-if="filteredInvoices.length === 0" class="bg-white shadow-md rounded-lg p-8 md:p-12 text-center">
         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <h3 class="mt-2 text-sm md:text-base font-medium text-gray-900">No invoices found</h3>
-        <p class="mt-1 text-sm text-gray-500">No invoices match your current filters. Try adjusting your search criteria.</p>
+        <h3 class="mt-2 text-sm md:text-base font-medium text-gray-900">Tidak ada invoice ditemukan</h3>
+        <p class="mt-1 text-sm text-gray-500">Tidak ada invoice yang cocok dengan filter Anda. Coba sesuaikan kriteria pencarian.</p>
         <div class="mt-6">
           <button
             @click="clearFilters"
             class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
           >
-            Clear all filters
+            Hapus semua filter
           </button>
         </div>
       </div>
@@ -129,7 +152,7 @@
                   <p class="text-sm text-gray-600 mt-1">{{ invoice.user.email }}</p>
                   <div class="mt-2">
                     <span
-                      :class="{'bg-yellow-200 text-yellow-800': invoice.status.id===1,'bg-green-200 text-green-800': invoice.status.id === 2,'bg-blue-200 text-blue-800': invoice.status.id === 3,}"
+                      :class="{'bg-yellow-200 text-yellow-800': invoice.status.id===1,'bg-green-200 text-green-800': invoice.status.id === 2,'bg-blue-200 text-blue-800': invoice.status.id === 3,'bg-red-200 text-red-800': invoice.status.id === 4,'bg-yellow-200 text-yellow-800': invoice.status.id === 5}"
                       class="px-2 py-1 rounded-full text-xs font-semibold"
                     >
                       {{ invoice.status.name }}
@@ -140,6 +163,10 @@
                   <button v-if="invoice.status.id === 2" @click="approveInvoice(invoice)" 
                     class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors">
                     Approve
+                  </button>
+                  <button v-if="invoice.status.id === 2" @click="openRejectModal(invoice)" 
+                    class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
+                    Reject
                   </button>
                   <button @click="openDetailModal(invoice)" 
                     class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors">
@@ -171,19 +198,19 @@
             <thead>
               <tr>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Invoice Number
+                  Nomor Invoice
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  User
+                  Pengguna
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Plan
+                  Paket
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Amount
+                  Jumlah
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Date
+                  Tanggal
                 </th>
                 <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Status
@@ -210,15 +237,16 @@
                 </td>
                 <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
                   <span
-                    :class="{'bg-yellow-200 text-yellow-800': invoice.status.id===1,'bg-green-200 text-green-800': invoice.status.id === 2,'bg-blue-200 text-blue-800': invoice.status.id === 3,}"
+                    :class="{'bg-yellow-200 text-yellow-800': invoice.status.id===1,'bg-green-200 text-green-800': invoice.status.id === 2,'bg-blue-200 text-blue-800': invoice.status.id === 3,'bg-red-200 text-red-800': invoice.status.id === 4,'bg-yellow-200 text-yellow-800': invoice.status.id === 5}"
                     class="px-2 py-1 rounded-full text-xs font-semibold"
                   >
                     {{ invoice.status.name }}
                   </span>
                 </td>
                 <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm text-right">
-                  <button v-if="invoice?.status?.id === 2" @click="approveInvoice(invoice)" class="text-green-600 hover:text-green-900 mr-4">Approve</button>
-                  <button @click="openDetailModal(invoice)" class="text-gray-600 hover:text-gray-900 mr-4">Detail</button>
+                  <button v-if="invoice?.status?.id === 2" @click="approveInvoice(invoice)" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors mr-2">Setujui</button>
+                  <button v-if="invoice?.status?.id === 2" @click="openRejectModal(invoice)" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors mr-2">Tolak</button>
+                  <button @click="openDetailModal(invoice)" class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors">Detail</button>
                 </td>
               </tr>
             </tbody>
@@ -232,7 +260,7 @@
       <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div class="p-4 md:p-6">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg md:text-xl font-semibold">Transaction Details</h3>
+            <h3 class="text-lg md:text-xl font-semibold">Detail Transaksi</h3>
             <button @click="closeDetailModal" class="text-gray-400 hover:text-gray-600 md:hidden">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -242,29 +270,29 @@
           <div v-if="selectedInvoice" class="space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <p class="text-sm text-gray-500 uppercase tracking-wide">Invoice Number</p>
+                <p class="text-sm text-gray-500 uppercase tracking-wide">Nomor Invoice</p>
                 <p class="font-medium">{{ selectedInvoice.invoice_number }}</p>
               </div>
               <div>
-                <p class="text-sm text-gray-500 uppercase tracking-wide">User</p>
+                <p class="text-sm text-gray-500 uppercase tracking-wide">Pengguna</p>
                 <p class="font-medium">{{ selectedInvoice.user.email }}</p>
               </div>
               <div>
-                <p class="text-sm text-gray-500 uppercase tracking-wide">Plan</p>
+                <p class="text-sm text-gray-500 uppercase tracking-wide">Paket</p>
                 <p class="font-medium">{{ selectedInvoice.plan.name }}</p>
               </div>
               <div>
-                <p class="text-sm text-gray-500 uppercase tracking-wide">Amount</p>
+                <p class="text-sm text-gray-500 uppercase tracking-wide">Jumlah</p>
                 <p class="font-medium text-green-600">Rp {{ toIDR(selectedInvoice.total) }}</p>
               </div>
               <div>
-                <p class="text-sm text-gray-500 uppercase tracking-wide">Date</p>
+                <p class="text-sm text-gray-500 uppercase tracking-wide">Tanggal</p>
                 <p class="font-medium">{{ formatDate(selectedInvoice.created_at, true) }}</p>
               </div>
               <div>
                 <p class="text-sm text-gray-500 uppercase tracking-wide">Status</p>
                 <span
-                  :class="{'bg-yellow-200 text-yellow-800': selectedInvoice.status.id===1,'bg-green-200 text-green-800': selectedInvoice.status.id === 2,'bg-blue-200 text-blue-800': selectedInvoice.status.id === 3,}"
+                  :class="{'bg-yellow-200 text-yellow-800': selectedInvoice.status.id===1,'bg-green-200 text-green-800': selectedInvoice.status.id === 2,'bg-blue-200 text-blue-800': selectedInvoice.status.id === 3,'bg-red-200 text-red-800': selectedInvoice.status.id === 4,'bg-yellow-200 text-yellow-800': selectedInvoice.status.id === 5}"
                   class="inline-block px-2 py-1 rounded-full text-xs font-semibold"
                 >
                   {{ selectedInvoice.status.name }}
@@ -272,20 +300,20 @@
               </div>
             </div>
             <div v-if="selectedInvoice.payment_receipt" class="border-t pt-4">
-              <p class="text-sm text-gray-500 uppercase tracking-wide mb-2">Proof of Payment</p>
+              <p class="text-sm text-gray-500 uppercase tracking-wide mb-2">Bukti Pembayaran</p>
               <a :href="selectedInvoice.payment_receipt" target="_blank" 
                 class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-                View Image
+                Lihat Gambar
               </a>
             </div>
           </div>
           <div class="flex justify-end mt-6 pt-4 border-t">
             <button @click="closeDetailModal" 
               class="bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors">
-              Close
+              Tutup
             </button>
           </div>
         </div>
@@ -296,6 +324,63 @@
 </template>
 
 <script setup>
+// State & logic untuk modal reject
+const showRejectModal = ref(false);
+const rejectReason = ref("");
+const rejectInvoice = ref(null);
+
+function openRejectModal(invoice) {
+  rejectInvoice.value = invoice;
+  rejectReason.value = "";
+  showRejectModal.value = true;
+}
+
+function closeRejectModal() {
+  showRejectModal.value = false;
+  rejectInvoice.value = null;
+  rejectReason.value = "";
+}
+
+async function submitReject() {
+  if (!rejectInvoice.value) return;
+  try {
+    // Update invoice status ke rejected (misal 4 = rejected)
+    const { error: invoiceError } = await supabase
+      .from("invoices")
+      .update({ status: 5 })
+      .eq("id", rejectInvoice.value.id);
+    if (invoiceError) throw invoiceError;
+
+    // Kirim email reject (opsional, sesuaikan kebutuhan)
+    try {
+      const emailResponse = await $fetch("/api/send-approval-email", {
+        method: "POST",
+        body: {
+          userEmail: rejectInvoice.value.user?.email,
+          userName: rejectInvoice.value.user?.name || rejectInvoice.value.user?.email,
+          invoiceNumber: rejectInvoice.value.invoice_number,
+          amount: rejectInvoice.value.total,
+          planName: rejectInvoice.value.plan?.name,
+          status: "reject",
+          reason: rejectReason.value,
+          startDate: "",
+          endDate: "",
+        },
+      });
+      if (emailResponse.success) {
+        showToast({ type: "success", message: "Invoice ditolak dan notifikasi email dikirim" });
+      } else {
+        showToast({ type: "success", message: "Invoice rejected (email notification failed)" });
+      }
+    } catch (emailError) {
+      showToast({ type: "success", message: "Invoice ditolak (notifikasi email gagal)" });
+    }
+    await fetchInvoices();
+    closeRejectModal();
+  } catch (error) {
+    showToast({ type: "error", message: "Gagal menolak invoice" });
+  }
+}
 import { ref, onMounted, computed, watch } from 'vue';
 import { useSupabaseClient } from '#imports';
 import { useToast } from '~/composables/useToast';
@@ -361,7 +446,7 @@ function clearFilters() {
 function applyFilters() {
   // This function can be used for additional filter logic if needed
   // The computed property already handles real-time filtering
-  showToast({ type: 'info', message: `Filtered ${filteredInvoices.value.length} invoices` });
+  showToast({ type: 'info', message: `${filteredInvoices.value.length} invoice difilter` });
 }
 
 async function fetchStatusOptions() {
@@ -480,14 +565,15 @@ async function approveInvoice(invoice) {
           amount: invoice.total,
           planName: invoice.plan?.name ,
           startDate: formatDate(now),
-          endDate: formatDate(endDate)
+          endDate: formatDate(endDate),
+          status: "approved"
         }
       });
       
       if (emailResponse.success) {
-        showToast({ type: 'success', message: 'Invoice approved and email notification sent' });
+        showToast({ type: 'success', message: 'Invoice disetujui dan notifikasi email dikirim' });
       } else {
-        showToast({ type: 'success', message: 'Invoice approved (email notification failed)' });
+        showToast({ type: 'success', message: 'Invoice disetujui (notifikasi email gagal)' });
       }
     } catch (emailError) {
       console.error('Email sending failed:', emailError);
@@ -496,7 +582,7 @@ async function approveInvoice(invoice) {
 
     await fetchInvoices();
   } catch (error) {
-    showToast({ type: 'error', message: 'Failed to approve invoice' });
+    showToast({ type: 'error', message: 'Gagal menyetujui invoice' });
     console.error('Error approving invoice:', error);
   }
 }
@@ -512,17 +598,17 @@ async function deleteInvoice(invoice) {
       throw error;
     }
 
-    showToast({ type: 'success', message: 'Invoice deleted successfully' });
+    showToast({ type: 'success', message: 'Invoice berhasil dihapus' });
     await fetchInvoices();
   } catch (error) {
-    showToast({ type: 'error', message: 'Failed to delete invoice' });
+    showToast({ type: 'error', message: 'Gagal menghapus invoice' });
     console.error('Error deleting invoice:', error);
   }
 }
 
 function sendInvoice(invoice) {
   // Logic to send invoice, e.g., via email
-  showToast({ type: 'info', message: `Sending invoice ${invoice.invoice_number}...` });
+  showToast({ type: 'info', message: `Mengirim invoice ${invoice.invoice_number}...` });
 }
 
 onMounted(async () => {

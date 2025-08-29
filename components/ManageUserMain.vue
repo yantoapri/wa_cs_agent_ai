@@ -4,8 +4,8 @@
     <div class="bg-white border-b border-gray-200 px-4 md:px-6 py-4">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-xl md:text-2xl font-bold text-gray-900">User Management</h1>
-          <p class="text-sm text-gray-600 mt-1">Manage users and their roles</p>
+          <h1 class="text-xl md:text-2xl font-bold text-gray-900">Manajemen Pengguna</h1>
+          <p class="text-sm text-gray-600 mt-1">Kelola pengguna dan peran mereka</p>
         </div>
       </div>
     </div>
@@ -17,24 +17,24 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Search by Name/Email -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Search User</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Cari Pengguna</label>
             <input
               v-model="searchUser"
               type="text"
-              placeholder="Search by name or email..."
+              placeholder="Cari berdasarkan nama atau email..."
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <!-- Filter by Package -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Package</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Paket</label>
             <select
               v-model="filterPackage"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="">All Packages</option>
-              <option value="no-package">No Package</option>
+              <option value="">Semua Paket</option>
+              <option value="no-package">Tidak Ada Paket</option>
               <option v-for="pkg in packages" :key="pkg.id" :value="pkg.id">
                 {{ pkg.name }}
               </option>
@@ -43,14 +43,14 @@
 
           <!-- Filter by Role -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Peran</label>
             <select
               v-model="filterRole"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="">All Roles</option>
+              <option value="">Semua Peran</option>
               <option value="1">Superadmin</option>
-              <option value="2">Client</option>
+              <option value="2">Klien</option>
             </select>
           </div>
         </div>
@@ -65,7 +65,7 @@
               @click="clearFilters"
               class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
             >
-              Clear Filters
+              Hapus Filter
             </button>
             <!-- <button
               @click="openAddModal"
@@ -74,26 +74,26 @@
               <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              Add User
+              Tambah Pengguna
             </button> -->
           </div>
         </div>
       </div>
 
-    <div v-if="loading" class="text-center py-8">Loading...</div>
+    <div v-if="loading" class="text-center py-8">Memuat...</div>
     <div v-else-if="error" class="text-red-500 text-center py-8">{{ error }}</div>
     <div v-else-if="filteredUsers.length === 0 && users.length > 0" class="bg-white shadow-md rounded-lg p-12 text-center">
       <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
-      <h3 class="mt-2 text-sm font-medium text-gray-900">No users found</h3>
-      <p class="mt-1 text-sm text-gray-500">No users match your current filters. Try adjusting your search criteria.</p>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">Tidak ada pengguna ditemukan</h3>
+      <p class="mt-1 text-sm text-gray-500">Tidak ada pengguna yang cocok dengan filter Anda. Coba sesuaikan kriteria pencarian.</p>
       <div class="mt-6">
         <button
           @click="clearFilters"
           class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          Clear all filters
+          Hapus semua filter
         </button>
       </div>
     </div>
@@ -101,8 +101,8 @@
       <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
-      <h3 class="mt-2 text-sm font-medium text-gray-900">No users</h3>
-      <p class="mt-1 text-sm text-gray-500">There are no users in the system yet.</p>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">Tidak ada pengguna</h3>
+      <p class="mt-1 text-sm text-gray-500">Belum ada pengguna di sistem.</p>
     </div>
     
     <div v-else class="bg-white shadow-md rounded-lg overflow-hidden">
@@ -116,13 +116,13 @@
                 <p class="text-sm text-gray-600">{{ user.email }}</p>
               </div>
               <div v-if="user.role?.id !== 1" class="flex gap-2">
-                <button @click="openEditModal(user)" class="text-blue-600 hover:text-blue-900 text-sm">Edit</button>
-                <button @click="openDeleteModal(user)" class="text-red-600 hover:text-red-900 text-sm">Delete</button>
+                <button @click="openEditModal(user)" class="text-blue-600 hover:text-blue-900 text-sm">Ubah</button>
+                <button @click="openDeleteModal(user)" class="text-red-600 hover:text-red-900 text-sm">Hapus</button>
               </div>
             </div>
             <div class="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <span class="text-gray-500">Package:</span>
+                <span class="text-gray-500">Paket:</span>
                 <div v-if="user?.package" class="mt-1">
                   <span 
                     class="inline-flex items-center gap-x-1.5 py-1 px-2 rounded-full text-xs font-medium border"
@@ -134,15 +134,15 @@
                 <span v-else class="text-gray-400">No Package</span>
               </div>
               <div>
-                <span class="text-gray-500">Role:</span>
+                <span class="text-gray-500">Peran:</span>
                 <p class="font-medium">{{ user.role?.name || user.role }}</p>
               </div>
               <div v-if="user.role?.id === 2">
-                <span class="text-gray-500">Start:</span>
+                <span class="text-gray-500">Mulai:</span>
                 <p>{{ formatDate(user.start_at) }}</p>
               </div>
               <div v-if="user.role?.id === 2">
-                <span class="text-gray-500">End:</span>
+                <span class="text-gray-500">Akhir:</span>
                 <p>{{ formatDate(user.end_at) }}</p>
               </div>
             </div>
@@ -156,22 +156,22 @@
           <thead>
             <tr>
               <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Name
+                Nama
               </th>
               <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Email
               </th>
               <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Package
+                Paket
               </th>
               <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Start At
+                Mulai Pada
               </th>
               <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                End At
+                Berakhir Pada
               </th>
               <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Role
+                Peran
               </th>
               <th class="px-3 py-3 border-b-2 border-gray-200 bg-gray-100"></th>
             </tr>
@@ -193,7 +193,7 @@
                     {{ user.package.name }}
                   </span>
                 </div>
-                <span v-else class="text-gray-400">No Package</span>
+                <span v-else class="text-gray-400">Tidak Ada Paket</span>
               </td>
               <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm">
                 <p class="text-gray-900 whitespace-no-wrap">
@@ -210,10 +210,10 @@
               </td>
               <td class="px-3 py-5 border-b border-gray-200 bg-white text-sm text-right">
                 <template v-if="user.role?.id !== 1">
-                  <button @click="openEditModal(user)" class="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
-                  <button @click="openDeleteModal(user)" class="text-red-600 hover:text-red-900">Delete</button>
+                  <button @click="openEditModal(user)" class="text-blue-600 hover:text-blue-900 mr-4">Ubah</button>
+                  <button @click="openDeleteModal(user)" class="text-red-600 hover:text-red-900">Hapus</button>
                 </template>
-                <span v-else class="text-gray-400 text-sm">Protected</span>
+                <span v-else class="text-gray-400 text-sm">Dilindungi</span>
               </td>
             </tr>
           </tbody>
@@ -226,11 +226,11 @@
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div class="p-6">
-          <h3 class="text-lg font-semibold mb-4">{{ isEditMode ? 'Edit User' : 'Add New User' }}</h3>
+          <h3 class="text-lg font-semibold mb-4">{{ isEditMode ? 'Ubah Pengguna' : 'Tambah Pengguna Baru' }}</h3>
           <form @submit.prevent="isEditMode ? updateUser() : addUser()">
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama *</label>
                 <input v-model="form.name" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
@@ -238,7 +238,7 @@
                 <input v-model="form.email" type="email" required :disabled="isEditMode" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
               </div>
               <div v-if="!isEditMode">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kata Sandi *</label>
                 <div class="relative">
                   <input
                     v-model="form.password"
@@ -274,19 +274,19 @@
                 </div>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Peran *</label>
                 <select v-model="form.role" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                  <option value="2">Client</option>
+                  <option value="2">Klien</option>
                   <option value="1">Superadmin</option>
                 </select>
               </div>
             </div>
             <div class="flex gap-3 mt-6">
               <button type="submit" :disabled="saving" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg">
-                {{ saving ? 'Saving...' : 'Save' }}
+                {{ saving ? 'Menyimpan...' : 'Simpan' }}
               </button>
               <button type="button" @click="closeModal" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg">
-                Cancel
+                Batal
               </button>
             </div>
           </form>
@@ -298,14 +298,14 @@
     <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div class="p-6">
-          <h3 class="text-lg font-semibold mb-4 text-red-600">Delete User</h3>
-          <p>Are you sure you want to delete <strong>{{ userToDelete?.username }}</strong>?</p>
+          <h3 class="text-lg font-semibold mb-4 text-red-600">Hapus Pengguna</h3>
+          <p>Apakah Anda yakin ingin menghapus <strong>{{ userToDelete?.username }}</strong>?</p>
           <div class="flex gap-3 mt-6">
             <button @click="confirmDelete" :disabled="deleting" class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg">
-              {{ deleting ? 'Deleting...' : 'Delete' }}
+              {{ deleting ? 'Menghapus...' : 'Hapus' }}
             </button>
             <button @click="closeDeleteModal" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg">
-              Cancel
+              Batal
             </button>
           </div>
         </div>
@@ -481,9 +481,9 @@ const addUser = async () => {
     });
     await fetchUsers();
     closeModal();
-    Swal.fire('Success', 'User added successfully', 'success');
+    Swal.fire('Berhasil', 'Pengguna berhasil ditambahkan', 'success');
   } catch (err) {
-    Swal.fire('Error', err.message, 'error');
+    Swal.fire('Kesalahan', err.message, 'error');
   } finally {
     saving.value = false;
   }
@@ -498,7 +498,7 @@ const updateUser = async () => {
     });
     await fetchUsers();
     closeModal();
-    Swal.fire('Success', 'User updated successfully', 'success');
+    Swal.fire('Berhasil', 'Pengguna berhasil diperbarui', 'success');
   } catch (err) {
     Swal.fire('Error', err.message, 'error');
   } finally {
@@ -518,7 +518,7 @@ const closeDeleteModal = () => {
 
 const confirmDelete = async () => {
   if (!userToDelete.value || !userToDelete.value.auth_id) {
-    Swal.fire('Error', 'Cannot delete user without an authentication ID.', 'error');
+    Swal.fire('Kesalahan', 'Tidak dapat menghapus pengguna tanpa ID autentikasi.', 'error');
     return;
   }
   deleting.value = true;
@@ -526,7 +526,7 @@ const confirmDelete = async () => {
     await removeUser(userToDelete.value.auth_id);
     await fetchUsers();
     closeDeleteModal();
-    Swal.fire('Success', 'User deleted successfully', 'success');
+    Swal.fire('Berhasil', 'Pengguna berhasil dihapus', 'success');
   } catch (err) {
     Swal.fire('Error', err.message, 'error');
   } finally {

@@ -10,7 +10,7 @@
         alt="Nutra Logo"
         class="w-24 h-12 sm:w-25 sm:h-14 mb-4 object-contain"
       />
-      <h1 class="text-xl sm:text-2xl font-bold mb-2 text-blue-700">Login</h1>
+      <h1 class="text-xl sm:text-2xl font-bold mb-2 text-blue-700">Masuk</h1>
       <p class="mb-6 text-gray-500 text-center text-sm sm:text-base">Masuk ke akun Anda untuk melanjutkan</p>
       <form @submit.prevent="login" class="w-full flex flex-col gap-4">
         <input
@@ -25,7 +25,7 @@
           <input
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
-            placeholder="Password"
+            placeholder="Kata Sandi"
             class="input-with-icon"
             required
             :disabled="loading"
@@ -79,9 +79,9 @@
                 d="M4 12a8 8 0 018-8v8z"
               ></path>
             </svg>
-            Loading...
+            Memuat...
           </span>
-          <span v-else>Login</span>
+          <span v-else>Masuk</span>
         </button>
       </form>
       <p v-if="error" class="text-red-500 mt-3 text-sm text-center">
@@ -90,7 +90,7 @@
       <NuxtLink
         to="/register"
         class="mt-6 text-blue-600 hover:underline transition text-center text-sm sm:text-base"
-        >Belum punya akun? <span class="font-semibold">Register</span></NuxtLink
+        >Belum punya akun? <span class="font-semibold">Daftar</span></NuxtLink
       >
     </div>
   </div>

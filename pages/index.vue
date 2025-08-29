@@ -8,15 +8,15 @@
           <!-- <span class="font-semibold">Nutra AI Chat</span> -->
         </div>
         <nav class="hidden md:flex items-center gap-6">
-          <a href="#home" class="hover:text-blue-600">Home</a>
-          <a href="#features" class="hover:text-blue-600">Features</a>
-          <a href="#pricing" class="hover:text-blue-600">Pricing</a>
-          <NuxtLink to="/doc" class="hover:text-blue-600">Document</NuxtLink>
-          <NuxtLink to="/login" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Login</NuxtLink>
+          <a href="#home" class="hover:text-blue-600">Beranda</a>
+          <a href="#features" class="hover:text-blue-600">Fitur</a>
+          <a href="#pricing" class="hover:text-blue-600">Harga</a>
+          <NuxtLink to="/doc" class="hover:text-blue-600">Dokumentasi</NuxtLink>
+          <NuxtLink to="/login" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Masuk</NuxtLink>
         </nav>
         <!-- Mobile: simple links -->
         <div class="md:hidden">
-          <NuxtLink to="/login" class="px-3 py-1.5 rounded-md bg-blue-600 text-white text-sm">Login</NuxtLink>
+          <NuxtLink to="/login" class="px-3 py-1.5 rounded-md bg-blue-600 text-white text-sm">Masuk</NuxtLink>
         </div>
       </div>
     </header>
@@ -44,13 +44,13 @@
                 <img src="/assets/img/nutra.png" class="h-10 w-10" alt="Nutra" />
                 <div>
                   <div class="font-semibold">Nutra Ai Agent</div>
-                  <div class="text-sm text-gray-500">Wa Channel chat & AI agent</div>
+                  <div class="text-sm text-gray-500">Chat Channel WhatsApp & Agent AI</div>
                 </div>
               </div>
               <div class="mt-4 grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div class="text-2xl font-bold">99.9%</div>
-                  <div class="text-xs text-gray-500">Uptime</div>
+                  <div class="text-xs text-gray-500">Waktu Aktif</div>
                 </div>
                 <div>
                   <div class="text-2xl font-bold">24/7</div>
@@ -246,7 +246,7 @@
             </div>
             <div class="mb-4">
               <h3 class="text-xl font-bold text-gray-900 mb-2">Agent Manusia</h3>
-              <h4 class="text-sm font-semibold text-rose-600 mb-3">Take Over Chat</h4>
+              <h4 class="text-sm font-semibold text-rose-600 mb-3">Ambil Alih Chat</h4>
             </div>
             <p class="text-gray-600 text-sm leading-relaxed">
               Handoff seamless dari AI ke agent manusia ketika diperlukan percakapan personal atau AI tidak dapat memberikan jawaban yang memuaskan.
@@ -321,7 +321,7 @@
                 </svg>
               </div>
             </div>
-            <h3 class="text-lg font-bold text-gray-900 mb-3">Setup Produk</h3>
+            <h3 class="text-lg font-bold text-gray-900 mb-3">Pengaturan Produk</h3>
             <p class="text-gray-600 text-sm">
               Upload dan kelola katalog produk Anda dengan gambar, deskripsi, dan harga yang akan dipromosikan AI.
             </p>
@@ -370,7 +370,7 @@
                 </svg>
               </div>
             </div>
-            <h3 class="text-lg font-bold text-gray-900 mb-3">Done!</h3>
+            <h3 class="text-lg font-bold text-gray-900 mb-3">Selesai!</h3>
             <p class="text-gray-600 text-sm">
               Nomor WhatsApp yang dihubungkan ke channel akan otomatis merespon sesuai konfigurasi AI dan produk yang Anda atur.
             </p>
@@ -407,7 +407,7 @@
           </div>
           <div class="text-center">
             <div class="text-3xl md:text-4xl font-bold text-orange-600 mb-2">24/7</div>
-            <div class="text-gray-600 text-sm">Support Available</div>
+            <div class="text-gray-600 text-sm">Dukungan Tersedia</div>
           </div>
         </div>
 
@@ -484,7 +484,7 @@
           <p class="mt-3 text-gray-600">Harga terjangkau, fitur lengkap untuk semua skala bisnis.</p>
         </div>
 
-        <div v-if="loading" class="text-center mt-10">Loading...</div>
+        <div v-if="loading" class="text-center mt-10">Memuat...</div>
         <div v-else-if="error" class="text-center mt-10 text-red-500">{{ error }}</div>
         
         <div v-else class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -531,13 +531,13 @@
           <span>Nutra AI Chat</span>
         </div>
         <div class="flex items-center gap-4">
-          <a href="#home" class="hover:text-blue-600">Home</a>
-          <a href="#features" class="hover:text-blue-600">Features</a>
-          <a href="#pricing" class="hover:text-blue-600">Pricing</a>
-          <NuxtLink to="/doc" class="hover:text-blue-600">Document</NuxtLink>
-          <NuxtLink to="/login" class="hover:text-blue-600">Login</NuxtLink>
+          <a href="#home" class="hover:text-blue-600">Beranda</a>
+          <a href="#features" class="hover:text-blue-600">Fitur</a>
+          <a href="#pricing" class="hover:text-blue-600">Harga</a>
+          <NuxtLink to="/doc" class="hover:text-blue-600">Dokumentasi</NuxtLink>
+          <NuxtLink to="/login" class="hover:text-blue-600">Masuk</NuxtLink>
         </div>
-        <div class="text-xs text-gray-400">© {{ new Date().getFullYear() }} Nutra. All rights reserved.</div>
+        <div class="text-xs text-gray-400">© {{ new Date().getFullYear() }} Nutra. Seluruh hak cipta.</div>
       </div>
     </footer>
   </div>
