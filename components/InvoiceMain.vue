@@ -476,8 +476,8 @@ async function approveInvoice(invoice) {
         body: {
           userEmail: invoice.user?.email,
           userName: invoice.user?.name || invoice.user?.email,
-          invoiceNumber: invoice.id,
-          amount: invoice.amount,
+          invoiceNumber: invoice.invoice_number,
+          amount: invoice.total,
           planName: invoice.plan?.name ,
           startDate: formatDate(now),
           endDate: formatDate(endDate)

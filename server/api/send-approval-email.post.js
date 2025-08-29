@@ -212,7 +212,7 @@ Tim Nutra USA Indonesia
       // Siapkan payload untuk mailketing.co.id
       const payload = {
         api_token: apiKeyEmail,
-        from_name: 'Nutra USA Indonesia',
+        from_name: 'Wagen | Nutra USA Indonesia',
         from_email: emailSender,
         recipient: userEmail,
         subject: `✅ Pembayaran Disetujui - Invoice ${invoiceNumber}`,
